@@ -2,7 +2,7 @@
 
 SM_MET_TX.zip includes: 
 
-soil_station folder:
+# soil_station folder:
 
 SM_1.dat to SM_6.dat includes 6 different stations at different locations (latitude and longitude). Each station has 4 sensors in soil at different depths. We measure soil water content and soil 
 temperature. Each .dat file includes the following columns:
@@ -32,7 +32,7 @@ temperature. Each .dat file includes the following columns:
 
 
 
-met_station folder:
+# met_station folder:
 
 MET_1.dat to MET_6.dat includes 6 different weather stations at different locations (latitude and longitude). Weather Station MET_1.dat is located at the same place that soil station SM_1.dat is located. 
 
