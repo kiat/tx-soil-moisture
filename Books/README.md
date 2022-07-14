@@ -1,0 +1,51 @@
+# Online Book
+
+* Forecasting: Principles and Practice https://otexts.com/fpp2/ 
+
+# Some useful references
+
+* https://vitalflux.com/autoregressive-ar-models-with-python-examples/
+
+* https://machinelearningmastery.com/autoregression-models-time-series-forecasting-python/
+
+* https://pythondata.com/forecasting-time-series-autoregression/
+
+Pandas and Time Series Data
+
+* https://www.youtube.com/watch?v=r0s4slGHwzE 
+
+# Data Cleansing, Outlier Detection and Imputation 
+
+* https://www.section.io/engineering-education/missing-values-in-time-series/ 
+* https://neptune.ai/blog/anomaly-detection-in-time-series
+
+
+
+# Deep Learning with Tensorflow
+
+* https://www.tensorflow.org/tutorials/structured_data/time_series
+
+* https://www.youtube.com/watch?v=6f67zrH-_IE
+
+* https://www.justintodata.com/forecast-time-series-lstm-with-tensorflow-keras/
+
+* https://github.com/tensorflow/examples/tree/master/courses/udacity_intro_to_tensorflow_for_deep_learning
+* Lesson 8 of Udacity's intro to TensorFlow for deep learning https://www.udacity.com/course/intro-to-tensorflow-for-deep-learning--ud187, including the exercise notebooks.
+
+* https://www.justintodata.com/forecast-time-series-lstm-with-tensorflow-keras/#step-3-creating-the-lstm-model
+* https://www.tfcertification.com/blog/master-time-series-tensorflow-10-minutes
+* https://medium.com/analytics-vidhya/time-series-forecasting-using-tensorflow-rkt109-ea858d8e49c6
+* https://github.com/aryan109/Sunspot_Prediction/blob/master/Sunspot_prediction.ipynb
+* https://www.coursera.org/learn/tensorflow-sequences-time-series-and-prediction/home/week/1
+* https://www.kaggle.com/code/nicholasjhana/multi-variate-time-series-forecasting-tensorflow/notebook
+* https://www.youtube.com/watch?v=mfuUS7nUx5Q
+* https://www.youtube.com/watch?v=xaIA83x5Icg&list=RDCMUCoW_WzQNJVAjxo4osNAxd_g&start_radio=1
+
+
+# General Tensorflow Tutorials
+* https://www.youtube.com/watch?v=HPjBY1H-U4U&list=PLhhyoLH6IjfxVOdVC1P1L5z5azs0XjMsb&index=2
+
+
+# Pytoch Time Series 
+https://towardsdatascience.com/pytorch-lstms-for-time-series-data-cd16190929d7
+
