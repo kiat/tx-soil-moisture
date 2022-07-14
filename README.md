@@ -10,3 +10,6 @@ Tuesdays 2 pm over zoom
 
 # Related Work
 * https://ieeexplore.ieee.org/document/9383802
+
+# Penman-Monteith equation
+* https://www.fao.org/3/x0490e/x0490e06.htm
