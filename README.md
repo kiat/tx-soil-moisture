@@ -8,6 +8,8 @@
 # Meetings 
 Tuesdays 2 pm over zoom 
 
+Friday 3 pm over zoom 
+
 # Related Work
 * https://ieeexplore.ieee.org/document/9383802
 
