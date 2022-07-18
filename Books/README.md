@@ -18,6 +18,7 @@ Pandas and Time Series Data
 
 * https://www.section.io/engineering-education/missing-values-in-time-series/ 
 * https://neptune.ai/blog/anomaly-detection-in-time-series
+* https://medium.com/bukalapak-data/time-series-anomaly-detection-simple-yet-powerful-approaches-4449ffe1ca12
 
 
 
