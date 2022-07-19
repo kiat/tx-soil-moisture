@@ -7,9 +7,9 @@
 * Arturo Hernandez <arturohernandez@utexas.edu>
 
 # Meetings 
-Tuesdays 2 pm over zoom 
+Tuesdays 2 pm over zoom https://utexas.zoom.us/my/kia.teymourian 
 
-Friday 3 pm over zoom 
+Fridays 3 pm over zoom https://utexas.zoom.us/my/kia.teymourian
 
 # Related Work
 * https://ieeexplore.ieee.org/document/9383802
