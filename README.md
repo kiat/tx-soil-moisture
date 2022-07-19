@@ -4,6 +4,7 @@
 * Raahim Owais <raahim.owais7@gmail.com>
 * Tyler J Dean <t.dean6@utexas.edu>
 * Shaojie Hou <shaojiehou@utexas.edu>
+* Arturo Hernandez <arturohernandez@utexas.edu>
 
 # Meetings 
 Tuesdays 2 pm over zoom 
