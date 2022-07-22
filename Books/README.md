@@ -21,7 +21,10 @@ Pandas and Time Series Data
 * https://medium.com/bukalapak-data/time-series-anomaly-detection-simple-yet-powerful-approaches-4449ffe1ca12
 * https://becominghuman.ai/time-series-and-how-to-detect-anomalies-in-them-part-i-7f9f6c2ad32e
 
+# Time Series Analysis with Python 
 
+* https://www.youtube.com/watch?v=mfuUS7nUx5Q
+* https://www.youtube.com/watch?v=L4sYigvSx2s&list=UU-0lpiwlftqwC7znCcF83qg
 
 # Deep Learning with Tensorflow
 
