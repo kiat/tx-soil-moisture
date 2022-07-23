@@ -11,6 +11,10 @@ temperature. Each .dat file includes the following columns:
 
 **Ppt:** Precipitation; hourly rainfall total (mm),
 
+
+**Soil Moisture** is a dimensionless property and has no unit. It is volume divided by volume (we can say the unit is cubic meter divided by cubic meter or m^3/m^3). The value can be from 0.0 to 0.6 practically but in theory it can be between 0.0 to 1.0 
+
+
 **SWC_5:** Soil water content or soil moisture at 5 cm depth, 
 
 **SWC_10:** Soil water content or soil moisture at 10 cm depth, 
