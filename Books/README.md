@@ -23,7 +23,7 @@ Pandas and Time Series Data
 
 # Time Series Analysis with Python 
 
-* follow this tutorial and create your notebook from this tutorial https://www.youtube.com/watch?v=mfuUS7nUx5Q
+* Follow this tutorial and create your notebook from this tutorial https://www.youtube.com/watch?v=mfuUS7nUx5Q
 * https://www.manning.com/books/time-series-forecasting-in-python-book
 * https://www.youtube.com/watch?v=L4sYigvSx2s&list=UU-0lpiwlftqwC7znCcF83qg
 
