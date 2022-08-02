@@ -20,4 +20,5 @@ Fridays 3 pm over zoom https://utexas.zoom.us/my/kia.teymourian
 
 
 * https://www.sciencedirect.com/journal/environmental-modelling-and-software 
-
+* https://www.journals.elsevier.com/computers-and-geosciences
+* https://www.sciencedirect.com/journal/computer-physics-communications
