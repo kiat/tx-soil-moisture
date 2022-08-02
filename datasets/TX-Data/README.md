@@ -54,6 +54,16 @@ per site specific climatology criteria
 
 **RH:** relative humidity (percentage): https://en.wikipedia.org/wiki/Humidity
 
+Dew Pont Temp ≤ Ambient temp for time period,
+
+Dew Pont Temp < 5°C change from previous hour,
+
+Dew Pont Temp≥ 0.5°C from previous hour, and
+
+Dew Pont Temp < Ambient Temp for 12 consecutive hours.
+
+
+
 **Wind speed:** meters/second
 
 0 m/s ≥ WS ≤ 25 m/s, WS varies ≥ 0.1 m/s for 3 consecutive hours, WS varies ≥ 0.5 m/s for 12 consecutive hours, or per site specific climatology criteria
@@ -65,6 +75,9 @@ per site specific climatology criteria
 
 
 **Srad:** solar radiation (W/m^2) https://en.wikipedia.org/wiki/Solar_irradiance
+Night time SR = 0,
+
+Day time SR < max SR for date and latitude
 
 
 
