@@ -19,6 +19,8 @@ Fridays 3 pm over zoom https://utexas.zoom.us/my/kia.teymourian
 * http://www.atmo.arizona.edu/students/courselinks/spring11/hwr523/HWR423_523_files/Evapotranspiration.pdf
 
 
+# Journals 
+
 * https://www.sciencedirect.com/journal/environmental-modelling-and-software 
 * https://www.journals.elsevier.com/computers-and-geosciences
 * https://www.sciencedirect.com/journal/computer-physics-communications
