@@ -89,5 +89,31 @@ These data are a little different from Houston data. But, soil moisture, precipi
 I think, something similar to this: https://github.com/lpphd/multivariate-attention-tcn, would be interesting to build and add, so that in real time we can predict each station soil moisture for the next day and since we get data each hour, we can check the ML model every hour.
 
 
+# GPS Locations
+
+1-	Latitude	30.3989
+Longitude	-98.6105
+Logger ID	CR1000-5
+
+2-	Latitude	30.4193
+Longitude	-98.8046
+Logger ID	CR200-26 (CR1000-1)
+
+3-	Latitude	30.4421
+Longitude	-98.8427
+Logger ID	CR1000-6
+
+4-	Latitude	30.4600
+Longitude	-98.9407
+Logger ID	CR1000-4
+
+5-	Latitude	30.2454
+Longitude	-98.7059
+Logger ID	CR1000-2
+
+6-	Latitude	30.2758
+Longitude	-98.7242
+Logger ID	CR1000-3
+
 
 
