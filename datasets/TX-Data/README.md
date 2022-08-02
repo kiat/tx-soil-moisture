@@ -52,6 +52,13 @@ We measure air temperature, humidity, wind speed and direction, and solar radiat
 
 **Wind speed:** meters/second
 
+0 m/s ≥ WS ≤ 25 m/s, WS varies ≥ 0.1 m/s for 3 consecutive hours, WS varies ≥ 0.5 m/s for 12 consecutive hours, or per site specific climatology criteria
+1/week or more frequent 
+
+![image](https://user-images.githubusercontent.com/1133111/182445921-9464b816-ec0d-495a-b858-190068babdd4.png)
+
+
+
 **Wind direction:** Degree
 
 **Srad:** solar radiation (W/m^2) https://en.wikipedia.org/wiki/Solar_irradiance
