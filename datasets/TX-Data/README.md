@@ -48,6 +48,10 @@ We measure air temperature, humidity, wind speed and direction, and solar radiat
 
 **Tair:** air temperature (deg C)
 
+Local record low≥ Temp≤ local record high, Temp ≤ 5°C from previous hourly record, Temp varies ≥ 0.5°C over 12 consecutive hours, or
+per site specific climatology criteria
+
+
 **RH:** relative humidity (percentage): https://en.wikipedia.org/wiki/Humidity
 
 **Wind speed:** meters/second
@@ -55,11 +59,10 @@ We measure air temperature, humidity, wind speed and direction, and solar radiat
 0 m/s ≥ WS ≤ 25 m/s, WS varies ≥ 0.1 m/s for 3 consecutive hours, WS varies ≥ 0.5 m/s for 12 consecutive hours, or per site specific climatology criteria
 1/week or more frequent 
 
-![image](https://user-images.githubusercontent.com/1133111/182445921-9464b816-ec0d-495a-b858-190068babdd4.png)
-
-
-
 **Wind direction:** Degree
+
+0°≥ WD ≤ 360°, WD varies ≥ 1°/3 consecutive hours, or per site specific climatology criteria
+
 
 **Srad:** solar radiation (W/m^2) https://en.wikipedia.org/wiki/Solar_irradiance
 
