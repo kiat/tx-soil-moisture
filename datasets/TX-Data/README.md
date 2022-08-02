@@ -48,36 +48,39 @@ We measure air temperature, humidity, wind speed and direction, and solar radiat
 
 **Tair:** air temperature (deg C)
 
-Local record low≥ Temp≤ local record high, Temp ≤ 5°C from previous hourly record, Temp varies ≥ 0.5°C over 12 consecutive hours, or
-per site specific climatology criteria
+* Local record low≥ Temp≤ local record high, 
+* Temp ≤ 5°C from previous hourly record, 
+* Temp varies ≥ 0.5°C over 12 consecutive hours, or per site specific climatology criteria
 
 
 **RH:** relative humidity (percentage): https://en.wikipedia.org/wiki/Humidity
 
-Dew Pont Temp ≤ Ambient temp for time period,
-
-Dew Pont Temp < 5°C change from previous hour,
-
-Dew Pont Temp≥ 0.5°C from previous hour, and
-
-Dew Pont Temp < Ambient Temp for 12 consecutive hours.
+* Dew Pont Temp ≤ Ambient temp for time period,
+* Dew Pont Temp < 5°C change from previous hour,
+* Dew Pont Temp≥ 0.5°C from previous hour, and
+* Dew Pont Temp < Ambient Temp for 12 consecutive hours.
 
 
 
 **Wind speed:** meters/second
 
-0 m/s ≥ WS ≤ 25 m/s, WS varies ≥ 0.1 m/s for 3 consecutive hours, WS varies ≥ 0.5 m/s for 12 consecutive hours, or per site specific climatology criteria
-1/week or more frequent 
+* 0 m/s ≥ WS ≤ 25 m/s, 
+* WS varies ≥ 0.1 m/s for 3 consecutive hours, 
+* WS varies ≥ 0.5 m/s for 12 consecutive hours, 
+* or per site specific climatology criteria
+* 1/week or more frequent 
 
 **Wind direction:** Degree
 
-0°≥ WD ≤ 360°, WD varies ≥ 1°/3 consecutive hours, or per site specific climatology criteria
+* 0°≥ WD ≤ 360°, 
+* WD varies ≥ 1°/3 consecutive hours, 
+* or per site specific climatology criteria
 
 
 **Srad:** solar radiation (W/m^2) https://en.wikipedia.org/wiki/Solar_irradiance
-Night time SR = 0,
 
-Day time SR < max SR for date and latitude
+* Night time SR = 0,
+* Day time SR < max SR for date and latitude
 
 
 
