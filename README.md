@@ -5,6 +5,7 @@
 * Tyler J Dean <t.dean6@utexas.edu>
 * Shaojie Hou <shaojiehou@utexas.edu>
 * Arturo Hernandez <arturohernandez@utexas.edu>
+* Shuhan Shen <shnshen@utexas.edu>
 
 # Meetings 
 Tuesdays 2 pm over zoom https://utexas.zoom.us/my/kia.teymourian 
