@@ -57,3 +57,7 @@ Pandas and Time Series Data
 # Pytoch Time Series 
 https://towardsdatascience.com/pytorch-lstms-for-time-series-data-cd16190929d7
 
+# Hidden Markov Model 
+
+* https://rubikscode.net/2021/09/06/stock-price-prediction-using-hidden-markov-model/
+
