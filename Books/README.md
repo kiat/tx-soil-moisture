@@ -31,6 +31,8 @@ Pandas and Time Series Data
 
 * https://www.tensorflow.org/tutorials/structured_data/time_series
 
+* https://github.com/nachi-hebbar/Time-Series-Forecasting-LSTM
+
 * https://www.youtube.com/watch?v=6f67zrH-_IE
 
 * https://www.justintodata.com/forecast-time-series-lstm-with-tensorflow-keras/
