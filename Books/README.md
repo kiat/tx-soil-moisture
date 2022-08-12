@@ -60,4 +60,4 @@ https://towardsdatascience.com/pytorch-lstms-for-time-series-data-cd16190929d7
 # Hidden Markov Model 
 
 * https://rubikscode.net/2021/09/06/stock-price-prediction-using-hidden-markov-model/
-
+* https://www.tutorialspoint.com/artificial_intelligence_with_python/artificial_intelligence_with_python_analyzing_time_series_data.htm
