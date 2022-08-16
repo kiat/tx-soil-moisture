@@ -9,7 +9,6 @@
 
 
 # Meetings 
-Tuesdays 2 pm over zoom https://utexas.zoom.us/my/kia.teymourian 
 
 Fridays 3 pm over zoom https://utexas.zoom.us/my/kia.teymourian
 
