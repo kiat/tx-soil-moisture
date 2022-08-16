@@ -18,6 +18,7 @@ Fridays 3 pm over zoom https://utexas.zoom.us/my/kia.teymourian
 # Penman-Monteith equation
 * https://www.fao.org/3/x0490e/x0490e06.htm
 * http://www.atmo.arizona.edu/students/courselinks/spring11/hwr523/HWR423_523_files/Evapotranspiration.pdf
+* https://edis.ifas.ufl.edu/pdf/AE/AE45900.pdf
 
 
 # Journals 
