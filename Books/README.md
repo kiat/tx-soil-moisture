@@ -2,6 +2,12 @@
 
 * Forecasting: Principles and Practice https://otexts.com/fpp2/ 
 
+
+# Lecture Series on Applied Time Series 
+
+* https://www.youtube.com/watch?v=XeAN-zYhqGw&list=PLA5yNsxyt7sC3B4qhj_sMgGWqWWaSerq- 
+
+
 # Some useful references
 
 * https://vitalflux.com/autoregressive-ar-models-with-python-examples/
