@@ -1,7 +1,9 @@
 all: create clean
 
 create:
-	pdflatex CS777-Assignment-1.tex
+	pdflatex main-tx-soil-moisture.tex
+	bibtex  main-tx-soil-moisture
+	pdflatex main-tx-soil-moisture.tex
 
 
 clean:
