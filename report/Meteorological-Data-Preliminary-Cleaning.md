@@ -84,4 +84,9 @@ Small anomalies from 2021 Jun 23 to 2021 Aug 31
 
 ( code, graphs, and more details found in [SolRad-Comparisons-and-Cleaning.ipynb](https://github.com/kiat/tx-soil-moisture/blob/main/notebook/SolRad-Comparisons-and-Cleaning.ipynb))
 
-In progress …
+Here, the process is similar for what we did for Tair. 2018 Stations 1 and 5 had gaps in about the same time frame. So, stations 1 and 5 were excluded from the 2018 mean calculation. The 2018 mean was then used to fill in the gaps. 
+
+**Station 1:** Missing data from 2018 Apr 12 to 2018 May 7
+
+**Station 5:** Gaps from 2018 Mar 1 to 2018 May 16
+
