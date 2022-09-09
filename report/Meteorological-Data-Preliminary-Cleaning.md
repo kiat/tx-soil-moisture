@@ -1,4 +1,4 @@
-Meteorological Data Preliminary Cleaning:
+# Meteorological Data Preliminary Cleaning:
 
 The relevant code can be found in [AirTemp-Comparisons-and-Cleaning.ipynb](https://github.com/kiat/tx-soil-moisture/blob/main/notebook/AirTemp-Comparisons-and-Cleaning.ipynb) , [RelHum-Comparisons-and-Cleaning.ipynb](https://github.com/kiat/tx-soil-moisture/blob/main/notebook/RelHum-Comparisons-and-Cleaning.ipynb) , [SolRad-Comparisons-and-Cleaning.ipynb](https://github.com/kiat/tx-soil-moisture/blob/main/notebook/SolRad-Comparisons-and-Cleaning.ipynb).
 
@@ -20,7 +20,7 @@ In this preliminary cleanup, we visually compared the data of all six stations a
 
 For each feature, we plotted all six station's data together and visually detected significant deviations of one station's data from the rest, as well as any gaps in the data on a year-to-year basis. Then, the station with gaps or anomalies was excluded from the mean calculation. The mean value of all other stations was then used to fill in gaps or replace the values of the anomalies.
 
-**Air Temperature** :
+## Air Temperature :
 
 ( code, graphs, and more details found in [AirTemp-Comparisons-and-Cleaning.ipynb](https://github.com/kiat/tx-soil-moisture/blob/main/notebook/AirTemp-Comparisons-and-Cleaning.ipynb) )
 
@@ -36,7 +36,7 @@ For **2019** , anomalies were found in Station 1. Thus, Station1 was excluded fr
 
 Station 1: Anomaly from Mar 25 to Mar 26.
 
-**Relative Humidity:**
+## Relative Humidity:
 
 ( code, graphs, and more details found in [RelHum-Comparisons-and-Cleaning.ipynb](https://github.com/kiat/tx-soil-moisture/blob/main/notebook/RelHum-Comparisons-and-Cleaning.ipynb) )
 
@@ -80,7 +80,7 @@ Small anomalies from 2020 Jul 2 to 2021 Feb 19
 
 Small anomalies from 2021 Jun 23 to 2021 Aug 31
 
-**Solar Radiation:**
+## Solar Radiation:
 
 ( code, graphs, and more details found in [SolRad-Comparisons-and-Cleaning.ipynb](https://github.com/kiat/tx-soil-moisture/blob/main/notebook/SolRad-Comparisons-and-Cleaning.ipynb))
 
