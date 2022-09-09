@@ -1,6 +1,6 @@
 # Meteorological Data Preliminary Cleaning:
 
-The relevant code can be found in [AirTemp-Comparisons-and-Cleaning.ipynb](https://github.com/kiat/tx-soil-moisture/blob/main/notebook/AirTemp-Comparisons-and-Cleaning.ipynb) , [RelHum-Comparisons-and-Cleaning.ipynb](https://github.com/kiat/tx-soil-moisture/blob/main/notebook/RelHum-Comparisons-and-Cleaning.ipynb) , [SolRad-Comparisons-and-Cleaning.ipynb](https://github.com/kiat/tx-soil-moisture/blob/main/notebook/SolRad-Comparisons-and-Cleaning.ipynb).
+The relevant code can be found in [AirTemp-Comparisons-and-Cleaning.ipynb](https://github.com/kiat/tx-soil-moisture/blob/main/notebook/AirTemp-Comparisons-and-Cleaning.ipynb), [SolRad-Comparisons-and-Cleaning.ipynb](https://github.com/kiat/tx-soil-moisture/blob/main/notebook/SolRad-Comparisons-and-Cleaning.ipynb), [RelHum-Comparisons-and-Cleaning.ipynb](https://github.com/kiat/tx-soil-moisture/blob/main/notebook/RelHum-Comparisons-and-Cleaning.ipynb) .
 
 The meteorological data for each station contains several features:
 
@@ -20,6 +20,7 @@ In this preliminary cleanup, we visually compared the data of all six stations a
 
 For each feature, we plotted all six station's data together and visually detected significant deviations of one station's data from the rest, as well as any gaps in the data on a year-to-year basis. Then, the station with gaps or anomalies was excluded from the mean calculation. The mean value of all other stations was then used to fill in gaps or replace the values of the anomalies.
 
+
 ## Air Temperature :
 
 ( code, graphs, and more details found in [AirTemp-Comparisons-and-Cleaning.ipynb](https://github.com/kiat/tx-soil-moisture/blob/main/notebook/AirTemp-Comparisons-and-Cleaning.ipynb) )
@@ -35,6 +36,18 @@ Station 5: Small gaps from Apr 5 to May 16. Small Anomalies from Apr 17 to May 1
 For **2019** , anomalies were found in Station 1. Thus, Station1 was excluded from the Tair 2019 mean. The mean was then used to clean up 2019 Station 1 data.
 
 Station 1: Anomaly from Mar 25 to Mar 26.
+
+
+## Solar Radiation:
+
+( code, graphs, and more details found in [SolRad-Comparisons-and-Cleaning.ipynb](https://github.com/kiat/tx-soil-moisture/blob/main/notebook/SolRad-Comparisons-and-Cleaning.ipynb))
+
+Here, the process is similar for what we did for Tair. 2018 Stations 1 and 5 had gaps in about the same time frame. So, stations 1 and 5 were excluded from the 2018 mean calculation. The 2018 mean was then used to fill in the gaps. 
+
+**Station 1:** Missing data from 2018 Apr 12 to 2018 May 7
+
+**Station 5:** Gaps from 2018 Mar 1 to 2018 May 16
+
 
 ## Relative Humidity:
 
@@ -79,14 +92,4 @@ Anomaly from 2019 Jan 14 to 2019 Dec 4
 Small anomalies from 2020 Jul 2 to 2021 Feb 19
 
 Small anomalies from 2021 Jun 23 to 2021 Aug 31
-
-## Solar Radiation:
-
-( code, graphs, and more details found in [SolRad-Comparisons-and-Cleaning.ipynb](https://github.com/kiat/tx-soil-moisture/blob/main/notebook/SolRad-Comparisons-and-Cleaning.ipynb))
-
-Here, the process is similar for what we did for Tair. 2018 Stations 1 and 5 had gaps in about the same time frame. So, stations 1 and 5 were excluded from the 2018 mean calculation. The 2018 mean was then used to fill in the gaps. 
-
-**Station 1:** Missing data from 2018 Apr 12 to 2018 May 7
-
-**Station 5:** Gaps from 2018 Mar 1 to 2018 May 16
 
