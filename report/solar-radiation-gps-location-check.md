@@ -1,6 +1,11 @@
 **In Progress...**
 
-By knowing the times of sunrise and sunset, we can determine the night time indices for each station. However, the exact timing of the sunrise and 
+# Solar Radiation GPS Location Check
+
+The relevant code can be found in 
+
+We expect solar radiation to be low during the night and high during the day. By knowing the times of sunrise and sunset, we can determine the night time indices 
+for each station. However, the exact timing of the sunrise and 
 sunset changes by location and time. We can find the sunrise and sunset times using NOAA solar calculations: https://gml.noaa.gov/grad/solcalc/. 
 The functions `get_julian_datetime()` and `get_sunlight_time()` perform these calculations.
 
