@@ -33,13 +33,13 @@ Stationarity is important to assess how the data is perceived and predicted. Bef
 
 To test the stationarity, we applied Augmented Dickey-Fuller Test and Order integration of one in Python. The null hypothesis H_0 of our test is assuming that The time series is non-stationary and the alternative hypothesis is H_A: The time series is stationary. Based on the statistic and p-value of adfuller, we determined the data from met stations are stationary.
 
-#### Visualize train and test set
+### Visualize train and test set
 
 Before the construction of prediction model, we split the data set into tranning and testing groups and visualize
 them. The shaded area is the testing set and the remaining part is the training set.
 
 
-#### Forcasting Models
+### Forcasting Models
 
 We use several forcasting models in the time series prediction:
 Seasonal Autoregressive Integrated Moving Average Model, or SARIMA Model is the forcasting model we use for univariate time series data forecasting.
