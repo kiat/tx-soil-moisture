@@ -1,4 +1,4 @@
-# Soild Moisture Sensor Data Analysis - Texas soil moisture dataset
+# Soil Moisture Sensor Data Analysis - Texas soil moisture dataset
 
 # Students
 * Raahim Owais <raahim.owais7@gmail.com>
