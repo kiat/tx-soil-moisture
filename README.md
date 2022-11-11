@@ -1,5 +1,16 @@
 # Soild Moisture Sensor Data Analysis - Texas soil moisture dataset
 
+TODOs: 
+
+* Use rain prediction values as parameters 
+* Run transfer learning to model to train the model on one station and use this to train the model for other stations. 
+
+ 
+
+
+
+
+
 # Students
 * Raahim Owais <raahim.owais7@gmail.com>
 * Tyler J Dean <t.dean6@utexas.edu>
