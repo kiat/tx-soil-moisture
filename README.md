@@ -16,6 +16,12 @@ TODOs:
 
 
 # Students
+# Sprint 2023
+* Sanchith Shanmuga <sanchith.s@utexas.edu>
+* Aayush Singh <aayush92488@utexas.edu>
+
+
+## Summer 2022 
 * Raahim Owais <raahim.owais7@gmail.com>
 * Tyler J Dean <t.dean6@utexas.edu>
 * Shaojie Hou <shaojiehou@utexas.edu>
