@@ -16,7 +16,7 @@ TODOs:
 
 
 # Students
-# Sprint 2023
+# Spring 2023
 * Sanchith Shanmuga <sanchith.s@utexas.edu>
 * Aayush Singh <aayush92488@utexas.edu>
 
