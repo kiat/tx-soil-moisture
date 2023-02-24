@@ -127,3 +127,6 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# HTML files (result of exporting Plotly graphs)
+*.html
