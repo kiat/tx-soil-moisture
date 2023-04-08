@@ -132,4 +132,4 @@ dmypy.json
 *.html
 
 # .dat files (result of downloading merged datasets from notebooks)
-*.dat
+# *.dat
