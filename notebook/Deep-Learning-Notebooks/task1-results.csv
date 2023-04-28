@@ -1,0 +1,5 @@
+Depth,Loss,Mean_absolute_error,Val_loss,Val_mean_absolute_error
+5cm,6.14E-05,0.0026,1.49E-04,0.004
+10cm,4.29E-05,0.0022,1.14E-04,0.0032
+20cm,1.69E-05,0.0016,1.04E-04,0.003
+50cm,8.82E-06,0.0012,4.73E-05,0.0011
