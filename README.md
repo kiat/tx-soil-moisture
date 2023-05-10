@@ -33,7 +33,7 @@ Meetings Fridays at 2:00 PM
 * Aayush Singh <aayush92488@utexas.edu>
 
 
-## Summer 2022 
+# Summer 2022 
 * Raahim Owais <raahim.owais7@gmail.com>
 * Tyler J Dean <t.dean6@utexas.edu>
 * Shaojie Hou <shaojiehou@utexas.edu>
