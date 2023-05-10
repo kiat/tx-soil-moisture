@@ -25,7 +25,7 @@ TODOs:
 * Ali Hajibeigi <ahajibeigi@utexas.edu>  (313E Student) 
 
 Meetings Fridays at 2:00 PM
-
+over zoom https://utexas.zoom.us/my/kia.teymourian
 
 
 # Spring 2023
@@ -40,10 +40,6 @@ Meetings Fridays at 2:00 PM
 * Arturo Hernandez <arturohernandez@utexas.edu>
 * Shuhan Shen <shnshen@utexas.edu>
 
-
-# Meetings 
-
-Fridays 3 pm over zoom https://utexas.zoom.us/my/kia.teymourian
 
 # Related Work
 * https://ieeexplore.ieee.org/document/9383802
