@@ -16,6 +16,18 @@ TODOs:
 
 
 # Students
+
+# Summer 2023
+
+
+* Hornsby, Trey C <tch2497@my.utexas.edu>
+* Benjamin C Cartwright <bencart0905@utexas.edu> (CS329 student)
+* Ali Hajibeigi <ahajibeigi@utexas.edu>  (313E Student) 
+
+Meetings Fridays at 2:00 PM
+
+
+
 # Spring 2023
 * Sanchith Shanmuga <sanchith.s@utexas.edu>
 * Aayush Singh <aayush92488@utexas.edu>
