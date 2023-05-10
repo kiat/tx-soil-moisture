@@ -17,8 +17,7 @@ TODOs:
 
 # Students
 
-# Summer 2023
-
+## Summer 2023
 
 * Hornsby, Trey C <tch2497@my.utexas.edu>
 * Benjamin C Cartwright <bencart0905@utexas.edu> (CS329 student)
@@ -28,12 +27,12 @@ Meetings Fridays at 2:00 PM
 over zoom https://utexas.zoom.us/my/kia.teymourian
 
 
-# Spring 2023
+## Spring 2023
 * Sanchith Shanmuga <sanchith.s@utexas.edu>
 * Aayush Singh <aayush92488@utexas.edu>
 
 
-# Summer 2022 
+## Summer 2022 
 * Raahim Owais <raahim.owais7@gmail.com>
 * Tyler J Dean <t.dean6@utexas.edu>
 * Shaojie Hou <shaojiehou@utexas.edu>
