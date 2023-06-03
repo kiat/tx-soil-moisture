@@ -43,12 +43,6 @@ over zoom https://utexas.zoom.us/my/kia.teymourian
 # Related Work
 * https://ieeexplore.ieee.org/document/9383802
 
-# Penman-Monteith equation
-* https://www.fao.org/3/x0490e/x0490e06.htm
-* http://www.atmo.arizona.edu/students/courselinks/spring11/hwr523/HWR423_523_files/Evapotranspiration.pdf
-* https://edis.ifas.ufl.edu/pdf/AE/AE45900.pdf
-
-
 # Journals 
 
 * https://www.sciencedirect.com/journal/environmental-modelling-and-software 
