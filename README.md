@@ -38,13 +38,3 @@ over zoom https://utexas.zoom.us/my/kia.teymourian
 * Shaojie Hou <shaojiehou@utexas.edu>
 * Arturo Hernandez <arturohernandez@utexas.edu>
 * Shuhan Shen <shnshen@utexas.edu>
-
-
-# Related Work
-* https://ieeexplore.ieee.org/document/9383802
-
-# Journals 
-
-* https://www.sciencedirect.com/journal/environmental-modelling-and-software 
-* https://www.journals.elsevier.com/computers-and-geosciences
-* https://www.sciencedirect.com/journal/computer-physics-communications
