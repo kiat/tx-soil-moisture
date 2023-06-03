@@ -11,6 +11,16 @@ https://www.cpc.ncep.noaa.gov/products/Soilmst_Monitoring/US/Soilmst/Soilmst.sht
 
 
 
+# Related Work
+* https://ieeexplore.ieee.org/document/9383802
+
+# Journals 
+
+* https://www.sciencedirect.com/journal/environmental-modelling-and-software 
+* https://www.journals.elsevier.com/computers-and-geosciences
+* https://www.sciencedirect.com/journal/computer-physics-communications
+
+
 
 # Penman-Monteith equation
 * https://www.fao.org/3/x0490e/x0490e06.htm
