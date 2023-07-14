@@ -1,0 +1,3 @@
+#This folder contains a merged version of the meteorological and soil water content data that has been merged and cleaned. 
+#Fields with high percentages of null values are filled in using a linear approximation. 
+
