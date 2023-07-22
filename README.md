@@ -19,12 +19,12 @@ TODOs:
 
 ## Summer 2023
 
-* Hornsby, Trey C <tch2497@my.utexas.edu>
+* Hornsby, Trey C <tch2497@my.utexas.edu> (313E Student)
 * Benjamin C Cartwright <bencart0905@utexas.edu> (CS329 student)
 * Ali Hajibeigi <ahajibeigi@utexas.edu>  (313E Student) 
 
 Meetings Fridays at 2:00 PM
-over zoom https://utexas.zoom.us/my/kia.teymourian
+over Zoom https://utexas.zoom.us/my/kia.teymourian
 
 
 ## Spring 2023
