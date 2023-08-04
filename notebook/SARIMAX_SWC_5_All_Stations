@@ -1,0 +1,673 @@
+{
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": 77,
+   "metadata": {
+    "id": "W1cU2iSKTDJX"
+   },
+   "outputs": [],
+   "source": [
+    "import os\n",
+    "import datetime\n",
+    "\n",
+    "import IPython\n",
+    "import IPython.display\n",
+    "import matplotlib as mpl\n",
+    "import matplotlib.pyplot as plt\n",
+    "import numpy as np\n",
+    "import pandas as pd\n",
+    "\n",
+    "from sklearn.metrics import mean_squared_error, mean_absolute_error\n",
+    "from statsmodels.graphics.tsaplots import plot_acf, plot_pacf\n",
+    "from statsmodels.tsa.seasonal import seasonal_decompose, STL\n",
+    "from statsmodels.stats.diagnostic import acorr_ljungbox\n",
+    "from statsmodels.tsa.statespace.sarimax import SARIMAX\n",
+    "from statsmodels.tsa.arima_process import ArmaProcess\n",
+    "from statsmodels.graphics.gofplots import qqplot\n",
+    "from statsmodels.tsa.stattools import adfuller\n",
+    "\n",
+    "from tqdm import tqdm_notebook\n",
+    "from itertools import product\n",
+    "from typing import Union\n",
+    "\n",
+    "import warnings\n",
+    "warnings.filterwarnings('ignore')\n",
+    "\n",
+    "%matplotlib inline\n",
+    "\n",
+    "mpl.rcParams['figure.figsize'] = (8, 6)\n",
+    "mpl.rcParams['axes.grid'] = False"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 78,
+   "metadata": {
+    "id": "dy7RpwTjl_0q"
+   },
+   "outputs": [],
+   "source": [
+    "# read in the merged station datasets\n",
+    "dfs = {}\n",
+    "for index in range(0, 6) :\n",
+    "  df = pd.read_csv('merged_' + str(index + 1) + '.dat', sep=\",\", parse_dates=[\"Date\"], index_col=\"Date\")\n",
+    "  dfs['Station' + str(index + 1)] = df\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 79,
+   "metadata": {
+    "id": "coGrVmWFmZay"
+   },
+   "outputs": [],
+   "source": [
+    "#drop these two features because they mess up station 4. Temporary solution\n",
+    "for key in dfs.keys():\n",
+    "  dfs[key].drop(['SWC_50'], axis = 1, inplace = True)\n",
+    "  dfs[key].drop(['T_50'], axis = 1, inplace = True)\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 80,
+   "metadata": {
+    "colab": {
+     "base_uri": "https://localhost:8080/"
+    },
+    "id": "IbivBktfmd8U",
+    "outputId": "b9e10542-fe21-44f3-844e-de9139b87c4c"
+   },
+   "outputs": [],
+   "source": [
+    "#drop flag feature and null values\n",
+    "\n",
+    "for station, df in dfs.items() :\n",
+    "  # drop the Flag feature (it is not relevant to our soil data and can cause our ML model to pick on unneccesary patterns)\n",
+    "  df = df.drop('Flag', axis = 1)\n",
+    "  # rename Ppt columns to identify whether the precipitation was recorded as a part of soil data or meteorological data\n",
+    "  df_new = df.rename(columns = {'Ppt_x' : 'Ppt_soil', 'Ppt_y': 'Ppt_met'})\n",
+    "  df_new.dropna(inplace=True)\n",
+    "  dfs[station] = df_new"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 81,
+   "metadata": {
+    "id": "f1q03La7mo53"
+   },
+   "outputs": [],
+   "source": [
+    "#Vectorize wind\n",
+    "for station, df in dfs.items() :\n",
+    "  # convert wind velocity and wind direction to a wind vector\n",
+    "  wv = df.pop('Windspeed')\n",
+    "\n",
+    "  # Convert to radians.\n",
+    "  wd_rad = df.pop('Winddirection')*np.pi / 180\n",
+    "\n",
+    "  # Calculate the wind x and y components.\n",
+    "  df['Wx'] = wv*np.cos(wd_rad)\n",
+    "  df['Wy'] = wv*np.sin(wd_rad)\n",
+    "  dfs[station] = df"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "id": "kVfORR_SmpEg"
+   },
+   "outputs": [],
+   "source": [
+    "# Remove periodicity in time data (remove daily and yearly periodicity)\n",
+    "day = 24*60*60\n",
+    "year = (365.2425)*day\n",
+    "\n",
+    "for station, df in dfs.items() :\n",
+    "  timestamp_s = (df.index).map(pd.Timestamp.timestamp)\n",
+    "\n",
+    "  df['Day sin'] = np.sin(timestamp_s * (2 * np.pi / day))\n",
+    "  df['Day cos'] = np.cos(timestamp_s * (2 * np.pi / day))\n",
+    "  df['Year sin'] = np.sin(timestamp_s * (2 * np.pi / year))\n",
+    "  df['Year cos'] = np.cos(timestamp_s * (2 * np.pi / year))\n",
+    "\n",
+    "  dfs[station] = df"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "id": "QMSBsIunG7yj"
+   },
+   "outputs": [],
+   "source": [
+    "# create one standard metric for PPT\n",
+    "for key in dfs.keys():\n",
+    "  dfs[key]['PPT'] = (dfs[key].pop('Ppt_soil') + dfs[key].pop('Ppt_met'))/2"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "id": "0fe82S2LmpJr"
+   },
+   "outputs": [],
+   "source": [
+    "#Normalize all the data\n",
+    "\n",
+    "for key in dfs.keys():\n",
+    "  dfs[key] = (dfs[key] - dfs[key].min())/(dfs[key].max()-dfs[key].min())"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "id": "rtphkEULUhic"
+   },
+   "outputs": [],
+   "source": [
+    "#add geographical position data\n",
+    "\n",
+    "position_dict = {\"Station1\": [30.3989,-98.6105],\n",
+    "                 \"Station2\": [30.4193,-98.8046],\n",
+    "                 \"Station3\": [30.4421,-98.8427],\n",
+    "                 \"Station4\": [30.4600, -98.9407],\n",
+    "                 \"Station5\": [30.2454,-98.7059],\n",
+    "                 \"Station6\": [30.2758,-98.7242]\n",
+    "                 }\n",
+    "\n",
+    "for key in dfs.keys():\n",
+    "  dfs[key][\"Latitude\"] = position_dict[key][0]\n",
+    "  dfs[key][\"Longitude\"] = position_dict[key][1]"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "colab": {
+     "base_uri": "https://localhost:8080/"
+    },
+    "id": "vWHVWFupefqX",
+    "outputId": "e4c3508b-24d1-4b43-cdf6-2f063fa430d9"
+   },
+   "outputs": [],
+   "source": [
+    "#only use data shared all together: indexes that are none null for each station\n",
+    "\n",
+    "index_union = pd.Index([])\n",
+    "for station, df in dfs.items():\n",
+    "  index_union = index_union.union(df.index)\n",
+    "\n",
+    "index_int = index_union\n",
+    "for station, df in dfs.items():\n",
+    "  index_int = index_int.intersection(df.index)\n",
+    "\n",
+    "\n",
+    "print(len(index_int))\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "id": "kQwH-S2IFmty"
+   },
+   "source": [
+    "# Create Multi-Index DF for all Station Data"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "id": "OQ8kkqDQIAts"
+   },
+   "outputs": [],
+   "source": [
+    "feats = dfs['Station1'].columns.tolist()\n",
+    "\n",
+    "stations = list(dfs.keys())"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "id": "3tL9jPD2Hxxa"
+   },
+   "outputs": [],
+   "source": [
+    "index = index_int\n",
+    "\n",
+    "cols = pd.MultiIndex.from_product([stations,feats], names = ['Station', 'Feature'])"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "id": "NMb878rlI4CC"
+   },
+   "outputs": [],
+   "source": [
+    "for station, df in dfs.items():\n",
+    "  cols_new = []\n",
+    "  for col in df.columns.tolist():\n",
+    "    cols_new.append(f\"{station} {col}\")\n",
+    "  df.columns = cols_new"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "colab": {
+     "base_uri": "https://localhost:8080/",
+     "height": 822
+    },
+    "id": "jiO1uTT-gbDR",
+    "outputId": "f5c2c144-6681-40ce-8ab7-378000a2d44c"
+   },
+   "outputs": [],
+   "source": [
+    "lis = [dfs[key].loc[index] for key in dfs.keys()]\n",
+    "\n",
+    "data = pd.concat(lis, axis = 1)\n",
+    "\n",
+    "data.head()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "id": "reYEFHniK-ZA"
+   },
+   "outputs": [],
+   "source": [
+    "df = pd.DataFrame(data = data.values, index = index, columns = cols)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "id": "eP3DQVZJZUuY"
+   },
+   "source": [
+    "# Data Split"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "colab": {
+     "base_uri": "https://localhost:8080/"
+    },
+    "id": "CTryjCJFa1kZ",
+    "outputId": "a947969d-ecf3-421f-9000-7336c3ace4c7"
+   },
+   "outputs": [],
+   "source": [
+    "#create Df of our target Values\n",
+    "\n",
+    "target_station = 'Station6'\n",
+    "\n",
+    "target_names = ['SWC_5']\n",
+    "\n",
+    "target_df = df[target_station][target_names]\n",
+    "\n",
+    "target_df.shape"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "#Create DF of all our data not the target\n",
+    "\n",
+    "non_targets = list(dfs.keys())\n",
+    "\n",
+    "non_targets.remove('Station6')\n",
+    "\n",
+    "train_df = df[non_targets]\n",
+    "\n",
+    "train_df.shape\n",
+    "\n",
+    "train=[]\n",
+    "test=[]\n",
+    "# PPT_exog = []\n",
+    "# Tair_exog = []\n",
+    "\n",
+    "for station, feature in df:\n",
+    "    \n",
+    "    if feature == \"SWC_5\" and station != 'Station6':\n",
+    "        train.extend(df[station].SWC_5)\n",
+    "    elif feature == \"SWC_5\":\n",
+    "        test.extend(df[station].SWC_5)\n",
+    "    \n",
+    "#     if feature == \"PPT\" and station != \"Station6\":\n",
+    "#         PPT_exog.extend(df[station].PPT)\n",
+    "#     if feature == \"Tair\" and station != \"Station6\":\n",
+    "#         Tair_exog.extend(df[station].Tair)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df_train = pd.DataFrame(train[::24*30])\n",
+    "df_test = pd.DataFrame(test[::24*30])\n",
+    "df_total = pd.concat([df_train, df_test], ignore_index=True)\n",
+    "# df_Tair_exog = pd.DataFrame(Tair_exog[::24*30])\n",
+    "\n",
+    "train_len = len(df_train)\n",
+    "test_len = len(df_test)\n",
+    "\n",
+    "total_len = train_len + test_len\n",
+    "\n",
+    "# want them seperate, one vector each statement\n",
+    "# train sequentially\n",
+    "\n",
+    "# one per day (not month)\n",
+    "# adjust time to be index and use mean()\n",
+    "# youtube vidio under referances in git"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df_test"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# for station, feature in df:\n",
+    "    \n",
+    "#     if feature == \"SWC_5\":\n",
+    "    \n",
+    "#         fig, ax = plt.subplots()\n",
+    "\n",
+    "#         ax.plot(df[station].SWC_5)\n",
+    "#         ax.set_xlabel('Date')\n",
+    "#         ax.set_ylabel('Soil Water Content')\n",
+    "\n",
+    "#         fig.autofmt_xdate()\n",
+    "#         plt.tight_layout()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Define SARIMA model\n",
+    "from typing import Union\n",
+    "from tqdm import tqdm_notebook\n",
+    "from statsmodels.tsa.statespace.sarimax import SARIMAX\n",
+    "\n",
+    "def optimize_SARIMAX(endog: Union[pd.Series, list], exog: Union[pd.Series, list], order_list: list, d: int, D: int, s: int) -> pd.DataFrame:\n",
+    "    \n",
+    "    results = []\n",
+    "    \n",
+    "    for order in tqdm_notebook(order_list):\n",
+    "        try: \n",
+    "            model = SARIMAX(\n",
+    "                endog,\n",
+    "                exog,\n",
+    "                order=(order[0], d, order[1]),\n",
+    "                seasonal_order=(order[2], D, order[3], s),\n",
+    "                simple_differencing=False).fit(disp=False)\n",
+    "        except:\n",
+    "            continue\n",
+    "            \n",
+    "        aic = model.aic\n",
+    "        print([order, aic])\n",
+    "        results.append([order, model.aic])\n",
+    "        \n",
+    "    result_df = pd.DataFrame(results)\n",
+    "    result_df.columns = ['(p,q,P,Q)', 'AIC']\n",
+    "    \n",
+    "    #Sort in ascending order, lower AIC is better\n",
+    "    result_df = result_df.sort_values(by='AIC', ascending=True).reset_index(drop=True)\n",
+    "    \n",
+    "    return result_df"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Define range of parameter's to check\n",
+    "ps = range(0, 2, 1)\n",
+    "qs = range(0, 2, 1)\n",
+    "Ps = range(0, 2, 1)\n",
+    "Qs = range(0, 2, 1)\n",
+    "\n",
+    "order_list = list(product(ps, qs, Ps, Qs))\n",
+    "\n",
+    "d = 0\n",
+    "D = 0\n",
+    "s = 12\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Find best set of parameters using the AIC\n",
+    "SARIMA_result_df = optimize_SARIMAX(df_train, None, order_list, d, D, s)\n",
+    "SARIMA_result_df"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Define and fit SARIMAX model\n",
+    "# call on each or optimize each\n",
+    "# N X 5 station to train (.value turns into a numpy array)\n",
+    "SARIMA_model = SARIMAX(df_train, order=((SARIMA_result_df.iloc[0][0][0]), 0, SARIMA_result_df.iloc[0][0][1]), seasonal_order = (SARIMA_result_df.iloc[0][0][2], 0, SARIMA_result_df.iloc[0][0][3], s), simple_differencing=False, enforce_stationarity=False)\n",
+    "SARIMA_model_fit = SARIMA_model.fit(disp=False)\n",
+    "\n",
+    "print(SARIMA_model_fit.summary())"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "## Forecasting \n",
+    "\n",
+    "def rolling_forecast(df: pd.DataFrame, train_len: int, horizon: int, window: int, method: str) -> list:\n",
+    "    \n",
+    "    total_len = train_len + horizon\n",
+    "    end_idx = train_len\n",
+    "    \n",
+    "    \n",
+    "    if method == 'last_season':\n",
+    "        pred_last_season = []\n",
+    "            \n",
+    "        for i in range(train_len, total_len, window):\n",
+    "            last_season = df[0][i-window:i]\n",
+    "            pred_last_season.extend(last_season)\n",
+    "            \n",
+    "            \n",
+    "        return pred_last_season\n",
+    "    \n",
+    "    elif method == 'SARIMA':\n",
+    "        pred_SARIMA = []\n",
+    "        \n",
+    "        for i in range(train_len, total_len, window):\n",
+    "            model = SARIMAX(df_train[:i], order=(SARIMA_result_df.iloc[0][0][0], 0, SARIMA_result_df.iloc[0][0][1]), seasonal_order = (SARIMA_result_df.iloc[0][0][2], 0, SARIMA_result_df.iloc[0][0][3], s), simple_differencing=False)\n",
+    "            res = model.fit(disp=False)\n",
+    "            predictions = res.get_prediction(0, i + window - 1)\n",
+    "            oos_pred = predictions.predicted_mean[-window:]\n",
+    "            pred_SARIMA.extend(oos_pred)\n",
+    "            \n",
+    "        return pred_SARIMA"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "pred_df = df_test.copy()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Define rolling forcast structure and create baseline for model by recalling the previous season\n",
+    "TRAIN_LEN = train_len\n",
+    "HORIZON = test_len\n",
+    "WINDOW = test_len\n",
+    "\n",
+    "pred_df['last_season'] = rolling_forecast(df_train, TRAIN_LEN, HORIZON, WINDOW, 'last_season')\n",
+    "pred_df.last_season"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Define SARIMA Prediction Dataframe\n",
+    "pred_df['SARIMA'] = rolling_forecast(df_total, TRAIN_LEN, HORIZON, WINDOW, 'SARIMA')\n",
+    "\n",
+    "pred_df.SARIMA"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# visualize predictions\n",
+    "fig, ax = plt.subplots()\n",
+    "\n",
+    "# ax.plot(df_total)\n",
+    "ax.plot(df_test, 'b-', label='actual')\n",
+    "# ax.plot(pred_df.last_season, 'r:', label='naive seasonal')\n",
+    "ax.plot(pred_df.SARIMA, 'k--', label='SARIMA')\n",
+    "ax.set_xlabel('Months')\n",
+    "ax.set_ylabel('Normalized SWC_5')\n",
+    "\n",
+    "fig.autofmt_xdate()\n",
+    "plt.tight_layout()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Evaluate \n",
+    "\n",
+    "mse=np.mean((df_test-pred_df.SARIMA)**2)\n",
+    "mse"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  }
+ ],
+ "metadata": {
+  "colab": {
+   "provenance": [],
+   "toc_visible": true
+  },
+  "kernelspec": {
+   "display_name": "Python 3 (ipykernel)",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.10.11"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 1
+}
