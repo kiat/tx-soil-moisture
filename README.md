@@ -17,7 +17,15 @@ TODOs:
 
 # Students
 
-## Summer 2023
+## Spring 2024 
+
+* James Li <lijmr889@gmail.com>
+* Divya Nitin <divyanitin@utexas.edu>
+* Shourav Dasari <shouravdasari@utexas.edu>
+* 
+
+
+## Summer 2023 and Fall 2023
 
 * Hornsby, Trey C <tch2497@my.utexas.edu> (313E Student)
 * Benjamin C Cartwright <bencart0905@utexas.edu> (CS329 student)
