@@ -1,8 +1,5 @@
 # Soil Moisture Sensor Data Analysis - Texas soil moisture dataset
 
-# Colab Links
-
-* https://colab.research.google.com/drive/1K_0UnxNSS47C1eREV-Vp565sTmnwHntr?usp=sharing
 
 TODOs: 
 
@@ -46,3 +43,8 @@ over Zoom https://utexas.zoom.us/my/kia.teymourian
 * Shaojie Hou <shaojiehou@utexas.edu>
 * Arturo Hernandez <arturohernandez@utexas.edu>
 * Shuhan Shen <shnshen@utexas.edu>
+
+# Colab Links
+
+* https://colab.research.google.com/drive/1K_0UnxNSS47C1eREV-Vp565sTmnwHntr?usp=sharing
+
