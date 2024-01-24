@@ -16,9 +16,9 @@ TODOs:
 
 ## Spring 2024 
 
-* James Li <lijmr889@gmail.com>
-* Divya Nitin <divyanitin@utexas.edu>
-* Shourav Dasari <shouravdasari@utexas.edu>
+* James Li <lijmr889@gmail.com> (Using Satelite dataset)
+* Divya Nitin <divyanitin@utexas.edu> (Weather Forcast dataset generation and usage)
+* Shourav Dasari <shouravdasari@utexas.edu> (Anomaly Detection in Time Series and Checking the soil moisture anomalies)
 * 
 
 
