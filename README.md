@@ -16,6 +16,8 @@ TODOs:
 
 ## Spring 2024 
 
+Meeting time: Wednesday 5pm. 
+
 * James Li <lijmr889@gmail.com> (Using Satelite dataset https://github.com/Hassan-Dashtian/CYGNSS)
 * Divya Nitin <divyanitin@utexas.edu> (Weather Forcast dataset generation and usage)
 * Shourav Dasari <shouravdasari@utexas.edu> (Anomaly Detection in Time Series and Checking the Soil Moisture Anomalies https://github.com/kiat/Getting-Things-Done-with-Pytorch/blob/master/06.time-series-anomaly-detection-ecg.ipynb)
