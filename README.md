@@ -7,6 +7,12 @@ TODOs:
 * Run transfer learning to model to train the model on one station and use this to train the model for other stations. 
 
  
+# Satelite Data CYGNSS
+
+ * https://podaac.jpl.nasa.gov/dataset/CYGNSS_L3_SOIL_MOISTURE_V1.0#
+ * https://opendap.earthdata.nasa.gov/
+
+
 
 
 
