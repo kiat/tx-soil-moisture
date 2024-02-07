@@ -130,6 +130,6 @@ dmypy.json
 
 # HTML files (result of exporting Plotly graphs)
 *.html
-
+complete_satellite_data/
 # .dat files (result of downloading merged datasets from notebooks)
 # *.dat
