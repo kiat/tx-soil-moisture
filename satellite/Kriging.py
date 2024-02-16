@@ -9,7 +9,7 @@ from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF, ConstantKernel as C
 from pykrige.ok import OrdinaryKriging
 
-file_path = '/Users/jamisenma/tx-soil-moisture/complete_satellite_data/ucar_cu_cygnss_sm_v1_2020_077.dap.nc4'  # Replace with your NetCDF file path
+file_path = '/Users/jamisenma/tx-soil-moisture/complete_satellite_data/ucar_cu_cygnss_sm_v1_2019_280.dap.nc4'  # Replace with your NetCDF file path
 dataset = open_mfdataset(file_path, combine="by_coords", parallel=True)
 
 
@@ -83,6 +83,7 @@ def make_dataframe():
         'Longitude': longitudes_flat,
         'Soil_Moisture': soil_moisture_flat
     })
+    df = df.dropna(subset=['Soil_Moisture'])
     return df
 
 
@@ -121,4 +122,4 @@ def kriging(df):
     return complete_df
 if __name__ == "__main__":
     dataframe = make_dataframe()
-    print(kriging(dataframe))
+    print(dataframe)
