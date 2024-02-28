@@ -18,3 +18,7 @@ https://colab.research.google.com/drive/1n-svc_vG61LlSR9kYfYAnXgmp9Y8XihI?usp=sh
 
 Multivariate Autoencoder Anomaly Detection Notebook: 
 https://colab.research.google.com/drive/1R57GejaxXbXZJCnS2PDip_eJJYFwN61t?usp=sharing
+
+2/28
+Update Autoencoder and VAE:
+https://colab.research.google.com/drive/1n-svc_vG61LlSR9kYfYAnXgmp9Y8XihI#scrollTo=Zx8MW3Ma_Eks
