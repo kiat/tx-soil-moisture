@@ -2,14 +2,18 @@ import pandas as pd
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 import tensorflow as tf
-
+import os
+from pathlib import Path
+import io
 #Reads in Simulated-Cleaned-Merged-Data and drops all indexes not withi the intersection of all 6 stations
 def read_data():
     dfs = {}
     for index in range(0, 6):
-        df = pd.read_csv('../datasets/finalized_data/Station' + str(index + 1) + '_Final_Version.csv', sep=",",
-                         parse_dates=["Date"], index_col="Date")
+        path = '../datasets/Simulate_Cleaned_Merged/Station' + str(index + 1) + '_simulated_cleaned_merged_data.csv'
+        df = pd.read_csv(path, sep="," , 
+                         parse_dates=["Unnamed: 0"], index_col="Unnamed: 0")
         dfs['Station' + str(index + 1)] = df
+        df.index = pd.to_datetime(df.index)
 
     index_union = pd.Index([])
     for station, df in dfs.items():
@@ -97,9 +101,8 @@ def split_and_stack_data(dfs, test_station_name = "Station6", remove_met = False
 def get_data(test_station_name = "Station6", remove_met = False):
     dfs = read_data()
     engineer_data(dfs)
-    for key in dfs.keys():
-        dfs[key].pop('Unnamed: 0')
     scale_data(dfs)
+
     return split_and_stack_data(dfs, test_station_name, remove_met)
 
 
@@ -149,7 +152,6 @@ def set_data(target_station = "Station6", target_col = "SWC_5", remove_met = Fal
 def retrieve_data(test = False):
     if test:
         return pd.read_parquet('test_df.parquet.gzip')
-
     else:
         return (pd.read_parquet('train_df.parquet.gzip'),pd.read_parquet('val_df.parquet.gzip'))
         
