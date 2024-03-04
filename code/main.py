@@ -6,9 +6,7 @@ import tensorflow as tf
 from helpers.feedback_model import FeedBack
 import os
 
-#dfs = read_data()
-get_data()
-#run_model(model_dict(), "TrialTest", remove_met = False, test_station = "Station1", target_col = "SWC_5", max_epochs = 1, patience = 5, trial_shape = [24*7, 10, 512])
+
 '''
 print("SWC_5 START" + "\n")
 run_model(model_dict(), "TrialB1", remove_met = False, test_station = "Station1", target_col = "SWC_5", max_epochs = 30, patience = 5, trial_shape = [24*7, 10, 512])
