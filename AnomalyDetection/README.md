@@ -22,3 +22,7 @@ https://colab.research.google.com/drive/1R57GejaxXbXZJCnS2PDip_eJJYFwN61t?usp=sh
 2/28
 Update Autoencoder and VAE:
 https://colab.research.google.com/drive/1n-svc_vG61LlSR9kYfYAnXgmp9Y8XihI#scrollTo=Zx8MW3Ma_Eks
+
+3/6
+Anomaly Grading:
+https://colab.research.google.com/drive/1qSnA8BykzpfzbofG1lPPXybm0raIYyOk?usp=sharing
