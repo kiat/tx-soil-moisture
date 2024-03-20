@@ -26,3 +26,8 @@ https://colab.research.google.com/drive/1n-svc_vG61LlSR9kYfYAnXgmp9Y8XihI#scroll
 3/6
 Anomaly Grading:
 https://colab.research.google.com/drive/1qSnA8BykzpfzbofG1lPPXybm0raIYyOk?usp=sharing
+
+3/6
+Anomaly Exploration:
+https://colab.research.google.com/drive/1qSnA8BykzpfzbofG1lPPXybm0raIYyOk#scrollTo=ef_sc1u6lkta&uniqifier=1
+https://colab.research.google.com/drive/1R57GejaxXbXZJCnS2PDip_eJJYFwN61t#scrollTo=nv8brtuupOe9
