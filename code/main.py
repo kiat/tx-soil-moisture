@@ -7,21 +7,21 @@ from helpers.feedback_model import FeedBack
 import os
 
 
-'''
-print("SWC_5 START" + "\n")
-run_model(model_dict(), "TrialB1", remove_met = False, test_station = "Station1", target_col = "SWC_5", max_epochs = 30, patience = 5, trial_shape = [24*7, 10, 512])
-run_model(model_dict(), "TrialB2", remove_met = False, test_station = "Station1", target_col = "SWC_5", max_epochs = 30, patience = 5, trial_shape = [24*7, 24, 512])
-run_model(model_dict(), "TrialB3", remove_met = False, test_station = "Station1", target_col = "SWC_5", max_epochs = 30, patience = 5, trial_shape = [24*7*3, 24*7, 512])
-run_model(model_dict(), "TrialB4", remove_met = False, test_station = "Station1", target_col = "SWC_5", max_epochs = 30, patience = 5, trial_shape = [24*7*8, 24*7, 512])
+shape_dict = {
+    "s1": [24*7*3, 24, 1024],
+    "s2": [24*7*3, 24*7, 1024],
+}
+station_list = ["Station1","Station6"]
 
-print("SWC_50 START" + "\n")
-run_model(model_dict(), "TrialC1", remove_met = False, test_station = "Station1", target_col = "SWC_50", max_epochs = 30, patience = 5, trial_shape = [24*7, 10, 512])
-run_model(model_dict(), "TrialC2", remove_met = False, test_station = "Station1", target_col = "SWC_50", max_epochs = 30, patience = 5, trial_shape = [24*7, 24, 512])
-run_model(model_dict(), "TrialC3", remove_met = False, test_station = "Station1", target_col = "SWC_50", max_epochs = 30, patience = 5, trial_shape = [24*7*3, 24*7, 512])
-run_model(model_dict(), "TrialC4", remove_met = False, test_station = "Station1", target_col = "SWC_50", max_epochs = 30, patience = 5, trial_shape = [24*7*8, 24*7, 512])
-'''
+swc_list = ["SWC_5","SWC_10","SWC_20","SWC_50"]
 
-
+for key, shape in shape_dict.items():
+    for station in station_list:
+        for swc in swc_list:
+            trial_num = 1
+            trial = "Trial" + str(trial_num)
+            run_model(model_dict(shape = shape), trial, remove_met = False, test_station = station, target_col = swc, max_epochs = 1, patience = 5, trial_shape = shape)
+            trial_num += 1
 
 
 

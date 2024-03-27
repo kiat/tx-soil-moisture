@@ -42,3 +42,38 @@ class FeedBack(tf.keras.Model):
         return predictions
     
 
+class BiFeedBack(tf.keras.Model):
+    def __init__(self, units, out_steps, num_features):
+        super().__init__()
+        self.out_steps = out_steps
+        self.units = units
+        # Use a Bidirectional LSTM layer
+        self.bidirectional_lstm = tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(units, return_sequences=True, return_state=True))
+        self.lstm_cell = tf.keras.layers.LSTMCell(units * 2)  # *2 because of concatenation of forward and backward states
+        self.dense = tf.keras.layers.Dense(num_features)
+
+    def call(self, inputs, training=None):
+        predictions = []
+
+        # Process the input sequence with the bidirectional LSTM.
+        x, forward_h, forward_c, backward_h, backward_c = self.bidirectional_lstm(inputs)
+
+        # Concatenate the forward and backward states
+        state = [tf.keras.layers.concatenate([forward_h, backward_h]),
+                 tf.keras.layers.concatenate([forward_c, backward_c])]
+
+        # Initialize the first input of the generative process with the last output of the bidirectional LSTM
+        prediction = self.dense(x[:, -1, :])
+
+        # Insert the first prediction.
+        predictions.append(prediction)
+
+        # Run the rest of the prediction steps.
+        for n in range(1, self.out_steps):
+            x, state = self.lstm_cell(prediction, states=state, training=training)
+            prediction = self.dense(x)
+            predictions.append(prediction)
+
+        predictions = tf.stack(predictions)
+        predictions = tf.transpose(predictions, [1, 0, 2])
+        return predictions
