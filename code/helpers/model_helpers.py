@@ -61,9 +61,7 @@ def store_preds(y_pred, y_true, shift, model_name, folder):
         min_val = len(results["y_true"])
         results[model_name] = y_pred[:min_val]
         results.to_csv(folder + "/results.csv", index = False)
-        print("try")
     except:
-        print('except')
         shift_bl = y_true[shift:]
         min_val = min([len(y_pred), len(y_true), len(shift_bl)])
         data = {
