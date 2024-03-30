@@ -15,13 +15,17 @@ station_list = ["Station1","Station6"]
 
 swc_list = ["SWC_5","SWC_10","SWC_20","SWC_50"]
 
+trial_num = 1
 for key, shape in shape_dict.items():
     for station in station_list:
         for swc in swc_list:
-            trial_num = 1
-            trial = "Trial" + str(trial_num)
-            run_model(model_dict(shape = shape), trial, remove_met = False, test_station = station, target_col = swc, max_epochs = 50, patience = 5, trial_shape = shape)
-            trial_num += 1
+            if(trial_num != 1):
+                print(trial_num)
+                trial = "Trial" + str(trial_num)
+                run_model(model_dict(shape = shape), trial, remove_met = False, test_station = station, target_col = swc, max_epochs = 50, patience = 5, trial_shape = shape)
+                trial_num += 1
+            else:
+                trial_num += 1
 
 
 
