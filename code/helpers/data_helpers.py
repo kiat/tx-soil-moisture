@@ -14,7 +14,7 @@ def read_data():
                          parse_dates=["Unnamed: 0"], index_col="Unnamed: 0")
         dfs['Station' + str(index + 1)] = df
         df.index = pd.to_datetime(df.index)
-
+    dfs1 = dfs.copy()
     index_union = pd.Index([])
     for station, df in dfs.items():
         index_union = index_union.union(df.index)
@@ -25,7 +25,7 @@ def read_data():
     for key in dfs.keys():
         dfs[key] = dfs[key].loc[index_int]
 
-    return dfs
+    return (dfs, dfs1)
 
 #vectorizes wind, changes time to trig values, converts longitude and latitude to trig values
 def engineer_data(dfs):
