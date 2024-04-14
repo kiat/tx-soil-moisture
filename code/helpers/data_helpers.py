@@ -9,26 +9,16 @@ import io
 def read_data():
     dfs = {}
     for index in range(0, 6):
-        path = '../datasets/Simulate_Cleaned_Merged/Station' + str(index + 1) + '_simulated_cleaned_merged_data.csv'
+        path = '../datasets/Revised_Final_Data/Station' + str(index + 1) + '_Revised_Final.csv'
         df = pd.read_csv(path, sep="," , 
                          parse_dates=["Unnamed: 0"], index_col="Unnamed: 0")
         dfs['Station' + str(index + 1)] = df
         df.index = pd.to_datetime(df.index)
-    dfs1 = dfs.copy()
 
-    index_union = pd.Index([])
     for station, df in dfs.items():
         df.pop("Ppt.1")
-        dfs[station] = df
-        index_union = index_union.union(df.index)
-
-    index_int = index_union
-    for station, df in dfs.items():
-        index_int = index_int.intersection(df.index)
-    for key in dfs.keys():
-        dfs[key] = dfs[key].loc[index_int]
-
-    return (dfs, dfs1)
+      
+    return dfs
 
 #vectorizes wind, changes time to trig values, converts longitude and latitude to trig values
 def engineer_data(dfs):
