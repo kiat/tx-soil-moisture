@@ -15,8 +15,11 @@ def read_data():
         dfs['Station' + str(index + 1)] = df
         df.index = pd.to_datetime(df.index)
     dfs1 = dfs.copy()
+
     index_union = pd.Index([])
     for station, df in dfs.items():
+        df.pop("Ppt.1")
+        dfs[station] = df
         index_union = index_union.union(df.index)
 
     index_int = index_union
