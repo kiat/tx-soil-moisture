@@ -26,7 +26,7 @@ def save_model(model, save_path):
 def compile_and_fit(model, max_epochs, patience, train_dataset, train_steps, val_dataset, val_steps, batch_size):
     early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=patience, mode='min')
     model.compile(loss=tf.keras.losses.MeanSquaredError(),
-                    optimizer=tf.keras.optimizers.Adam(learning_rate=0.0001),
+                    optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),
                     metrics=[tf.keras.metrics.MeanAbsoluteError(), tf.keras.metrics.MeanSquaredError()])
     
     model.fit(train_dataset,

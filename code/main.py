@@ -11,21 +11,22 @@ shape_dict = {
     "s1": [24*7, 24, 1024],
     "s2": [24*7, 24*7, 1024],
 }
+
+
 station_list = ["Station1","Station6"]
 
 swc_list = ["SWC_5","SWC_10","SWC_20","SWC_50"]
+
+completed_trials = [1, 2, 3, 4, 5, 6]
 
 trial_num = 1
 for key, shape in shape_dict.items():
     for station in station_list:
         for swc in swc_list:
-            if(trial_num != 1):
-                print(trial_num)
+            if(trial_num not in completed_trials):
                 trial = "Trial" + str(trial_num)
                 run_model(model_dict(shape = shape), trial, remove_met = False, test_station = station, target_col = swc, max_epochs = 50, patience = 5, trial_shape = shape)
                 trial_num += 1
             else:
                 trial_num += 1
-
-
 

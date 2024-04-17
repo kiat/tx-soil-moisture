@@ -9,15 +9,12 @@ import io
 def read_data():
     dfs = {}
     for index in range(0, 6):
-        path = '../datasets/Revised_Final_Data/Station' + str(index + 1) + '_Revised_Final.csv'
+        path = '../datasets/Revised_Final_Data/Station' + str(index + 1) + '_Revised_Final_Data.csv'
         df = pd.read_csv(path, sep="," , 
                          parse_dates=["Unnamed: 0"], index_col="Unnamed: 0")
         dfs['Station' + str(index + 1)] = df
         df.index = pd.to_datetime(df.index)
 
-    for station, df in dfs.items():
-        df.pop("Ppt.1")
-      
     return dfs
 
 #vectorizes wind, changes time to trig values, converts longitude and latitude to trig values
@@ -67,10 +64,8 @@ def scale_data(dfs):
 # the remaining values from that station are used as validation and 
 # the rest is training 
 def split_and_stack_data(dfs, test_station_name = "Station6", remove_met = False):
-    cut = '2021-01-01 00:00:00'
 
     for key in dfs.keys():
-        dfs[key] = dfs[key][dfs[key].index < cut]
         if remove_met:
             dfs[key] = dfs[key][["SWC_5","SWC_10","SWC_20","SWC_50"]]
 
