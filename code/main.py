@@ -23,6 +23,7 @@ for key, shape in shape_dict.items():
     for station in station_list:
         for swc in swc_list:
             trial = "Trial" + str(trial_num)
+            print("Running Experiment - Key: ", key," Shape: " , shape , "  Station: ",  station, "  SWC:" , swc)
             run_model(model_dict(shape = shape), trial, remove_met = False, test_station = station, target_col = swc, max_epochs = 50, patience = 5, trial_shape = shape)
             trial_num += 1
 
