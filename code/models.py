@@ -3,7 +3,7 @@ from helpers.feedback_model import FeedBack, BiFeedBack
 
 def model_dict(shape):
     lstm_model = tf.keras.models.Sequential([
-        tf.keras.layers.LSTM(128, activation = 'relu', input_shape=(shape[0], 22), return_sequences=True),
+        tf.keras.layers.LSTM(128, activation = 'relu', input_shape=(shape[0], 21), return_sequences=True),
         tf.keras.layers.LSTM(64, activation = 'relu', return_sequences=True),
         tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(32, return_sequences=False)), 
         tf.keras.layers.Dense(units=64, activation='relu'),
@@ -11,7 +11,7 @@ def model_dict(shape):
         tf.keras.layers.Dense(units=1, activation='tanh')
     ])
     bi_lstm_model = tf.keras.models.Sequential([
-        tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(128, activation = 'relu', input_shape=(shape[0], 22), return_sequences=True)),
+        tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(128, activation = 'relu', input_shape=(shape[0], 21), return_sequences=True)),
         tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(64, return_sequences=True)),
         tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(32, return_sequences=False)),
         tf.keras.layers.Dense(32, activation='relu'),
