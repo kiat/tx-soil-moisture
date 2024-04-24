@@ -31,3 +31,7 @@ https://colab.research.google.com/drive/1qSnA8BykzpfzbofG1lPPXybm0raIYyOk?usp=sh
 Anomaly Exploration:
 https://colab.research.google.com/drive/1qSnA8BykzpfzbofG1lPPXybm0raIYyOk#scrollTo=ef_sc1u6lkta&uniqifier=1
 https://colab.research.google.com/drive/1R57GejaxXbXZJCnS2PDip_eJJYFwN61t#scrollTo=nv8brtuupOe9
+
+4/24
+SWC/Precpitation High Frequency Anomalies:
+https://colab.research.google.com/drive/1n2uD2oQsEj_ER_Rx8WsA04RmmI9yqTsv?usp=sharing
