@@ -1,3 +1,7 @@
+# Run download.sh script file to get AMSR Data from https://nsidc.org/data/ae_land3/versions/2
+# Run getAMSRdata.py to get 6 stations csv files
+# Run Jamisen_Cleaning_And_Analysis.py to clean data. Output should be in this format (AMSR_station_1_merged.csv)
+
 import os
 import glob
 from datetime import datetime
