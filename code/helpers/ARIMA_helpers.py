@@ -20,8 +20,8 @@ def run_arima(target_feat = "SWC_5", exo_feats = None, seasonal = False, stepwis
                           trace = True,
                           start_p=1,
                           start_q=1,  
-                          max_p=1, # Change later
-                          max_q=1, # Change
+                          max_p=7, # Change later
+                          max_q=7, # Change
                           m=8670, # is the frequncy of the cycle
                           seasonal=seasonal, 
                           d=1,
@@ -33,7 +33,7 @@ def run_arima(target_feat = "SWC_5", exo_feats = None, seasonal = False, stepwis
                           #information_criteria = 'AIC',
                           #error_action='ignore',
                           #suppress_warnings=True,
-                          stepwise=True)  #Trying False
+                          stepwise=stepwise)  #Trying False
     print("Model Ran")
     if exo_feats == None:
         forecast = model.predict(len(end_test))
