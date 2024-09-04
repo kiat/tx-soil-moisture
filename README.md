@@ -20,6 +20,11 @@ TODOs:
 
 # Students
 
+## Fall 2024
+
+Meeting time 4:30 to 5:30 pm. 
+
+
 ## Spring 2024 
 
 Meeting time: Wednesday 5pm. 
