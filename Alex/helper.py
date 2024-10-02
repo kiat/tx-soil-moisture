@@ -4,6 +4,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import MinMaxScaler
 import tensorflow as tf
+from statsmodels.tsa.arima.model import ARIMA
+from sklearn.metrics import mean_squared_error
+
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
@@ -129,14 +132,12 @@ def plot_single_pred(model, name, dataset, data_steps, y, batch_size=32):
     plt.plot(forecast)
     plt.legend(("Actual", "Predictions"))
 
+
+
+
+
 # define models
-lstm_model = tf.keras.models.Sequential([ 
-    tf.keras.layers.LSTM(128, return_sequences=True), # try commenting this out
-    tf.keras.layers.LSTM(64, return_sequences=True),
-    tf.keras.layers.LSTM(32, return_sequences=False),
-    tf.keras.layers.Dense(units=32, activation='relu'),
-    tf.keras.layers.Dense(units=1, activation='tanh')
-])
+
 
 bi_lstm_model = tf.keras.models.Sequential([
     tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(128, return_sequences=True)), # try commenting this out
@@ -148,4 +149,68 @@ bi_lstm_model = tf.keras.models.Sequential([
 
 linear_model = tf.keras.Sequential([tf.keras.layers.Dense(units=1)])
 
-autoregressive_model = tf.keras.Sequential([tf.keras.layers.Dense(units=1, input_shape=(None, 1))])
+dense_model = tf.keras.Sequential([
+    tf.keras.layers.Dense(units=64, activation='relu'),
+    tf.keras.layers.Dense(units=64, activation='relu'),
+    tf.keras.layers.Dense(units=1)
+])
+
+# cnn_model = tf.keras.Sequential([
+#     tf.keras.layers.Conv1D(filters=32, kernel_size=5,
+#                       activation='relu', input_shape=X_train.shape[-2:]),
+#     tf.keras.layers.MaxPooling1D(pool_size=4),
+#     tf.keras.layers.Conv1D(filters=32, kernel_size=5, activation='relu'),
+#     tf.keras.layers.MaxPooling1D(pool_size=4),
+#     tf.keras.layers.Flatten(),
+#     tf.keras.layers.Dense(units=1)
+# ])
+
+
+rnn_model = tf.keras.Sequential([
+    tf.keras.layers.SimpleRNN(128, return_sequences=True),
+    tf.keras.layers.SimpleRNN(64, return_sequences=True),
+    tf.keras.layers.SimpleRNN(32, return_sequences=False),
+    tf.keras.layers.Dense(units=1)
+])
+
+
+
+# bidirectional_model = tf.keras.Sequential([tf.keras.layers.Bidrectional(units=1)])
+
+def create_autoregressive_model(input_shape):
+    # Create the autoregressive model, where input_shape is passed from main.py
+    model = tf.keras.Sequential([
+        tf.keras.layers.Dense(units=1, input_shape=input_shape)
+    ])
+    return model
+
+def create_cnn_model(input_shape):
+    model = tf.keras.Sequential([
+        tf.keras.layers.Conv1D(filters=32, kernel_size=5, activation='relu', input_shape=input_shape),
+        tf.keras.layers.MaxPooling1D(pool_size=4),
+        tf.keras.layers.Conv1D(filters=32, kernel_size=5, activation='relu'),
+        tf.keras.layers.MaxPooling1D(pool_size=4),
+        tf.keras.layers.Flatten(),
+        tf.keras.layers.Dense(units=1)
+    ])
+    return model
+
+
+def compare_models(model_results):
+    for model_name, mse in model_results.items():
+        print(f"{model_name} Model MSE: {mse}")
+
+
+# Function to run ARIMA model and make predictions
+def run_arima_model(train_data, test_data, order=(1, 0, 0)):
+    model = ARIMA(train_data, order=order)
+    model_fit = model.fit()
+
+    # Make predictions on the test data
+    predictions = model_fit.forecast(steps=len(test_data))
+    
+    #mse
+    mse = mean_squared_error(test_data, predictions)
+    print(f"ARIMA Model MSE: {mse}")
+    return mse
+
