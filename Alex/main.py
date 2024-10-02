@@ -1,7 +1,7 @@
 from helper import (
     load_data, preprocess_data, generate_batches, compile_and_fit, plot_single_pred, 
     create_autoregressive_model, run_arima_model, compare_models, dense_model, 
-    rnn_model, create_cnn_model, bi_lstm_model
+    rnn_model, create_cnn_model, bi_lstm_model, linear_model
 )
 import os
 import pandas as pd
@@ -36,7 +36,7 @@ test_dataset, test_steps = generate_batches(X_test, y_test, batch_size=BATCH_SIZ
 # train and plot models
 # bilstm
 history_bilstm = compile_and_fit(bi_lstm_model, train_dataset, train_steps, val_dataset, val_steps, batch_size=BATCH_SIZE, model_name="biLSTM", patience=PAT, max_epochs=MAX_EPOCHS)
-plot_single_pred(bi_ltm_model, 'BiLSTM', test_dataset, test_steps, y_test, batch_size=BATCH_SIZE)
+plot_single_pred(bi_lstm_model, 'BiLSTM', test_dataset, test_steps, y_test, batch_size=BATCH_SIZE)
 
 #linear
 history_linear = compile_and_fit(linear_model, train_dataset, train_steps, val_dataset, val_steps, batch_size=BATCH_SIZE, model_name="linear", patience=PAT, max_epochs=MAX_EPOCHS)
