@@ -134,3 +134,4 @@ complete_satellite_data/
 satellite/AMSRData/
 # .dat files (result of downloading merged datasets from notebooks)
 # *.dat
+.Rproj.user

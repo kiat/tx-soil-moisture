@@ -29,7 +29,7 @@ for key, shape in shape_dict.items():
             trial_num += 1
 
 
-#run_arima(target_feat = "SWC_5", exo_feats = ["SWC_10","SWC_20","SWC_50"], seasonal = False, stepwise = False)
+run_arima(target_feat = "SWC_5", exo_feats = ["SWC_10","SWC_20","SWC_50"], seasonal = False, stepwise = False)
 
 
 '''

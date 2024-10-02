@@ -10,7 +10,7 @@ def train_model(model_dict, patience, folder, max_epochs, window_size, shift_amt
     val_dataset, val_steps = create_sets(val_df, window_size, shift_amt, target_idx, batch_size)
 
     for key in model_dict.keys():
-        save_path = folder + '/' + key
+        save_path = folder + '/' + key + '.keras'
         compile_and_fit(model_dict[key], max_epochs, patience, train_dataset, train_steps, val_dataset, val_steps, batch_size)
         save_model(model_dict[key], save_path)
 
@@ -83,7 +83,7 @@ def evaluate_model(save_path, folder, model_name, window_size, shift_amt, target
 
 def evaluate_all(folder, model_dict, window_size, shift_amt, target_idx, batch_size):
     for key in model_dict.keys():
-        save_path = folder + '/' + key
+        save_path = folder + '/' + key + '.keras'
         print(save_path)
         print(key)
         evaluate_model(save_path, folder, key, window_size, shift_amt, target_idx, batch_size)
