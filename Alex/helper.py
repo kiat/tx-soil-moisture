@@ -155,17 +155,6 @@ dense_model = tf.keras.Sequential([
     tf.keras.layers.Dense(units=1)
 ])
 
-# cnn_model = tf.keras.Sequential([
-#     tf.keras.layers.Conv1D(filters=32, kernel_size=5,
-#                       activation='relu', input_shape=X_train.shape[-2:]),
-#     tf.keras.layers.MaxPooling1D(pool_size=4),
-#     tf.keras.layers.Conv1D(filters=32, kernel_size=5, activation='relu'),
-#     tf.keras.layers.MaxPooling1D(pool_size=4),
-#     tf.keras.layers.Flatten(),
-#     tf.keras.layers.Dense(units=1)
-# ])
-
-
 rnn_model = tf.keras.Sequential([
     tf.keras.layers.SimpleRNN(128, return_sequences=True),
     tf.keras.layers.SimpleRNN(64, return_sequences=True),
