@@ -4,6 +4,7 @@ import tensorflow as tf
 from tensorflow.keras import layers
 import matplotlib.pyplot as plt
 from tensorflow.keras.callbacks import EarlyStopping
+import operator
 
 
 # Load your dataset
@@ -131,56 +132,261 @@ window = WindowGenerator(input_width=input_width, label_width=label_width, shift
                          train_df=train_df, val_df=val_df, test_df=test_df, label_columns=['SWC_5'])
 
 
-# Define models in a dictionary
+# all models here
 models = {
-    'Dense': tf.keras.Sequential([
-        layers.Flatten(),
-        layers.Dense(units=128, activation='relu'),
-        layers.Dense(units=24)
-    ]),
-    'Multi-step Dense': tf.keras.Sequential([
-        layers.Flatten(),
-        layers.Dense(units=512, activation='relu'),
-        layers.Dense(units=128, activation='relu'),
-        layers.Dense(units=24)
-    ]),
-    'CNN': tf.keras.Sequential([
-        layers.Conv1D(filters=64, kernel_size=3, activation='relu', input_shape=(input_width, len(train_df.columns))),
-        layers.GlobalAveragePooling1D(),  # This layer reduces the time dimension to a single vector
-        layers.Dense(units=24)  # Output 24-hour predictions
-    ]),
-    'RNN': tf.keras.Sequential([
-        layers.SimpleRNN(64, return_sequences=False),
-        layers.Dense(24)
-    ]),
-    'LSTM': tf.keras.Sequential([
-        layers.LSTM(64, return_sequences=False),
-        layers.Dense(24)
-    ]),
-    'Autoregressive': tf.keras.Sequential([
-        layers.Dense(units=128, activation='relu'),
-        layers.GlobalAveragePooling1D(),
-        layers.Dense(units=24)
-    ]),
-    'Linear': tf.keras.Sequential([
-        layers.GlobalAveragePooling1D(),
+    # 'Dense': tf.keras.Sequential([
+    #     layers.Flatten(),
+    #     layers.Dense(units=128, activation='relu'),
+    #     layers.Dense(units=24)
+    # ]),
+    # 'Multi-step Dense': tf.keras.Sequential([
+    #     layers.Flatten(),
+    #     layers.Dense(units=512, activation='relu'),
+    #     layers.Dense(units=128, activation='relu'),
+    #     layers.Dense(units=24)
+    # ]),
+    # 'CNN': tf.keras.Sequential([
+    #     layers.Conv1D(filters=64, kernel_size=3, activation='relu', input_shape=(input_width, len(train_df.columns))),
+    #     layers.GlobalAveragePooling1D(),  
+    #     layers.Dense(units=24)
+    # ]),
+    # 'RNN': tf.keras.Sequential([
+    #     layers.SimpleRNN(64, return_sequences=False),
+    #     layers.Dense(24)
+    # ]),
+    # 'LSTM': tf.keras.Sequential([
+    #     layers.LSTM(64, return_sequences=False),
+    #     layers.Dense(24)
+    # ]),
+    # 'Autoregressive': tf.keras.Sequential([
+    #     layers.Dense(units=128, activation='relu'),
+    #     layers.GlobalAveragePooling1D(),
+    #     layers.Dense(units=24)
+    # ]),
+    # 'Linear': tf.keras.Sequential([
+    #     layers.GlobalAveragePooling1D(),
+    #     layers.Dense(units=24)
+    # ]), 
+    'Bi-LSTM': tf.keras.Sequential([
+        layers.Bidirectional(layers.LSTM(128, activation='relu', input_shape=(shape[0], 21))),
+        layers.Dense(64, activation='relu'),
         layers.Dense(units=24)  # Output a vector of length 24 for 24-hour predictions
     ])
 }
 
-# Compile all models in the dictionary
 for name, model in models.items():
     model.compile(optimizer='adam', loss='mae')
 
 # Early stopping callback to stop training when validation loss does not improve
-early_stopping = EarlyStopping(monitor='val_loss', patience=3, restore_best_weights=True)
+early_stopping = EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True)
 
 model_losses = {}
 
-# Train, evaluate, and visualize all models
+# Dictionary to store the feature importance for each model
+model_feature_importance = {}
+
+all_features = list(train_df.columns)
+all_features.remove('SWC_5')  # Assuming 'SWC_5' is the label column
+
+# Dictionary to store the overall performance of each model (with all features)
+overall_model_losses = {}
+
+
+
+# # Train and evaluate each model with all features (to get the baseline loss)
+# print("\nTraining models with all features (baseline)...")
+# for name, model in models.items():
+#     print(f'\nTraining {name} model with all features...')
+    
+#     # Reinitialize model
+#     model = tf.keras.models.clone_model(model)
+#     model.compile(optimizer='adam', loss='mae')
+    
+#     # Train the model with early stopping
+#     history = model.fit(
+#         window.train,
+#         validation_data=window.val,
+#         epochs=10,
+#         callbacks=[early_stopping]
+#     )
+    
+#     # Evaluate the model on the test set and store the test loss as the baseline
+#     baseline_loss = model.evaluate(window.test)
+#     overall_model_losses[name] = baseline_loss
+    
+#     print(f'{name} Model Baseline Test Loss (with all features): {baseline_loss}')
+
+# # Now perform feature ablation
+# for name, model in models.items():
+#     print(f'\nEvaluating feature importance for model: {name}')
+    
+#     # Dictionary to track how much the loss increases when each feature is removed
+#     feature_loss_diffs = {}
+    
+#     # Iterate through each feature, removing it from the dataset
+#     for feature_to_remove in all_features:
+#         print(f'\nTraining {name} model without feature: {feature_to_remove}')
+        
+#         # Remove the selected feature from the dataset
+#         train_df_mod = train_df.drop(columns=[feature_to_remove])
+#         val_df_mod = val_df.drop(columns=[feature_to_remove])
+#         test_df_mod = test_df.drop(columns=[feature_to_remove])
+
+#         # Create a new WindowGenerator instance with the modified dataset
+#         window_mod = WindowGenerator(
+#             input_width=input_width,
+#             label_width=label_width,
+#             shift=shift,
+#             train_df=train_df_mod,
+#             val_df=val_df_mod,
+#             test_df=test_df_mod,
+#             label_columns=['SWC_5']
+#         )
+        
+#         # Reinitialize the model to ensure fresh training
+#         model = tf.keras.models.clone_model(model)
+#         model.compile(optimizer='adam', loss='mae')
+        
+#         # Train the model with early stopping
+#         history = model.fit(
+#             window_mod.train,
+#             validation_data=window_mod.val,
+#             epochs=10,
+#             callbacks=[early_stopping]
+#         )
+        
+#         # Evaluate the model on the test set without the removed feature
+#         ablation_loss = model.evaluate(window_mod.test)
+        
+#         # Calculate the difference in loss (how much worse the model performed without the feature)
+#         loss_diff = ablation_loss - overall_model_losses[name]
+#         feature_loss_diffs[feature_to_remove] = loss_diff
+
+#         print(f'{name} Model Test Loss without {feature_to_remove}: {ablation_loss} (Loss Difference: {loss_diff})')
+    
+#     # Sort features by their importance (features with the largest loss increase are most important)
+#     sorted_feature_importance = sorted(feature_loss_diffs.items(), key=operator.itemgetter(1), reverse=True)
+    
+#     # Store the sorted feature importance for this model
+#     model_feature_importance[name] = sorted_feature_importance
+    
+#     print(f'\nFeature importance for {name} model (most to least important):')
+#     for feature, loss_diff in sorted_feature_importance:
+#         print(f'  {feature}: {loss_diff}')
+
+
+
+# # Ensure that the CNN model's baseline loss is computed and stored first
+# print("\nTraining CNN model with all features (baseline)...")
+
+# # Reinitialize the CNN model
+# cnn_model = tf.keras.Sequential([
+#     layers.Conv1D(filters=64, kernel_size=3, activation='relu', input_shape=(input_width, len(train_df.columns))),
+#     layers.GlobalAveragePooling1D(),
+#     layers.Dense(units=24)
+# ])
+# cnn_model.compile(optimizer='adam', loss='mae')
+
+# # Train the CNN model with early stopping
+# history = cnn_model.fit(
+#     window.train,
+#     validation_data=window.val,
+#     epochs=10,
+#     callbacks=[early_stopping]
+# )
+
+# # Evaluate the CNN model on the test set and store the test loss as the baseline
+# baseline_loss_cnn = cnn_model.evaluate(window.test)
+# overall_model_losses['CNN'] = baseline_loss_cnn  # Store the baseline loss for CNN
+
+# print(f'CNN Model Baseline Test Loss (with all features): {baseline_loss_cnn}')
+
+# # Now perform feature ablation for CNN model only
+# print(f'\nEvaluating feature importance for CNN model')
+
+# # Dictionary to track how much the loss increases when each feature is removed
+# feature_loss_diffs = {}
+
+# # Iterate through each feature, removing it from the dataset
+# for feature_to_remove in all_features:
+#     print(f'\nTraining CNN model without feature: {feature_to_remove}')
+    
+#     # Remove the selected feature from the dataset
+#     train_df_mod = train_df.drop(columns=[feature_to_remove])
+#     val_df_mod = val_df.drop(columns=[feature_to_remove])
+#     test_df_mod = test_df.drop(columns=[feature_to_remove])
+
+#     # Dynamically set the input shape based on the remaining number of features
+#     num_features = len(train_df_mod.columns)
+
+#     # Create a new WindowGenerator instance with the modified dataset
+#     window_mod = WindowGenerator(
+#         input_width=input_width,
+#         label_width=label_width,
+#         shift=shift,
+#         train_df=train_df_mod,
+#         val_df=val_df_mod,
+#         test_df=test_df_mod,
+#         label_columns=['SWC_5']
+#     )
+    
+#     # Reinitialize the CNN model with the correct input shape
+#     model = tf.keras.Sequential([
+#         layers.Conv1D(filters=64, kernel_size=3, activation='relu', input_shape=(input_width, num_features)),
+#         layers.GlobalAveragePooling1D(),
+#         layers.Dense(units=24)
+#     ])
+#     model.compile(optimizer='adam', loss='mae')
+    
+#     # Train the model with early stopping
+#     history = model.fit(
+#         window_mod.train,
+#         validation_data=window_mod.val,
+#         epochs=10,
+#         callbacks=[early_stopping]
+#     )
+    
+#     # Evaluate the model on the test set without the removed feature
+#     ablation_loss = model.evaluate(window_mod.test)
+    
+#     # Calculate the difference in loss (how much worse the model performed without the feature)
+#     loss_diff = ablation_loss - overall_model_losses['CNN']  # Use the stored baseline CNN loss
+#     feature_loss_diffs[feature_to_remove] = loss_diff
+
+#     print(f'CNN Model Test Loss without {feature_to_remove}: {ablation_loss} (Loss Difference: {loss_diff})')
+
+# # Sort features by their importance (features with the largest loss increase are most important)
+# sorted_feature_importance = sorted(feature_loss_diffs.items(), key=operator.itemgetter(1), reverse=True)
+
+# # Store the sorted feature importance for CNN model
+# model_feature_importance['CNN'] = sorted_feature_importance
+
+# print(f'\nFeature importance for CNN model (most to least important):')
+# for feature, loss_diff in sorted_feature_importance:
+#     print(f'  {feature}: {loss_diff}')
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Train and evaluate each model with all features (to get the baseline loss)
+print("\nTraining models with all features (baseline)...")
 for name, model in models.items():
-    print(f'\nTraining {name} model...')
-    # Train the model
+    print(f'\nTraining {name} model with all features...')
+    
+    # Reinitialize model
+    model = tf.keras.models.clone_model(model)
+    model.compile(optimizer='adam', loss='mae')
+    
+    # Train the model with early stopping
     history = model.fit(
         window.train,
         validation_data=window.val,
@@ -188,17 +394,88 @@ for name, model in models.items():
         callbacks=[early_stopping]
     )
     
-    # Evaluate the model on the test set
-    test_loss = model.evaluate(window.test)
-    model_losses[name] = test_loss
-    print(f'{name} Model Test Loss: {test_loss}')
+    # Evaluate the model on the test set and store the test loss as the baseline
+    baseline_loss = model.evaluate(window.test)
+    overall_model_losses[name] = baseline_loss  # Store baseline loss for each model
     
-    # Plot the predictions for each model
-    # window.plot(model=model, plot_col='SWC_5')
+    print(f'{name} Model Baseline Test Loss (with all features): {baseline_loss}')
 
 
-min_loss_model = min(model_losses, key=model_losses.get)
-max_loss_model = max(model_losses, key=model_losses.get)
+# Now perform feature ablation for each model
+name = ''
 
-print(f'\nModel with the least loss: {min_loss_model} - Loss: {model_losses[min_loss_model]}')
-print(f'Model with the most loss: {max_loss_model} - Loss: {model_losses[max_loss_model]}')
+for name, model in models.items():
+
+    print(f'\nEvaluating feature importance for model: {name}')
+    
+    # Dictionary to track how much the loss increases when each feature is removed
+    feature_loss_diffs = {}
+    
+    # Iterate through each feature, removing it from the dataset
+    for feature_to_remove in all_features:
+        print(f'\nTraining {name} model without feature: {feature_to_remove}')
+        
+        # Remove the selected feature from the dataset
+        train_df_mod = train_df.drop(columns=[feature_to_remove])
+        val_df_mod = val_df.drop(columns=[feature_to_remove])
+        test_df_mod = test_df.drop(columns=[feature_to_remove])
+
+        # Dynamically set the input shape based on the remaining number of features
+        num_features = len(train_df_mod.columns)
+
+        # Create a new WindowGenerator instance with the modified dataset
+        window_mod = WindowGenerator(
+            input_width=input_width,
+            label_width=label_width,
+            shift=shift,
+            train_df=train_df_mod,
+            val_df=val_df_mod,
+            test_df=test_df_mod,
+            label_columns=['SWC_5']
+        )
+        
+        # Reinitialize the model to ensure fresh training with updated input shape
+        model = tf.keras.models.clone_model(models[name])
+        model.compile(optimizer='adam', loss='mae')
+        
+        # Train the model with early stopping
+        history = model.fit(
+            window_mod.train,
+            validation_data=window_mod.val,
+            epochs=10,
+            callbacks=[early_stopping]
+        )
+        
+        # Evaluate the model on the test set without the removed feature
+        ablation_loss = model.evaluate(window_mod.test)
+        
+        # Calculate the difference in loss (how much worse the model performed without the feature)
+        loss_diff = ablation_loss - overall_model_losses[name]
+        feature_loss_diffs[feature_to_remove] = loss_diff
+
+        print(f'{name} Model Test Loss without {feature_to_remove}: {ablation_loss} (Loss Difference: {loss_diff})')
+    
+    # Sort features by their importance (features with the largest loss increase are most important)
+    sorted_feature_importance = sorted(feature_loss_diffs.items(), key=operator.itemgetter(1), reverse=True)
+    
+    # Store the sorted feature importance for this model
+    model_feature_importance[name] = sorted_feature_importance
+    
+    print(f'\nFeature importance for {name} model (most to least important):')
+    for feature, loss_diff in sorted_feature_importance:
+        print(f'  {feature}: {loss_diff}')
+
+
+# Final ranking of models by baseline test loss
+sorted_models_by_performance = sorted(overall_model_losses.items(), key=operator.itemgetter(1))
+
+print("\nFinal Ranking of Models (Best to Worst based on baseline test loss):")
+for model_name, loss in sorted_models_by_performance:
+    print(f'  {model_name}: {loss}')
+
+# Print the most important features for each model
+print("\nMost important features for each model:")
+for model_name, feature_importance in model_feature_importance.items():
+    print(f'\n{model_name} model feature importance (most to least important):')
+    for feature, importance in feature_importance:
+        print(f'  {feature}: {importance}')

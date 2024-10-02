@@ -30,36 +30,6 @@ for key, shape in shape_dict.items():
             trial_num += 1
 
 
-#SHAP
-def calculate_shap_importance(model, training_data_sample, test_data_sample):
-    explainer = shap.DeepExplainer(model, training_data_sample)  # Explain predictions
-    shap_values = explainer.shap_values(test_data_sample)
-
-    # plot shap values
-    shap.summary_plot(shap_values, test_data_sample)
-    return shap_values
-
-# now looking at importance of permutation
-def calculate_permutation_importance(model, test_data, test_labels):
-   
-    y_pred = model.predict(test_data)
-    
-    #  get permutation importance
-    results = permutation_importance(model, test_data, test_labels, scoring='neg_mean_squared_error')
-    
-    
-    #  scores
-    importance_df = pd.DataFrame(results.importances_mean, index=test_data.columns, columns=["Importance"])
-    print(importance_df.sort_values(by="Importance", ascending=False))
-    return importance_df
-
-
-training_data_sample = np.random.rand(100, 1024)  
-test_data_sample = np.random.rand(10, 1024)  
-
-# Calculate SHAP importance
-shap_values = calculate_shap_importance(model, training_data_sample, test_data_sample)
-
 
 
 # hello 
