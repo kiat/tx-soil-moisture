@@ -14,6 +14,8 @@ def load_and_preprocess_data(station, target_col, train_split, val_split, window
     # Load data
     station_filepath = f"{data_path}/Station{station}_simulated_cleaned_merged_data.csv"
     dfs = load_data(station_filepath)
+    engineer_data(dfs, boolean=True)
+    scale_data(dfs)
     cur_df = dfs["cur_station"]
 
     # Filter columns to keep only the target column and non-SWC columns

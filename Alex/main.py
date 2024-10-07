@@ -20,12 +20,11 @@ PAT = 3
 MAX_EPOCHS = 25
 BATCH_SIZE = 128
 
-# Stations and target columns to iterate over
-# stations = range(1, 7)  # Stations 1 to 6
-# target_columns = ["SWC_5", "SWC_10", "SWC_15", "SWC_20"]
+stations = range(1, 7)  # Stations 1 to 6
+target_columns = ["SWC_5", "SWC_10", "SWC_20", "SWC_50"]
 
-stations = [1]
-target_columns = ["SWC_5"]
+# stations = [1]
+# target_columns = [ "SWC_5"]
 
 # Loop through each station and each target column
 for station in stations:
