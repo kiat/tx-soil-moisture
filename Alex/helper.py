@@ -10,6 +10,32 @@ from sklearn.metrics import mean_squared_error
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
+def load_and_preprocess_data(station, target_col, train_split, val_split, window_size, shift_amt, batch_size, data_path="../datasets/Simulate_Cleaned_Merged"):
+    # Load data
+    station_filepath = f"{data_path}/Station{station}_simulated_cleaned_merged_data.csv"
+    dfs = load_data(station_filepath)
+    cur_df = dfs["cur_station"]
+
+    # Filter columns to keep only the target column and non-SWC columns
+    cur_df = cur_df[[col for col in cur_df.columns if not col.startswith('SWC') or col == target_col]]
+
+    # Preprocess data
+    X_train, y_train, X_val, y_val, X_test, y_test = preprocess_data(
+        cur_df, target_col, train_split, val_split, window_size, shift_amt
+    )
+
+    # Generate batches for training, validation, and testing
+    train_dataset, train_steps = generate_batches(X_train, y_train, batch_size=batch_size)
+    val_dataset, val_steps = generate_batches(X_val, y_val, batch_size=batch_size)
+    test_dataset, test_steps = generate_batches(X_test, y_test, batch_size=batch_size)
+
+    return (
+        cur_df, 
+        X_train, y_train, X_val, y_val, X_test, y_test,
+        train_dataset, val_dataset, test_dataset, 
+        train_steps, val_steps, test_steps
+    )
+
 # function to load and preprocess the data
 def load_data(filepath):
     dfs = {}
@@ -198,3 +224,105 @@ def run_arima_model(train_data, test_data, order=(1, 0, 0)):
     print(f"ARIMA Model MSE: {mse}")
     return mse
 
+
+def feature_importance_analysis(features, cur_df, target_col, model, model_name, train_split, val_split, window_size, shift_amt, batch_size, patience, max_epochs):
+    mse_results = {}
+    mae_results = {}
+    mape_results = {}
+
+    for feature in features:
+        print(f"Training {model_name} without feature: {feature}")
+        cur_df_modified = cur_df.drop(columns=[feature])
+        
+        X_train, y_train, X_val, y_val, X_test, y_test = preprocess_data(
+            cur_df_modified, target_col, train_split, val_split, window_size, shift_amt
+        )
+        train_dataset, train_steps = generate_batches(X_train, y_train, batch_size=batch_size)
+        val_dataset, val_steps = generate_batches(X_val, y_val, batch_size=batch_size)
+
+        history = compile_and_fit(
+            model, train_dataset, train_steps, val_dataset, val_steps,
+            batch_size=batch_size, model_name=f"{model_name}_without_{feature}",
+            patience=patience, max_epochs=max_epochs
+        )
+
+        mse = history.history['val_mean_squared_error'][-1]
+        mae = history.history['val_mean_absolute_error'][-1]
+        mape = history.history['val_mean_absolute_percentage_error'][-1]
+
+        mse_results[feature] = mse
+        mae_results[feature] = mae
+        mape_results[feature] = mape
+    
+    return mse_results, mae_results, mape_results
+
+def run_feature_importance_for_model(cur_df, feature_names, target_col, model, model_name, train_split, val_split, window_size, shift_amt, batch_size, patience, max_epochs):
+    mse_results, mae_results, mape_results = feature_importance_analysis(
+        feature_names, cur_df, target_col, model, model_name, train_split, val_split, window_size, shift_amt, batch_size, patience, max_epochs
+    )
+
+    sorted_mse = sorted(mse_results.items(), key=lambda x: x[1], reverse=True)
+    print(f"\nMSE results after removing each feature for {model_name}: (higher indicates more important)")
+    for feature, mse in sorted_mse:
+        print(f"Feature: {feature}, MSE: {mse}")
+
+    sorted_mae = sorted(mae_results.items(), key=lambda x: x[1], reverse=True)
+    print(f"\nMAE results after removing each feature for {model_name}:")
+    for feature, mae in sorted_mae:
+        print(f"Feature: {feature}, MAE: {mae}")
+
+    sorted_mape = sorted(mape_results.items(), key=lambda x: x[1], reverse=True)
+    print(f"\nMAPE results after removing each feature for {model_name}:")
+    for feature, mape in sorted_mape:
+        print(f"Feature: {feature}, MAPE: {mape}")
+
+def feature_addition_analysis(features, cur_df, target_col, model, model_name, train_split, val_split, window_size, shift_amt, batch_size, patience, max_epochs):
+    mse_results = {}
+    mae_results = {}
+    mape_results = {}
+
+    for feature in features:
+        print(f"Training {model_name} with only feature: {feature}")
+        cur_df_modified = cur_df[[feature, target_col]]
+        
+        X_train, y_train, X_val, y_val, X_test, y_test = preprocess_data(
+            cur_df_modified, target_col, train_split, val_split, window_size, shift_amt
+        )
+        train_dataset, train_steps = generate_batches(X_train, y_train, batch_size=batch_size)
+        val_dataset, val_steps = generate_batches(X_val, y_val, batch_size=batch_size)
+
+        history = compile_and_fit(
+            model, train_dataset, train_steps, val_dataset, val_steps,
+            batch_size=batch_size, model_name=f"{model_name}_with_only_{feature}",
+            patience=patience, max_epochs=max_epochs
+        )
+
+        mse = history.history['val_mean_squared_error'][-1]
+        mae = history.history['val_mean_absolute_error'][-1]
+        mape = history.history['val_mean_absolute_percentage_error'][-1]
+
+        mse_results[feature] = mse
+        mae_results[feature] = mae
+        mape_results[feature] = mape
+    
+    return mse_results, mae_results, mape_results
+
+def run_feature_addition_for_model(cur_df, feature_names, target_col, model, model_name, train_split, val_split, window_size, shift_amt, batch_size, patience, max_epochs):
+    mse_results, mae_results, mape_results = feature_addition_analysis(
+        feature_names, cur_df, target_col, model, model_name, train_split, val_split, window_size, shift_amt, batch_size, patience, max_epochs
+    )
+
+    sorted_mse = sorted(mse_results.items(), key=lambda x: x[1])
+    print(f"\nMSE results after adding each feature for {model_name}: (lower indicates more important)")
+    for feature, mse in sorted_mse:
+        print(f"Feature: {feature}, MSE: {mse}")
+
+    sorted_mae = sorted(mae_results.items(), key=lambda x: x[1])
+    print(f"\nMAE results after adding each feature for {model_name}:")
+    for feature, mae in sorted_mae:
+        print(f"Feature: {feature}, MAE: {mae}")
+
+    sorted_mape = sorted(mape_results.items(), key=lambda x: x[1])
+    print(f"\nMAPE results after adding each feature for {model_name}:")
+    for feature, mape in sorted_mape:
+        print(f"Feature: {feature}, MAPE: {mape}")
