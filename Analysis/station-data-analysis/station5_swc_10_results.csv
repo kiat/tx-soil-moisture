@@ -1,0 +1,55 @@
+Model,Metric,Feature,Importance
+RNN,MSE,Ppt,-0.0036
+RNN,MSE,T_5,-0.0071
+RNN,MSE,Tair,0.0657
+RNN,MSE,RH,0.0022
+RNN,MSE,Windspeed,0.0820
+RNN,MSE,Winddirection,0.0012
+RNN,MSE,Srad,0.0282
+RNN,MAE,Ppt,-0.0025
+RNN,MAE,T_5,-0.0105
+RNN,MAE,Tair,0.0821
+RNN,MAE,RH,0.0018
+RNN,MAE,Windspeed,0.1005
+RNN,MAE,Winddirection,0.0003
+RNN,MAE,Srad,0.0321
+RNN,MAE Percentage,Ppt,-0.6827
+RNN,MAE Percentage,T_5,-2.8648
+RNN,MAE Percentage,Tair,22.3965
+RNN,MAE Percentage,RH,0.4830
+RNN,MAE Percentage,Windspeed,27.4354
+RNN,MAE Percentage,Winddirection,0.0858
+RNN,MAE Percentage,Srad,8.7561
+CNN,MSE,Ppt,-0.0002
+CNN,MSE,T_5,0.0033
+CNN,MSE,Tair,0.0297
+CNN,MSE,RH,0.0115
+CNN,MSE,Windspeed,-0.0060
+CNN,MSE,Winddirection,0.0020
+CNN,MSE,Srad,0.0023
+CNN,MAE,Ppt,-0.0028
+CNN,MAE,T_5,0.0065
+CNN,MAE,Tair,0.0363
+CNN,MAE,RH,0.0217
+CNN,MAE,Windspeed,-0.0169
+CNN,MAE,Winddirection,0.0039
+CNN,MAE,Srad,0.0007
+CNN,MAE Percentage,Ppt,-0.7505
+CNN,MAE Percentage,T_5,1.7665
+CNN,MAE Percentage,Tair,9.8999
+CNN,MAE Percentage,RH,5.9226
+CNN,MAE Percentage,Windspeed,-4.6152
+CNN,MAE Percentage,Winddirection,1.0668
+CNN,MAE Percentage,Srad,0.1985
+Custom AR,MSE,Ppt,0.0416
+Custom AR,MSE,T_5,0.0297
+Custom AR,MSE,Tair,0.0361
+Custom AR,MSE,RH,0.0422
+Custom AR,MSE,Windspeed,0.0426
+Custom AR,MSE,Winddirection,0.0425
+Custom AR,MSE,Srad,0.0422
+
+Model Performance Summary
+Model,MSE,MAE,MAE Percentage
+RNN,0.0563,0.2040,55.68%
+CNN,0.0421,0.1815,49.53%
