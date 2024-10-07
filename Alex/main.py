@@ -10,9 +10,10 @@ import matplotlib.pyplot as plt
 from sklearn.preprocessing import MinMaxScaler
 import tensorflow as tf
 from statsmodels.tsa.arima.model import ARIMA
-from sklearn.metrics import mean_squared_error
+from sklearn.metrics import mean_squared_error, mean_absolute_error
 
 # parameters - more generalized
+STATION = 1
 TARGET_COL = "SWC_5"
 TRAIN_SPLIT = 0.7
 VAL_SPLIT = 0.2
@@ -24,8 +25,11 @@ BATCH_SIZE = 128
 
 # load and preprocess data
 
-dfs = load_data('../datasets/Simulate_Cleaned_Merged/Station1_simulated_cleaned_merged_data.csv')
-cur_df = dfs["Station1"]
+station_filepath = f'../datasets/Simulate_Cleaned_Merged/Station{STATION}_simulated_cleaned_merged_data.csv'
+dfs = load_data(station_filepath)
+cur_df = dfs["cur_station"]
+cur_df = cur_df[[col for col in cur_df.columns if not col.startswith('SWC') or col == TARGET_COL]]
+
 
 X_train, y_train, X_val, y_val, X_test, y_test = preprocess_data(cur_df, TARGET_COL, TRAIN_SPLIT, VAL_SPLIT, WINDOW_SIZE, SHIFT_AMT)
 
@@ -34,151 +38,193 @@ val_dataset, val_steps = generate_batches(X_val, y_val, batch_size=BATCH_SIZE)
 test_dataset, test_steps = generate_batches(X_test, y_test, batch_size=BATCH_SIZE)
 
 # train and plot models
-# bilstm
-history_bilstm = compile_and_fit(bi_lstm_model, train_dataset, train_steps, val_dataset, val_steps, batch_size=BATCH_SIZE, model_name="biLSTM", patience=PAT, max_epochs=MAX_EPOCHS)
-plot_single_pred(bi_lstm_model, 'BiLSTM', test_dataset, test_steps, y_test, batch_size=BATCH_SIZE)
+# history_bilstm = compile_and_fit(bi_lstm_model, train_dataset, train_steps, val_dataset, val_steps, batch_size=BATCH_SIZE, model_name="biLSTM", patience=PAT, max_epochs=MAX_EPOCHS)
 
-#linear
-history_linear = compile_and_fit(linear_model, train_dataset, train_steps, val_dataset, val_steps, batch_size=BATCH_SIZE, model_name="linear", patience=PAT, max_epochs=MAX_EPOCHS)
+# Linear
+# history_linear = compile_and_fit(linear_model, train_dataset, train_steps, val_dataset, val_steps, batch_size=BATCH_SIZE, model_name="linear", patience=PAT, max_epochs=MAX_EPOCHS)
 
-#autoregressive
-autoregressive_model = create_autoregressive_model(X_train.shape[-2:])
-history_ar = compile_and_fit(autoregressive_model, train_dataset, train_steps, val_dataset, val_steps, batch_size=BATCH_SIZE, model_name="autoregressive", patience=PAT, max_epochs=MAX_EPOCHS)
+# Autoregressive
+# autoregressive_model = create_autoregressive_model(X_train.shape[-2:])
+# history_ar = compile_and_fit(autoregressive_model, train_dataset, train_steps, val_dataset, val_steps, batch_size=BATCH_SIZE, model_name="autoregressive", patience=PAT, max_epochs=MAX_EPOCHS)
 
-#Dense
-history_dense = compile_and_fit(dense_model, train_dataset, train_steps, val_dataset, val_steps, batch_size=BATCH_SIZE, model_name="dense", patience=PAT, max_epochs=MAX_EPOCHS)
+# Dense
+# history_dense = compile_and_fit(dense_model, train_dataset, train_steps, val_dataset, val_steps, batch_size=BATCH_SIZE, model_name="dense", patience=PAT, max_epochs=MAX_EPOCHS)
 
 # RNN
-history_rnn = compile_and_fit(rnn_model, train_dataset, train_steps, val_dataset, val_steps, batch_size=BATCH_SIZE, model_name="RNN", patience=PAT, max_epochs=MAX_EPOCHS)
+# history_rnn = compile_and_fit(rnn_model, train_dataset, train_steps, val_dataset, val_steps, batch_size=BATCH_SIZE, model_name="RNN", patience=PAT, max_epochs=MAX_EPOCHS)
 
 # CNN
-cnn_model = create_cnn_model(X_train.shape[-2:])
-history_cnn = compile_and_fit(cnn_model, train_dataset, train_steps, val_dataset, val_steps, batch_size=BATCH_SIZE, model_name="CNN", patience=PAT, max_epochs=MAX_EPOCHS)
-
+# cnn_model = create_cnn_model(X_train.shape[-2:])
 
 # ARIMA Model
-arima_order = (1, 0, 0) #p,d,q
-train_size = int(len(y_train) * 0.8) 
-train_data_arima = y_train[:train_size]  
-test_data_arima = y_test 
-arima_mse = run_arima_model(train_data_arima, test_data_arima, order=arima_order)
+# arima_order = (1, 0, 0)  # p, d, q
+# train_size = int(len(y_train) * 0.8)
+# train_data_arima = y_train[:train_size]
+# test_data_arima = y_test
+# arima_mse, arima_mae, arima_mape = run_arima_model(train_data_arima, test_data_arima, order=arima_order)
 
-# compare models, this is without removing anything
-model_results = {
-    "BiLSTM": history_bilstm.history['val_mean_squared_error'][-1],  # Add last epoch's MSE from history
-    "Linear": history_linear.history['val_mean_squared_error'][-1],
-    "Autoregressive": history_ar.history['val_mean_squared_error'][-1],
-    "dense": history_dense.history['val_mean_squared_error'][-1],
-    "ARIMA": arima_mse,
-    "RNN": history_rnn.history['val_mean_squared_error'][-1],
-    "CNN": history_cnn.history['val_mean_squared_error'][-1]
-}
-compare_models(model_results)
 
+
+# # compare models, this is without removing anything
+# model_results = {
+#     "BiLSTM": history_bilstm.history['val_mean_squared_error'][-1],  # Add last epoch's MSE from history
+#     "Linear": history_linear.history['val_mean_squared_error'][-1],
+#     "Autoregressive": history_ar.history['val_mean_squared_error'][-1],
+#     "dense": history_dense.history['val_mean_squared_error'][-1],
+#     "ARIMA": arima_mse,
+#     "RNN": history_rnn.history['val_mean_squared_error'][-1],
+#     "CNN": history_cnn.history['val_mean_squared_error'][-1]
+# }
+# compare_models(model_results)
 
 
 
 # Feature Importance Analysis
-# removing features to find the most important feature in any given model
+# Removing features to find the most important feature in any given model
 feature_names = [col for col in cur_df.columns if col != TARGET_COL]
 
-# retrain the specified model after removing each feature
+# Retrain the specified model after removing each feature and track MSE, MAE, MAPE
 def feature_importance_analysis(features, cur_df, target_col, model, model_name):
     mse_results = {}
+    mae_results = {}
+    mape_results = {}
 
     for feature in features:
-        print(f"training {model_name} without feature: {feature}")
+        print(f"Training {model_name} without feature: {feature}")
         cur_df_modified = cur_df.drop(columns=[feature])
         
-        X_train, y_train, X_val, y_val, X_test, y_test = preprocess_data(cur_df_modified, target_col, TRAIN_SPLIT, VAL_SPLIT, WINDOW_SIZE, SHIFT_AMT)
+        X_train, y_train, X_val, y_val, X_test, y_test = preprocess_data(
+            cur_df_modified, target_col, TRAIN_SPLIT, VAL_SPLIT, WINDOW_SIZE, SHIFT_AMT
+        )
         train_dataset, train_steps = generate_batches(X_train, y_train, batch_size=BATCH_SIZE)
         val_dataset, val_steps = generate_batches(X_val, y_val, batch_size=BATCH_SIZE)
         test_dataset, test_steps = generate_batches(X_test, y_test, batch_size=BATCH_SIZE)
 
-        # re-train the specified model without the feature
-        history = compile_and_fit(model, train_dataset, train_steps, val_dataset, val_steps, batch_size=BATCH_SIZE, model_name=f"{model_name}_without_{feature}", patience=PAT, max_epochs=MAX_EPOCHS)
+        # Re-train the specified model without the feature
+        history = compile_and_fit(
+            model, train_dataset, train_steps, val_dataset, val_steps,
+            batch_size=BATCH_SIZE, model_name=f"{model_name}_without_{feature}",
+            patience=PAT, max_epochs=MAX_EPOCHS
+        )
 
-        # calculate mse on the test set
+        # Extract the last values of MSE, MAE, and MAPE from the training history
         mse = history.history['val_mean_squared_error'][-1]
+        mae = history.history['val_mean_absolute_error'][-1]
+        mape = history.history['val_mean_absolute_percentage_error'][-1]
+
+        # Store results
         mse_results[feature] = mse
+        mae_results[feature] = mae
+        mape_results[feature] = mape
     
-    return mse_results
+    return mse_results, mae_results, mape_results
 
-# perform feature importance analysis for any model
+# Perform feature importance analysis for any model and sort results by MSE, MAE, and MAPE
 def run_feature_importance_for_model(model, model_name):
-    mse_results_without_features = feature_importance_analysis(feature_names, cur_df, TARGET_COL, model, model_name)
+    mse_results_without_features, mae_results_without_features, mape_results_without_features = feature_importance_analysis(
+        feature_names, cur_df, TARGET_COL, model, model_name
+    )
 
-    # display results
-    print(f"\nmse results after removing each feature for {model_name}:")
-    for feature, mse in mse_results_without_features.items():
-        print(f"feature: {feature}, mse: {mse}")
-
-    # sort by mse to identify which feature caused the biggest change
+    # Display and sort by MSE
+    print(f"\nMSE results after removing each feature for {model_name}: (higher indicates more important)") 
     sorted_mse = sorted(mse_results_without_features.items(), key=lambda x: x[1], reverse=True)
-    print(f"\nsorted mse (higher mse indicates more important feature in {model_name}):")
     for feature, mse in sorted_mse:
-        print(f"feature: {feature}, mse: {mse}")
+        print(f"Feature: {feature}, MSE: {mse}")
 
-# run feature importance analysis for rnn model
+    # Display and sort by MAE
+    print(f"\nMAE results after removing each feature for {model_name}:")
+    sorted_mae = sorted(mae_results_without_features.items(), key=lambda x: x[1], reverse=True)
+    for feature, mae in sorted_mae:
+        print(f"Feature: {feature}, MAE: {mae}")
+
+    # Display and sort by MAPE
+    print(f"\nMAPE results after removing each feature for {model_name}:")
+    sorted_mape = sorted(mape_results_without_features.items(), key=lambda x: x[1], reverse=True)
+    for feature, mape in sorted_mape:
+        print(f"Feature: {feature}, MAPE: {mape}")
+
+# Run feature importance analysis for RNN model
 run_feature_importance_for_model(rnn_model, "RNN")
 
-# # run feature importance analysis for dense model
-run_feature_importance_for_model(dense_model, "Dense")
+# Run feature importance analysis for Dense model
+# run_feature_importance_for_model(dense_model, "Dense")
 
 
 
+from sklearn.metrics import mean_squared_error, mean_absolute_percentage_error
 
-# adding one fature at a time to see its effect on mse
-# feature importance analysis by adding one feature at a time to see its effect on mse
+# Feature importance analysis by adding one feature at a time to see its effect on MSE, MAE, and MAPE
 def feature_addition_analysis(features, cur_df, target_col, model, model_name):
     mse_results = {}
+    mae_results = {}
+    mape_results = {}
 
     for feature in features:
-        print(f"training {model_name} with only feature: {feature}")
+        print(f"Training {model_name} with only feature: {feature}")
         # Use only the selected feature along with the target column
         cur_df_modified = cur_df[[feature, target_col]]
         
-        X_train, y_train, X_val, y_val, X_test, y_test = preprocess_data(cur_df_modified, target_col, TRAIN_SPLIT, VAL_SPLIT, WINDOW_SIZE, SHIFT_AMT)
+        X_train, y_train, X_val, y_val, X_test, y_test = preprocess_data(
+            cur_df_modified, target_col, TRAIN_SPLIT, VAL_SPLIT, WINDOW_SIZE, SHIFT_AMT
+        )
         train_dataset, train_steps = generate_batches(X_train, y_train, batch_size=BATCH_SIZE)
         val_dataset, val_steps = generate_batches(X_val, y_val, batch_size=BATCH_SIZE)
         test_dataset, test_steps = generate_batches(X_test, y_test, batch_size=BATCH_SIZE)
 
-        # re-train the specified model with the single feature
-        history = compile_and_fit(model, train_dataset, train_steps, val_dataset, val_steps, batch_size=BATCH_SIZE, model_name=f"{model_name}_with_only_{feature}", patience=PAT, max_epochs=MAX_EPOCHS)
+        # Re-train the specified model with the single feature
+        history = compile_and_fit(
+            model, train_dataset, train_steps, val_dataset, val_steps,
+            batch_size=BATCH_SIZE, model_name=f"{model_name}_with_only_{feature}",
+            patience=PAT, max_epochs=MAX_EPOCHS
+        )
 
-        # calculate mse on the test set
+        # Extract the last values of MSE, MAE, and MAPE from the training history
         mse = history.history['val_mean_squared_error'][-1]
+        mae = history.history['val_mean_absolute_error'][-1]
+        mape = history.history['val_mean_absolute_percentage_error'][-1]
+
+        # Store results
         mse_results[feature] = mse
+        mae_results[feature] = mae
+        mape_results[feature] = mape
     
-    return mse_results
+    return mse_results, mae_results, mape_results
 
-# perform feature addition analysis for any model
+# Perform feature addition analysis for any model and sort results by MSE, MAE, and MAPE
 def run_feature_addition_for_model(model, model_name):
-    mse_results_with_features = feature_addition_analysis(feature_names, cur_df, TARGET_COL, model, model_name)
+    mse_results_with_features, mae_results_with_features, mape_results_with_features = feature_addition_analysis(
+        feature_names, cur_df, TARGET_COL, model, model_name
+    )
 
-    # display results
-    print(f"\nmse results after adding each feature for {model_name}:")
-    for feature, mse in mse_results_with_features.items():
-        print(f"feature: {feature}, mse: {mse}")
-
-    # sort by mse to identify which feature resulted in the best performance
+    # Display and sort by MSE
+    print(f"\nMSE results after adding each feature for {model_name}: (lower indicates more important)")
     sorted_mse = sorted(mse_results_with_features.items(), key=lambda x: x[1], reverse=False)
-    print(f"\nsorted mse (lower mse indicates more important feature in {model_name}):")
     for feature, mse in sorted_mse:
-        print(f"feature: {feature}, mse: {mse}")
+        print(f"Feature: {feature}, MSE: {mse}")
+
+    # Display and sort by MAE
+    print(f"\nMAE results after adding each feature for {model_name}:")
+    sorted_mae = sorted(mae_results_with_features.items(), key=lambda x: x[1], reverse=False)
+    for feature, mae in sorted_mae:
+        print(f"Feature: {feature}, MAE: {mae}")
+
+    # Display and sort by MAPE
+    print(f"\nMAPE results after adding each feature for {model_name}:")
+    sorted_mape = sorted(mape_results_with_features.items(), key=lambda x: x[1], reverse=False)
+    for feature, mape in sorted_mape:
+        print(f"Feature: {feature}, MAPE: {mape}")
+
 
 # run feature addition analysis for dense model
-run_feature_addition_for_model(dense_model, "Dense")
+# run_feature_addition_for_model(dense_model, "Dense")
 
 # run feature addition analysis for rnn model
-run_feature_addition_for_model(rnn_model, "RNN")
+# run_feature_addition_for_model(rnn_model, "RNN")
 
 
 
 
 
-#TODO: add arima model >
-#TODO: analyze all models by seeing which performs best (MSE, loss, recall, etc) >
-#TODO: see which feature is most important (add features one at a time to see)
-#TODO: get .py file to work>
-#TODO: add paragraph report to show what I've learned what i discovered
+# TODO: make model look slightly cleaner, add MSE, MAE, and MAPE
+# TODO: Format into how it looks in /code/ folder
+# TODO: drop other SWC

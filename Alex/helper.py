@@ -14,7 +14,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 def load_data(filepath):
     dfs = {}
     df = pd.read_csv(filepath, sep=",", parse_dates=["Unnamed: 0"], index_col="Unnamed: 0")
-    dfs['Station1'] = df
+    dfs['cur_station'] = df
     return dfs
 
 def engineer_data(dfs, boolean):
@@ -112,8 +112,8 @@ def compile_and_fit(model, data, steps_per_epoch, val_data, val_steps, model_nam
     ckpt = tf.keras.callbacks.ModelCheckpoint(model_name + ".keras", save_best_only=True)
 
     model.compile(loss=tf.keras.losses.MeanSquaredError(),
-                  optimizer=tf.keras.optimizers.Adam(learning_rate=0.0001),
-                  metrics=[tf.keras.metrics.MeanAbsoluteError(), tf.keras.metrics.MeanSquaredError()])
+                    optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),
+                    metrics=[tf.keras.metrics.MeanAbsoluteError(), tf.keras.metrics.MeanSquaredError(), tf.keras.metrics.MeanAbsolutePercentageError()])
     
     history = model.fit(data, epochs=max_epochs, callbacks=[ckpt, early_stopping],
                         validation_data=val_data, validation_steps=val_steps,
@@ -137,8 +137,6 @@ def plot_single_pred(model, name, dataset, data_steps, y, batch_size=32):
 
 
 # define models
-
-
 bi_lstm_model = tf.keras.models.Sequential([
     tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(128, return_sequences=True)), # try commenting this out
     tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(64, return_sequences=True)),
@@ -162,10 +160,7 @@ rnn_model = tf.keras.Sequential([
     tf.keras.layers.Dense(units=1)
 ])
 
-
-
 # bidirectional_model = tf.keras.Sequential([tf.keras.layers.Bidrectional(units=1)])
-
 def create_autoregressive_model(input_shape):
     # Create the autoregressive model, where input_shape is passed from main.py
     model = tf.keras.Sequential([
