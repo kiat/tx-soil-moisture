@@ -140,6 +140,7 @@ test_df = df.iloc[int(n*0.9):]  # Last 10% for testing
 
   
 num_features = df.shape[1]
+label_features = ['SWC_5', 'SWC_10', 'SWC_20', 'SWC_50']
 
 
 configurations = [
@@ -260,6 +261,7 @@ def calculate_original_performance(models, config, train_df, val_df, test_df):
 def drop_feature_and_evaluate(models, config, original_mae, train_df, val_df, test_df, features, target):
     feature_importance = {}
     early_stopping = EarlyStopping(monitor='val_loss', patience=3, restore_best_weights=True)
+    num_features = df_copy.shape[1]
     # Iterate over all features and drop one feature at a time
     for feature in features:
         print(f"\nEvaluating the effect of dropping feature: {feature}")
@@ -379,6 +381,17 @@ for config in configurations:
     CONV_WIDTH = 3
     # Define models in a dictionary
     label_width = config['output_steps']
+    n = len(df)
+    df_copy = df.copy()
+    label = config['features']
+    features_to_drop = [col for col in label_features if col != label]
+
+    # Drop the features
+    df_copy = df_copy.drop(columns=features_to_drop)
+    train_df = df_copy.iloc[0:int(n*0.7)]
+    val_df = df_copy.iloc[int(n*0.7):int(n*0.9)]
+    test_df = df_copy.iloc[int(n*0.9):]
+    num_features = df_copy.shape[1]
     models = {
         'Baseline': tf.keras.Sequential([
             tf.keras.layers.Lambda(lambda x: x[:, -label_width:, 1])  # predicts last swc_5 value
@@ -438,6 +451,7 @@ for config in configurations:
             tf.keras.layers.Reshape([label_width, num_features])
         ]),
     }
+    
     # Example usage:
     print("\nDetermining feature importance...")
     # Assume 'all_features' contains the list of features in your dataset

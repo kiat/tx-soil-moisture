@@ -7,6 +7,7 @@ from tensorflow.keras.callbacks import EarlyStopping
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 from statsmodels.tsa.arima.model import ARIMA
 from sklearn.preprocessing import StandardScaler
+import csv
 
 
 # Load your dataset
@@ -133,14 +134,14 @@ class WindowGenerator:
         plt.show()
 
 # Split data into train, validation, and test sets
-n = len(df)
-train_df = df.iloc[0:int(n*0.7)]
-val_df = df.iloc[int(n*0.7):int(n*0.9)]
-test_df = df.iloc[int(n*0.9):]
+# n = len(df)
+# train_df = df.iloc[0:int(n*0.7)]
+# val_df = df.iloc[int(n*0.7):int(n*0.9)]
+# test_df = df.iloc[int(n*0.9):]
 
   
-num_features = df.shape[1]
-
+num_features = df.shape[1] - 3
+label_features = ['SWC_5', 'SWC_10', 'SWC_20', 'SWC_50']
 
 configurations = [
         {"features": 'SWC_5', "input_steps": 24, "output_steps": 1},
@@ -175,7 +176,7 @@ def create_window(input_width, label_width, shift, train_df, val_df, test_df, la
 
 # Function to train and evaluate all models for a given configuration
 def train_and_evaluate_models(config, models, train_df, val_df, test_df):
-    # Adjust the window based on the current configuration
+    # Adjust the window based on the current configuration  
     window = create_window(
         input_width=config['input_steps'],
         label_width=config['output_steps'],
@@ -186,6 +187,7 @@ def train_and_evaluate_models(config, models, train_df, val_df, test_df):
         label_columns=[config['features']]
     )
     
+
     performance = {}
     val_performance = {}
     early_stopping = EarlyStopping(monitor='val_loss', patience=3, restore_best_weights=True)
@@ -215,14 +217,25 @@ def train_and_evaluate_models(config, models, train_df, val_df, test_df):
             print(f'\nTraining {name} model for configuration: {config}')
             model.compile(loss=tf.keras.losses.MeanSquaredError(),
                     optimizer=tf.keras.optimizers.Adam(),
-                    metrics=[tf.keras.metrics.MeanAbsoluteError()])
+                    metrics=[tf.keras.metrics.MeanSquaredError(), tf.keras.metrics.MeanAbsoluteError(), tf.keras.metrics.MeanAbsolutePercentageError()])
             history = model.fit(
                 window.train,
                 validation_data=window.val,
                 epochs=10,
                 callbacks=[early_stopping]
             )
+            # test_results = model.evaluate(window.test, return_dict=True)
+            # val_results = model.evaluate(window.val, return_dict=True)
             
+            # test_predictions = model.predict(window.test)
+            # test_labels = next(iter(window.test))[1].numpy()  # Get true labels
+            
+            # mse = mean_squared_error(test_labels.flatten(), test_predictions.flatten())
+            # mae = mean_absolute_error(test_labels.flatten(), test_predictions.flatten())
+            # mape = mean_absolute_percentage_error(test_labels.flatten(), test_predictions.flatten())
+            
+            # performance[name] = {'mae': mae, 'mse': mse, 'mape': mape}
+            # val_performance[name] = val_results
             performance[name] = model.evaluate(window.test, return_dict = True)
             val_performance[name] = model.evaluate(window.val, return_dict = True)
             print(f'{name} Model Test Loss: {performance[name]}')
@@ -276,6 +289,23 @@ def print_model_summaries(models, all_losses):
         print(f'\nModel with the lowest MAE: {min_loss_model} - MAE: {min_result}')
         print(f'Model with the highest MAE: {max_loss_model} - MAE: {max_result}')
 
+def write_results_to_csv(all_losses, filename='model_results.csv'):
+    fieldnames = ['Configuration', 'Model', 'MAE', 'MSE', 'MAPE']
+    
+    with open(filename, mode='w', newline='') as file:
+        writer = csv.DictWriter(file, fieldnames=fieldnames)
+        writer.writeheader()
+        
+        for config_name, (test_results, _) in all_losses.items():
+            for model_name, metrics in test_results.items():
+                writer.writerow({
+                    'Configuration': config_name,
+                    'Model': model_name,
+                    'MAE': metrics['mean_absolute_error'],
+                    'MSE': metrics['mean_squared_error'],
+                    'MAPE': metrics['mean_absolute_percentage_error']
+                })
+
 # Initialize a dictionary to hold losses across configurations
 all_losses = {}
 
@@ -285,6 +315,18 @@ for config in configurations:
     CONV_WIDTH = 3
     # Define models in a dictionary
     label_width = config['output_steps']
+    n = len(df)
+    df_copy = df.copy()
+    label = config['features']
+    features_to_drop = [col for col in label_features if col != label]
+
+    # Drop the features
+    df_copy = df_copy.drop(columns=features_to_drop)
+    train_df = df_copy.iloc[0:int(n*0.7)]
+    val_df = df_copy.iloc[int(n*0.7):int(n*0.9)]
+    test_df = df_copy.iloc[int(n*0.9):]
+    num_features = df_copy.shape[1]
+    # make way to drop other features besides one in config
     models = {
         'Baseline': tf.keras.Sequential([
             tf.keras.layers.Lambda(lambda x: x[:, -label_width:, 1])  # predicts last swc_5 value
@@ -353,6 +395,8 @@ for config in configurations:
 
 # Call the function to print the summaries
 print_model_summaries(models, all_losses)
+write_results_to_csv(all_losses, filename='model_results.csv')
+
 for config_name, losses in all_losses.items():
     print(f"\nPlotting performance for configuration: {config_name}")
     
