@@ -21,6 +21,14 @@ def load_and_preprocess_data(station, target_col, train_split, val_split, window
 
     # Filter columns to keep only the target column and non-SWC columns
     cur_df = cur_df[[col for col in cur_df.columns if not col.startswith('SWC') or col == target_col]]
+    # Retain only columns that either start with 'SWC' or match the target column
+    cur_df = cur_df[[col for col in cur_df.columns if not col.startswith('SWC') or col == target_col]]
+
+    # Define columns to drop, including 'T_10', 'T_20', 'T_50', 'latitude', and 'longitude'
+    columns_to_drop = [col for col in cur_df.columns if col in ["T_10", "T_20", "T_50", "Latitude", "Longitude"]]
+
+    # Drop the specified columns from the DataFrame
+    cur_df.drop(columns=columns_to_drop, inplace=True)
 
     # Preprocess data
     X_train, y_train, X_val, y_val, X_test, y_test = preprocess_data(

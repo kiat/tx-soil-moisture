@@ -11,6 +11,26 @@ from sklearn.preprocessing import MinMaxScaler
 from statsmodels.tsa.arima.model import ARIMA
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 
+
+
+
+
+
+output_dir = 'results'
+
+# Function to save model and history
+def save_model_and_history(model, history, model_name, output_dir='results'):
+    # Save the model in the specified directory
+    model_save_path = os.path.join(output_dir, f"{model_name}.h5")
+    model.save(model_save_path)
+    print(f"Model saved to {model_save_path}")
+
+    # Save the training history to a CSV file
+    history_df = pd.DataFrame(history.history)
+    history_file_path = os.path.join(output_dir, f"{model_name}_history.csv")
+    history_df.to_csv(history_file_path, index=False)
+    print(f"Training history saved to {history_file_path}")
+
 # Parameters - more generalized
 TRAIN_SPLIT = 0.7
 VAL_SPLIT = 0.2
@@ -20,11 +40,11 @@ PAT = 3
 MAX_EPOCHS = 25
 BATCH_SIZE = 128
 
-stations = range(1, 7)  # Stations 1 to 6
-target_columns = ["SWC_5", "SWC_10", "SWC_20", "SWC_50"]
+# stations = range(1, 7)  # Stations 1 to 6
+# target_columns = ["SWC_5", "SWC_10", "SWC_20", "SWC_50"]
 
-# stations = [1]
-# target_columns = [ "SWC_5"]
+stations = [1]
+target_columns = [ "SWC_5"]
 
 # Loop through each station and each target column
 for station in stations:
@@ -39,12 +59,12 @@ for station in stations:
         )
         # Define models
         models = {
-            "biLSTM": bi_lstm_model,
-            "linear": linear_model,
-            "autoregressive": create_autoregressive_model(X_train.shape[-2:]),
-            "dense": dense_model,
-            "RNN": rnn_model,
-            "CNN": create_cnn_model(X_train.shape[-2:])
+            # "biLSTM": bi_lstm_model,
+            # "linear": linear_model,
+            # "autoregressive": create_autoregressive_model(X_train.shape[-2:]),
+            # "dense": dense_model,
+            # "RNN": rnn_model,
+            # "CNN": create_cnn_model(X_train.shape[-2:])
         }
 
         # # ARIMA Model
@@ -64,6 +84,7 @@ for station in stations:
                 patience=PAT, max_epochs=MAX_EPOCHS
             )
             model_histories[model_name] = history
+            save_model_and_history(model, history, f"{model_name}_Station{station}_{target_col}", output_dir)
 
         # Collect model results
         model_results = {}
@@ -80,36 +101,35 @@ for station in stations:
 
 
         # Convert the dictionary to a DataFrame with the desired column order
-        output_dir = 'results'
-        results_df = pd.DataFrame.from_dict(model_results, orient='index')
-        results_df = results_df[["MAE", "MAPE", "MSE", "R2"]]  # Ensure the correct column order
+        # results_df = pd.DataFrame.from_dict(model_results, orient='index')
+        # results_df = results_df[["MAE", "MAPE", "MSE"]]  # Ensure the correct column order
 
-        # Define the output file path
-        output_file = os.path.join(output_dir, f"results_Station{station}_{target_col}.csv")
+        # # Define the output file path
+        # output_file = os.path.join(output_dir, f"results_Station{station}_{target_col}.csv")
 
-        # Save the DataFrame to a CSV file with a header
-        results_df.to_csv(output_file, index_label='Model')
+        # # Save the DataFrame to a CSV file with a header
+        # results_df.to_csv(output_file, index_label='Model')
 
         # Feature names (excluding the target column)
         feature_names = [col for col in cur_df.columns if col != target_col]
 
         # Run feature importance analysis for RNN model
-        run_feature_importance_for_model(
-            cur_df, feature_names, target_col, rnn_model, "RNN",
-            TRAIN_SPLIT, VAL_SPLIT, WINDOW_SIZE, SHIFT_AMT, BATCH_SIZE, PAT, MAX_EPOCHS
-        )
+        # run_feature_importance_for_model(
+        #     cur_df, feature_names, target_col, rnn_model, "RNN",
+        #     TRAIN_SPLIT, VAL_SPLIT, WINDOW_SIZE, SHIFT_AMT, BATCH_SIZE, PAT, MAX_EPOCHS
+        # )
 
         # Run feature importance analysis for Dense model
-        run_feature_importance_for_model(
-            cur_df, feature_names, target_col, dense_model, "Dense",
-            TRAIN_SPLIT, VAL_SPLIT, WINDOW_SIZE, SHIFT_AMT, BATCH_SIZE, PAT, MAX_EPOCHS
-        )
+        # run_feature_importance_for_model(
+        #     cur_df, feature_names, target_col, dense_model, "Dense",
+        #     TRAIN_SPLIT, VAL_SPLIT, WINDOW_SIZE, SHIFT_AMT, BATCH_SIZE, PAT, MAX_EPOCHS
+        # )
 
         # Run feature addition analysis for RNN model
-        run_feature_addition_for_model(
-            cur_df, feature_names, target_col, rnn_model, "RNN",
-            TRAIN_SPLIT, VAL_SPLIT, WINDOW_SIZE, SHIFT_AMT, BATCH_SIZE, PAT, MAX_EPOCHS
-        )
+        # run_feature_addition_for_model(
+        #     cur_df, feature_names, target_col, rnn_model, "RNN",
+        #     TRAIN_SPLIT, VAL_SPLIT, WINDOW_SIZE, SHIFT_AMT, BATCH_SIZE, PAT, MAX_EPOCHS
+        # )
 
         # Run feature addition analysis for Dense model
         run_feature_addition_for_model(
