@@ -78,6 +78,18 @@ for station in stations:
         print(f"Comparing models for Station {station}, Target: {target_col}")
         compare_models(model_results)
 
+
+        # Convert the dictionary to a DataFrame with the desired column order
+        output_dir = 'results'
+        results_df = pd.DataFrame.from_dict(model_results, orient='index')
+        results_df = results_df[["MAE", "MAPE", "MSE", "R2"]]  # Ensure the correct column order
+
+        # Define the output file path
+        output_file = os.path.join(output_dir, f"results_Station{station}_{target_col}.csv")
+
+        # Save the DataFrame to a CSV file with a header
+        results_df.to_csv(output_file, index_label='Model')
+
         # Feature names (excluding the target column)
         feature_names = [col for col in cur_df.columns if col != target_col]
 
