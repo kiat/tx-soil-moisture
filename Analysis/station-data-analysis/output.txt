@@ -1,552 +1,151 @@
-Running station4_swc_5.py...
-/Users/ayaannazir/Desktop/Research/tx-soil-moisture/Analysis/station-data-analysis/station4_swc_5.py:19: UserWarning: Creating a tensor from a list of numpy.ndarrays is extremely slow. Please consider converting the list to a single numpy.ndarray with numpy.array() before converting to a tensor. (Triggered internally at /private/var/folders/nz/j6p8yfhx1mv_0grj5xl4650h0000gp/T/abs_1aidzjezue/croot/pytorch_1687856425340/work/torch/csrc/utils/tensor_new.cpp:248.)
-  return torch.FloatTensor(sequences), torch.FloatTensor(targets)
-Starting RNN feature importance calculation...
-RNN Base Performance:
-MSE: 0.1316
-MAE: 0.3183
-MAE Percentage: 86.50%
-RNN feature importance calculation completed.
-RNN Feature Importance (MSE):
-Srad: 0.0200
-Tair: -0.0405
-Ppt: -0.0529
-Winddirection: -0.0540
-T_5: -0.0821
-RH: -0.0916
-Windspeed: -0.0962
-Starting CNN feature importance calculation...
-CNN Base Performance:
-MSE: 0.0326
-MAE: 0.1575
-MAE Percentage: 42.81%
-CNN feature importance calculation completed.
-CNN Feature Importance (MSE):
-Srad: 0.0279
-T_5: 0.0057
-Tair: 0.0023
-RH: 0.0013
-Winddirection: 0.0001
-Windspeed: -0.0026
-Ppt: -0.0039
-
-RNN Feature Importance for SWC_5 (MSE):
-      Feature  Importance
-         Srad    0.019973
-         Tair   -0.040525
-          Ppt   -0.052858
-Winddirection   -0.053987
-          T_5   -0.082093
-           RH   -0.091629
-    Windspeed   -0.096242
-
-RNN Feature Importance for SWC_5 (MAE):
-      Feature  Importance
-         Srad    0.027733
-         Tair   -0.060881
-          Ppt   -0.079038
-Winddirection   -0.080633
-          T_5   -0.128555
-           RH   -0.144671
-    Windspeed   -0.153627
-
-RNN Feature Importance for SWC_5 (MAE Percentage):
-      Feature  Importance
-         Srad    7.537740
-         Tair  -16.547263
-          Ppt  -21.482521
-Winddirection  -21.915931
-          T_5  -34.940964
-           RH  -39.321449
-    Windspeed  -41.755629
-
-CNN Feature Importance for SWC_5 (MSE):
-      Feature  Importance
-         Srad    0.027908
-          T_5    0.005713
-         Tair    0.002276
-           RH    0.001313
-Winddirection    0.000106
-    Windspeed   -0.002611
-          Ppt   -0.003928
-
-CNN Feature Importance for SWC_5 (MAE):
-      Feature  Importance
-         Srad    0.035257
-           RH    0.001371
-Winddirection   -0.000455
-          T_5   -0.001247
-    Windspeed   -0.007274
-         Tair   -0.007564
-          Ppt   -0.009410
-
-CNN Feature Importance for SWC_5 (MAE Percentage):
-      Feature  Importance
-         Srad    9.582883
-           RH    0.372666
-Winddirection   -0.123787
-          T_5   -0.338909
-    Windspeed   -1.977116
-         Tair   -2.055955
-          Ppt   -2.557647
-
-Comparison of Feature Importance Across Models for SWC_5 Prediction (Normalized and Adjusted):
-               RNN (MSE)  CNN (MSE)  Custom AR  RNN (MAE)  CNN (MAE)  RNN (MAE %)  CNN (MAE %)
-Ppt             0.373305   0.000001   0.942320   0.411275   0.000001     0.411275     0.000001
-T_5             0.121748   0.302834   0.000001   0.138247   0.182755     0.138247     0.182755
-Tair            0.479426   0.194854   0.293113   0.511395   0.041324     0.511395     0.041324
-RH              0.039688   0.164622   0.790952   0.049381   0.241366     0.049381     0.241366
-Windspeed       0.000001   0.041369   0.938097   0.000001   0.047818     0.000001     0.047818
-Winddirection   0.363594   0.126708   0.999999   0.402482   0.200474     0.402482     0.200474
-Srad            0.999999   0.999999   0.969587   0.999999   0.999999     0.999999     0.999999
-
-Model Performance Summary:
-RNN - MSE: 0.1316, MAE: 0.3183, MAE Percentage: 86.50%
-CNN - MSE: 0.0326, MAE: 0.1575, MAE Percentage: 42.81%
-Saving results to CSV file...
-Results saved to station4_swc_5_results.csv
-Finished running station4_swc_5.py
-
-==================================================
-
-Running station4_swc_10.py...
-/Users/ayaannazir/Desktop/Research/tx-soil-moisture/Analysis/station-data-analysis/station4_swc_10.py:19: UserWarning: Creating a tensor from a list of numpy.ndarrays is extremely slow. Please consider converting the list to a single numpy.ndarray with numpy.array() before converting to a tensor. (Triggered internally at /private/var/folders/nz/j6p8yfhx1mv_0grj5xl4650h0000gp/T/abs_1aidzjezue/croot/pytorch_1687856425340/work/torch/csrc/utils/tensor_new.cpp:248.)
-  return torch.FloatTensor(sequences), torch.FloatTensor(targets)
-Starting RNN feature importance calculation...
-RNN Base Performance:
-MSE: 0.0586
-MAE: 0.2110
-MAE Percentage: 55.19%
-RNN feature importance calculation completed.
-RNN Feature Importance (MSE):
-Ppt: 0.1122
-RH: 0.0910
-Windspeed: 0.0833
-Tair: 0.0366
-Winddirection: 0.0349
-Srad: -0.0016
-T_5: -0.0093
-Starting CNN feature importance calculation...
-CNN Base Performance:
-MSE: 0.0309
-MAE: 0.1537
-MAE Percentage: 40.18%
-CNN feature importance calculation completed.
-CNN Feature Importance (MSE):
-RH: 0.0231
-T_5: 0.0083
-Srad: 0.0080
-Winddirection: 0.0049
-Windspeed: 0.0046
-Tair: 0.0030
-Ppt: -0.0038
-
-RNN Feature Importance for SWC_10 (MSE):
-      Feature  Importance
-          Ppt    0.112195
-           RH    0.090962
-    Windspeed    0.083262
-         Tair    0.036608
-Winddirection    0.034941
-         Srad   -0.001616
-          T_5   -0.009294
-
-RNN Feature Importance for SWC_10 (MAE):
-      Feature  Importance
-          Ppt    0.150044
-           RH    0.123776
-    Windspeed    0.113537
-         Tair    0.053595
-Winddirection    0.050954
-         Srad   -0.002566
-          T_5   -0.015692
-
-RNN Feature Importance for SWC_10 (MAE Percentage):
-      Feature  Importance
-          Ppt   39.241213
-           RH   32.371134
-    Windspeed   29.693371
-         Tair   14.016765
-Winddirection   13.325977
-         Srad   -0.671184
-          T_5   -4.103863
-
-CNN Feature Importance for SWC_10 (MSE):
-      Feature  Importance
-           RH    0.023130
-          T_5    0.008265
-         Srad    0.008045
-Winddirection    0.004888
-    Windspeed    0.004597
-         Tair    0.002975
-          Ppt   -0.003754
-
-CNN Feature Importance for SWC_10 (MAE):
-      Feature  Importance
-           RH    0.027983
-          T_5    0.022011
-         Srad    0.015887
-Winddirection    0.014276
-    Windspeed    0.013763
-         Tair    0.007048
-          Ppt   -0.010921
-
-CNN Feature Importance for SWC_10 (MAE Percentage):
-      Feature  Importance
-           RH    7.318550
-          T_5    5.756602
-         Srad    4.154930
-Winddirection    3.733647
-    Windspeed    3.599536
-         Tair    1.843372
-          Ppt   -2.856195
-
-Comparison of Feature Importance Across Models for SWC_10 Prediction (Normalized and Adjusted):
-               RNN (MSE)  CNN (MSE)  Custom AR  RNN (MAE)  CNN (MAE)  RNN (MAE %)  CNN (MAE %)
-Ppt             0.999999   0.000001   0.957388   0.999999   0.000001     0.999999     0.000001
-T_5             0.000001   0.447069   0.000001   0.000001   0.846488     0.000001     0.846488
-Tair            0.377827   0.250285   0.294807   0.418055   0.461885     0.418055     0.461885
-RH              0.825224   0.999999   0.796565   0.841503   0.999999     0.841503     0.999999
-Windspeed       0.761843   0.310630   0.962394   0.779725   0.634486     0.779725     0.634486
-Winddirection   0.364104   0.321470   0.999999   0.402118   0.647667     0.402118     0.647667
-Srad            0.063202   0.438866   0.969236   0.079194   0.689071     0.079194     0.689071
-
-Model Performance Summary:
-RNN - MSE: 0.0586, MAE: 0.2110, MAE Percentage: 55.19%
-CNN - MSE: 0.0309, MAE: 0.1537, MAE Percentage: 40.18%
-Saving results to CSV file...
-Results saved to station4_swc_20_results.csv
-Finished running station4_swc_10.py
-
-==================================================
-
-Running station4_swc_20.py...
-/Users/ayaannazir/Desktop/Research/tx-soil-moisture/Analysis/station-data-analysis/station4_swc_20.py:19: UserWarning: Creating a tensor from a list of numpy.ndarrays is extremely slow. Please consider converting the list to a single numpy.ndarray with numpy.array() before converting to a tensor. (Triggered internally at /private/var/folders/nz/j6p8yfhx1mv_0grj5xl4650h0000gp/T/abs_1aidzjezue/croot/pytorch_1687856425340/work/torch/csrc/utils/tensor_new.cpp:248.)
-  return torch.FloatTensor(sequences), torch.FloatTensor(targets)
-Starting RNN feature importance calculation...
-RNN Base Performance:
-MSE: 0.0503
-MAE: 0.1888
-MAE Percentage: 61.01%
-RNN feature importance calculation completed.
-RNN Feature Importance (MSE):
-Ppt: 0.0260
-T_5: 0.0190
-Windspeed: 0.0153
-Tair: 0.0066
-RH: -0.0010
-Srad: -0.0065
-Winddirection: -0.0150
-Starting CNN feature importance calculation...
-CNN Base Performance:
-MSE: 0.0290
-MAE: 0.1462
-MAE Percentage: 47.24%
-CNN feature importance calculation completed.
-CNN Feature Importance (MSE):
-Tair: 0.0083
-RH: 0.0062
-Ppt: 0.0003
-Srad: -0.0004
-T_5: -0.0009
-Winddirection: -0.0033
-Windspeed: -0.0050
-
-RNN Feature Importance for SWC_20 (MSE):
-      Feature  Importance
-          Ppt    0.026015
-          T_5    0.018995
-    Windspeed    0.015298
-         Tair    0.006625
-           RH   -0.000978
-         Srad   -0.006509
-Winddirection   -0.015001
-
-RNN Feature Importance for SWC_20 (MAE):
-      Feature  Importance
-          Ppt    0.041594
-          T_5    0.030411
-    Windspeed    0.025075
-         Tair    0.010989
-           RH   -0.000989
-         Srad   -0.010664
-Winddirection   -0.027299
-
-RNN Feature Importance for SWC_20 (MAE Percentage):
-      Feature  Importance
-          Ppt   13.439536
-          T_5    9.826225
-    Windspeed    8.102047
-         Tair    3.550732
-           RH   -0.319690
-         Srad   -3.445750
-Winddirection   -8.820468
-
-CNN Feature Importance for SWC_20 (MSE):
-      Feature  Importance
-         Tair    0.008350
-           RH    0.006241
-          Ppt    0.000324
-         Srad   -0.000362
-          T_5   -0.000870
-Winddirection   -0.003322
-    Windspeed   -0.004985
-
-CNN Feature Importance for SWC_20 (MAE):
-      Feature  Importance
-           RH    0.015359
-         Tair    0.010344
-          Ppt    0.001504
-         Srad   -0.000999
-          T_5   -0.001706
-Winddirection   -0.008954
-    Windspeed   -0.014032
-
-CNN Feature Importance for SWC_20 (MAE Percentage):
-      Feature  Importance
-           RH    4.962769
-         Tair    3.342262
-          Ppt    0.485942
-         Srad   -0.322655
-          T_5   -0.551316
-Winddirection   -2.893072
-    Windspeed   -4.533961
-
-Comparison of Feature Importance Across Models for 20 Prediction (Normalized and Adjusted):
-               RNN (MSE)  CNN (MSE)  Custom AR  RNN (MAE)  CNN (MAE)  RNN (MAE %)  CNN (MAE %)
-Ppt             0.999999   0.398114   0.943051   0.999999   0.528593     0.999999     0.528593
-T_5             0.828846   0.308604   0.000001   0.837677   0.419370     0.837677     0.419370
-Tair            0.527251   0.999999   0.283986   0.555759   0.829361     0.555759     0.829362
-RH              0.341875   0.841867   0.699979   0.381886   0.999999     0.381886     0.999999
-Windspeed       0.738709   0.000001   0.972952   0.760220   0.000001     0.760221     0.000001
-Winddirection   0.000001   0.124729   0.999999   0.000001   0.172785     0.000001     0.172785
-Srad            0.207028   0.346695   0.973203   0.241452   0.443448     0.241452     0.443448
-
-Model Performance Summary:
-RNN - MSE: 0.0503, MAE: 0.1888, MAE Percentage: 61.01%
-CNN - MSE: 0.0290, MAE: 0.1462, MAE Percentage: 47.24%
-Saving results to CSV file...
-Results saved to station4_swc_20_results.csv
-Finished running station4_swc_20.py
-
-==================================================
-
-Running station4_swc_50.py...
-/Users/ayaannazir/Desktop/Research/tx-soil-moisture/Analysis/station-data-analysis/station4_swc_50.py:19: UserWarning: Creating a tensor from a list of numpy.ndarrays is extremely slow. Please consider converting the list to a single numpy.ndarray with numpy.array() before converting to a tensor. (Triggered internally at /private/var/folders/nz/j6p8yfhx1mv_0grj5xl4650h0000gp/T/abs_1aidzjezue/croot/pytorch_1687856425340/work/torch/csrc/utils/tensor_new.cpp:248.)
-  return torch.FloatTensor(sequences), torch.FloatTensor(targets)
-Starting RNN feature importance calculation...
-RNN Base Performance:
-MSE: 0.1929
-MAE: 0.4249
-MAE Percentage: 99.72%
-RNN feature importance calculation completed.
-RNN Feature Importance (MSE):
-Winddirection: 0.0055
-T_5: -0.0908
-Ppt: -0.1141
-Windspeed: -0.1401
-Tair: -0.1510
-Srad: -0.1699
-RH: -0.1760
-Starting CNN feature importance calculation...
-CNN Base Performance:
-MSE: 0.0141
-MAE: 0.0976
-MAE Percentage: 22.92%
-CNN feature importance calculation completed.
-CNN Feature Importance (MSE):
-Winddirection: 0.0234
-Srad: 0.0057
-RH: 0.0034
-Ppt: 0.0034
-Windspeed: -0.0001
-Tair: -0.0010
-T_5: -0.0017
-
-RNN Feature Importance for SWC_50 (MSE):
-      Feature  Importance
-Winddirection    0.005461
-          T_5   -0.090757
-          Ppt   -0.114100
-    Windspeed   -0.140063
-         Tair   -0.151003
-         Srad   -0.169874
-           RH   -0.176007
-
-RNN Feature Importance for SWC_50 (MAE):
-      Feature  Importance
-Winddirection    0.005970
-          T_5   -0.125967
-          Ppt   -0.170358
-    Windspeed   -0.219782
-         Tair   -0.248031
-         Srad   -0.303585
-           RH   -0.320715
-
-RNN Feature Importance for SWC_50 (MAE Percentage):
-      Feature  Importance
-Winddirection    1.401293
-          T_5  -29.566026
-          Ppt  -39.984953
-    Windspeed  -51.585385
-         Tair  -58.215699
-         Srad  -71.254873
-           RH  -75.275521
-
-CNN Feature Importance for SWC_50 (MSE):
-      Feature  Importance
-Winddirection    0.023426
-         Srad    0.005733
-           RH    0.003387
-          Ppt    0.003385
-    Windspeed   -0.000149
-         Tair   -0.001013
-          T_5   -0.001703
-
-CNN Feature Importance for SWC_50 (MAE):
-      Feature  Importance
-Winddirection    0.062340
-         Srad    0.016265
-          Ppt    0.010878
-           RH    0.009125
-    Windspeed   -0.000611
-         Tair   -0.003415
-          T_5   -0.007033
-
-CNN Feature Importance for SWC_50 (MAE Percentage):
-      Feature  Importance
-Winddirection   14.631970
-         Srad    3.817658
-          Ppt    2.553298
-           RH    2.141829
-    Windspeed   -0.143452
-         Tair   -0.801559
-          T_5   -1.650646
-
-Comparison of Feature Importance Across Models for SWC_50 Prediction (Normalized and Adjusted):
-               RNN (MSE)  CNN (MSE)  Custom AR  RNN (MAE)  CNN (MAE)  RNN (MAE %)  CNN (MAE %)
-Ppt             0.341148   0.202453   0.711779   0.460251   0.258186     0.460251     0.258186
-T_5             0.469782   0.000001   0.000001   0.596132   0.000001     0.596132     0.000001
-Tair            0.137790   0.027436   0.392833   0.222490   0.052147     0.222490     0.052147
-RH              0.000001   0.202547   0.119967   0.000001   0.232915     0.000001     0.232916
-Windspeed       0.198074   0.061823   0.980934   0.308961   0.092565     0.308961     0.092565
-Winddirection   0.999999   0.999999   0.970236   0.999999   0.999999     0.999999     0.999999
-Srad            0.033797   0.295911   0.999999   0.052436   0.335837     0.052436     0.335837
-
-Model Performance Summary:
-RNN - MSE: 0.1929, MAE: 0.4249, MAE Percentage: 99.72%
-CNN - MSE: 0.0141, MAE: 0.0976, MAE Percentage: 22.92%
-Saving results to CSV file...
-Results saved to station4_swc_50_results.csv
-Finished running station4_swc_50.py
-
 ==================================================
 
 Running station5_swc_5.py...
-/Users/ayaannazir/Desktop/Research/tx-soil-moisture/Analysis/station-data-analysis/station5_swc_5.py:19: UserWarning: Creating a tensor from a list of numpy.ndarrays is extremely slow. Please consider converting the list to a single numpy.ndarray with numpy.array() before converting to a tensor. (Triggered internally at /private/var/folders/nz/j6p8yfhx1mv_0grj5xl4650h0000gp/T/abs_1aidzjezue/croot/pytorch_1687856425340/work/torch/csrc/utils/tensor_new.cpp:248.)
+/Users/ayaannazir/Desktop/Research/tx-soil-moisture/Analysis/station-data-analysis/station5_swc_5.py:20: UserWarning: Creating a tensor from a list of numpy.ndarrays is extremely slow. Please consider converting the list to a single numpy.ndarray with numpy.array() before converting to a tensor. (Triggered internally at /private/var/folders/nz/j6p8yfhx1mv_0grj5xl4650h0000gp/T/abs_1aidzjezue/croot/pytorch_1687856425340/work/torch/csrc/utils/tensor_new.cpp:248.)
   return torch.FloatTensor(sequences), torch.FloatTensor(targets)
 Starting RNN feature importance calculation...
 RNN Base Performance:
-MSE: 0.0842
-MAE: 0.2296
-MAE Percentage: 63.67%
+MSE: 0.8517
+MAE: 0.8007
+MAE Percentage: 80.23%
+R²: 0.1451
 RNN feature importance calculation completed.
 RNN Feature Importance (MSE):
-Tair: 0.0569
-Ppt: 0.0363
-T_5: 0.0225
-Windspeed: -0.0034
-RH: -0.0071
-Srad: -0.0146
-Winddirection: -0.0348
+RH: 0.0753
+T_5: 0.0630
+Windspeed: 0.0394
+Ppt: 0.0391
+Srad: 0.0198
+Tair: 0.0133
+Winddirection: -0.0102
 Starting CNN feature importance calculation...
 CNN Base Performance:
-MSE: 0.0330
-MAE: 0.1540
-MAE Percentage: 42.71%
+MSE: 0.5138
+MAE: 0.5684
+MAE Percentage: 56.95%
+R²: 0.4842
 CNN feature importance calculation completed.
 CNN Feature Importance (MSE):
-RH: 0.0191
-T_5: 0.0120
-Srad: 0.0116
-Windspeed: 0.0107
-Ppt: 0.0097
-Winddirection: 0.0093
-Tair: 0.0070
+T_5: 0.0951
+Ppt: 0.0884
+Tair: 0.0450
+RH: 0.0331
+Windspeed: 0.0260
+Winddirection: 0.0145
+Srad: 0.0005
+Starting Custom AR importance calculation...
+
+Custom AR Results for SWC_5:
+Ppt:
+  MSE: 0.9674
+  MAE: 0.8655
+  MAE Percentage: 86.55%
+  R²: 0.0327
+T_5:
+  MSE: 0.6983
+  MAE: 0.6670
+  MAE Percentage: 66.70%
+  R²: 0.3018
+Tair:
+  MSE: 0.8528
+  MAE: 0.7729
+  MAE Percentage: 77.28%
+  R²: 0.1473
+RH:
+  MSE: 0.9924
+  MAE: 0.8721
+  MAE Percentage: 87.20%
+  R²: 0.0077
+Windspeed:
+  MSE: 0.9940
+  MAE: 0.8735
+  MAE Percentage: 87.34%
+  R²: 0.0060
+Winddirection:
+  MSE: 0.9956
+  MAE: 0.8749
+  MAE Percentage: 87.49%
+  R²: 0.0044
+Srad:
+  MSE: 0.9895
+  MAE: 0.8684
+  MAE Percentage: 86.84%
+  R²: 0.0105
 
 RNN Feature Importance for SWC_5 (MSE):
       Feature  Importance
-         Tair    0.056859
-          Ppt    0.036299
-          T_5    0.022504
-    Windspeed   -0.003376
-           RH   -0.007125
-         Srad   -0.014587
-Winddirection   -0.034794
+           RH    0.075314
+          T_5    0.062977
+    Windspeed    0.039424
+          Ppt    0.039109
+         Srad    0.019801
+         Tair    0.013267
+Winddirection   -0.010188
 
 RNN Feature Importance for SWC_5 (MAE):
       Feature  Importance
-         Tair    0.081479
-          Ppt    0.048662
-          T_5    0.029246
-    Windspeed   -0.004807
-           RH   -0.005452
-         Srad   -0.016759
-Winddirection   -0.036048
+           RH    0.040478
+          T_5    0.035969
+          Ppt    0.021959
+    Windspeed    0.021688
+         Srad    0.009678
+         Tair    0.009132
+Winddirection   -0.004676
 
 RNN Feature Importance for SWC_5 (MAE Percentage):
       Feature  Importance
-         Tair   22.597009
-          Ppt   13.495702
-          T_5    8.110940
-    Windspeed   -1.333129
-           RH   -1.512164
-         Srad   -4.647750
-Winddirection   -9.997302
+           RH    4.055458
+          T_5    3.603727
+          Ppt    2.200115
+    Windspeed    2.172959
+         Srad    0.969630
+         Tair    0.914943
+Winddirection   -0.468463
 
 CNN Feature Importance for SWC_5 (MSE):
       Feature  Importance
-           RH    0.019084
-          T_5    0.012034
-         Srad    0.011618
-    Windspeed    0.010659
-          Ppt    0.009729
-Winddirection    0.009253
-         Tair    0.007014
+          T_5    0.095131
+          Ppt    0.088418
+         Tair    0.044978
+           RH    0.033054
+    Windspeed    0.025993
+Winddirection    0.014492
+         Srad    0.000506
 
 CNN Feature Importance for SWC_5 (MAE):
       Feature  Importance
-           RH    0.044540
-          T_5    0.029253
-    Windspeed    0.027734
-          Ppt    0.025501
-         Srad    0.024469
-Winddirection    0.024291
-         Tair    0.019896
+          Ppt    0.049756
+          T_5    0.039251
+         Tair    0.013484
+           RH    0.006493
+    Windspeed    0.005527
+Winddirection   -0.002807
+         Srad   -0.007916
 
 CNN Feature Importance for SWC_5 (MAE Percentage):
       Feature  Importance
-           RH   12.352514
-          T_5    8.112890
-    Windspeed    7.691491
-          Ppt    7.072413
-         Srad    6.786096
-Winddirection    6.736600
-         Tair    5.517867
+          Ppt    4.984999
+          T_5    3.932559
+         Tair    1.350957
+           RH    0.650555
+    Windspeed    0.553727
+Winddirection   -0.281209
+         Srad   -0.793117
 
-Comparison of Feature Importance Across Models for SWC_5 Prediction (Normalized and Adjusted):
-               RNN (MSE)  CNN (MSE)  Custom AR  RNN (MAE)  CNN (MAE)  RNN (MAE %)  CNN (MAE %)
-Ppt             0.775676   0.224938   0.905072   0.720770   0.227451     0.720770     0.227451
-T_5             0.625161   0.415917   0.000001   0.555565   0.379686     0.555565     0.379686
-Tair            0.999999   0.000001   0.519576   0.999999   0.000001     0.999999     0.000001
-RH              0.301885   0.999999   0.989070   0.260326   0.999999     0.260326     0.999999
-Windspeed       0.342796   0.302029   0.994711   0.265819   0.318030     0.265819     0.318030
-Winddirection   0.000001   0.185554   0.999999   0.000001   0.178317     0.000001     0.178317
-Srad            0.220470   0.381453   0.979511   0.164125   0.185559     0.164125     0.185559
+Comparison of Feature Importance Across Models for SWC_5 Prediction (Normalized):
+               RNN (MSE)  CNN (MSE)  Custom AR (MSE)  RNN (MAE)  CNN (MAE)  Custom AR (MAE)  RNN (MAE %)  CNN (MAE %)  Custom AR (MAE %)  RNN (R²)  CNN (R²)  Custom AR (R²)
+Ppt             0.576558   0.929062         0.905080   0.589882   1.000000         0.954831     0.589882     1.000000           0.954831  0.576558  0.929063        0.094920
+T_5             0.855705   1.000000         0.000000   0.900145   0.817858         0.000000     0.900146     0.817858           0.000000  0.855705  1.000000        1.000000
+Tair            0.274318   0.469978         0.519581   0.305798   0.371068         0.509222     0.305798     0.371068           0.509222  0.274317  0.469978        0.480419
+RH              1.000000   0.343971         0.989079   1.000000   0.249851         0.986372     1.000000     0.249852           0.986372  1.000000  0.343971        0.010921
+Windspeed       0.580243   0.269344         0.994720   0.583878   0.233094         0.993129     0.583879     0.233094           0.993129  0.580243  0.269344        0.005280
+Winddirection   0.000000   0.147802         1.000000   0.000000   0.088594         1.000000     0.000000     0.088594           1.000000  0.000000  0.147801        0.000000
+Srad            0.350741   0.000000         0.979520   0.317887   0.000000         0.968963     0.317886     0.000000           0.968963  0.350741  0.000000        0.020480
 
 Model Performance Summary:
-RNN - MSE: 0.0842, MAE: 0.2296, MAE Percentage: 63.67%
-CNN - MSE: 0.0330, MAE: 0.1540, MAE Percentage: 42.71%
+RNN - MSE: 0.8517, MAE: 0.8007, MAE Percentage: 80.23%, R²: 0.1451
+CNN - MSE: 0.5138, MAE: 0.5684, MAE Percentage: 56.95%, R²: 0.4842
+Custom AR - MSE: 0.9271, MAE: 0.8277, MAE Percentage: 82.77%, R²: 0.0729
 Saving results to CSV file...
 Results saved to station5_swc_5_results.csv
 Finished running station5_swc_5.py
@@ -554,334 +153,457 @@ Finished running station5_swc_5.py
 ==================================================
 
 Running station5_swc_10.py...
-/Users/ayaannazir/Desktop/Research/tx-soil-moisture/Analysis/station-data-analysis/station5_swc_10.py:19: UserWarning: Creating a tensor from a list of numpy.ndarrays is extremely slow. Please consider converting the list to a single numpy.ndarray with numpy.array() before converting to a tensor. (Triggered internally at /private/var/folders/nz/j6p8yfhx1mv_0grj5xl4650h0000gp/T/abs_1aidzjezue/croot/pytorch_1687856425340/work/torch/csrc/utils/tensor_new.cpp:248.)
+/Users/ayaannazir/Desktop/Research/tx-soil-moisture/Analysis/station-data-analysis/station5_swc_10.py:20: UserWarning: Creating a tensor from a list of numpy.ndarrays is extremely slow. Please consider converting the list to a single numpy.ndarray with numpy.array() before converting to a tensor. (Triggered internally at /private/var/folders/nz/j6p8yfhx1mv_0grj5xl4650h0000gp/T/abs_1aidzjezue/croot/pytorch_1687856425340/work/torch/csrc/utils/tensor_new.cpp:248.)
   return torch.FloatTensor(sequences), torch.FloatTensor(targets)
 Starting RNN feature importance calculation...
 RNN Base Performance:
-MSE: 0.0563
-MAE: 0.2040
-MAE Percentage: 55.68%
+MSE: 0.8972
+MAE: 0.8324
+MAE Percentage: 83.41%
+R²: 0.0992
 RNN feature importance calculation completed.
 RNN Feature Importance (MSE):
-Windspeed: 0.0820
-Tair: 0.0657
-Srad: 0.0282
-RH: 0.0022
-Winddirection: 0.0012
-Ppt: -0.0036
-T_5: -0.0071
+T_10: 0.0971
+Srad: 0.0403
+Winddirection: -0.0181
+Ppt: -0.0274
+Windspeed: -0.0388
+Tair: -0.0450
+RH: -0.0463
 Starting CNN feature importance calculation...
 CNN Base Performance:
-MSE: 0.0421
-MAE: 0.1815
-MAE Percentage: 49.53%
+MSE: 0.5213
+MAE: 0.5521
+MAE Percentage: 55.32%
+R²: 0.4766
 CNN feature importance calculation completed.
 CNN Feature Importance (MSE):
-Tair: 0.0297
-RH: 0.0115
-T_5: 0.0033
-Srad: 0.0023
-Winddirection: 0.0020
-Ppt: -0.0002
-Windspeed: -0.0060
+T_10: 0.0825
+Ppt: 0.0377
+Tair: 0.0317
+RH: 0.0074
+Winddirection: 0.0053
+Srad: -0.0028
+Windspeed: -0.0080
+Starting Custom AR importance calculation...
+
+Custom AR Results for SWC_10:
+Ppt:
+  MSE: 0.9735
+  MAE: 0.8730
+  MAE Percentage: 87.30%
+  R²: 0.0266
+T_10:
+  MSE: 0.6761
+  MAE: 0.6472
+  MAE Percentage: 64.72%
+  R²: 0.3239
+Tair:
+  MSE: 0.8458
+  MAE: 0.7686
+  MAE Percentage: 76.86%
+  R²: 0.1543
+RH:
+  MSE: 0.9884
+  MAE: 0.8737
+  MAE Percentage: 87.37%
+  R²: 0.0117
+Windspeed:
+  MSE: 0.9963
+  MAE: 0.8805
+  MAE Percentage: 88.05%
+  R²: 0.0038
+Winddirection:
+  MSE: 0.9955
+  MAE: 0.8800
+  MAE Percentage: 88.00%
+  R²: 0.0045
+Srad:
+  MSE: 0.9881
+  MAE: 0.8723
+  MAE Percentage: 87.23%
+  R²: 0.0120
 
 RNN Feature Importance for SWC_10 (MSE):
       Feature  Importance
-    Windspeed    0.082019
-         Tair    0.065664
-         Srad    0.028229
-           RH    0.002163
-Winddirection    0.001213
-          Ppt   -0.003564
-          T_5   -0.007142
+         T_10    0.097112
+         Srad    0.040315
+Winddirection   -0.018120
+          Ppt   -0.027424
+    Windspeed   -0.038821
+         Tair   -0.045037
+           RH   -0.046259
 
 RNN Feature Importance for SWC_10 (MAE):
       Feature  Importance
-    Windspeed    0.100542
-         Tair    0.082076
-         Srad    0.032088
-           RH    0.001770
-Winddirection    0.000315
-          Ppt   -0.002502
-          T_5   -0.010499
+         T_10    0.044206
+         Srad    0.019186
+Winddirection   -0.013206
+          Ppt   -0.018283
+    Windspeed   -0.023080
+         Tair   -0.025997
+           RH   -0.028542
 
 RNN Feature Importance for SWC_10 (MAE Percentage):
       Feature  Importance
-    Windspeed   27.435422
-         Tair   22.396457
-         Srad    8.756053
-           RH    0.483000
-Winddirection    0.085843
-          Ppt   -0.682735
-          T_5   -2.864838
+         T_10    4.429460
+         Srad    1.922423
+Winddirection   -1.323217
+          Ppt   -1.831925
+    Windspeed   -2.312648
+         Tair   -2.604890
+           RH   -2.859890
 
 CNN Feature Importance for SWC_10 (MSE):
       Feature  Importance
-         Tair    0.029679
-           RH    0.011490
-          T_5    0.003304
-         Srad    0.002318
-Winddirection    0.002012
-          Ppt   -0.000208
-    Windspeed   -0.006044
+         T_10    0.082539
+          Ppt    0.037710
+         Tair    0.031673
+           RH    0.007429
+Winddirection    0.005250
+         Srad   -0.002839
+    Windspeed   -0.008011
 
 CNN Feature Importance for SWC_10 (MAE):
       Feature  Importance
-         Tair    0.036280
-           RH    0.021704
-          T_5    0.006474
-Winddirection    0.003909
-         Srad    0.000728
-          Ppt   -0.002750
-    Windspeed   -0.016913
+         T_10    0.058292
+          Ppt    0.028060
+         Tair    0.017073
+           RH    0.012105
+         Srad    0.008162
+Winddirection    0.006215
+    Windspeed    0.001173
 
 CNN Feature Importance for SWC_10 (MAE Percentage):
       Feature  Importance
-         Tair    9.899855
-           RH    5.922568
-          T_5    1.766491
-Winddirection    1.066756
-         Srad    0.198531
-          Ppt   -0.750518
-    Windspeed   -4.615173
+         T_10    5.840904
+          Ppt    2.811623
+         Tair    1.710731
+           RH    1.212972
+         Srad    0.817889
+Winddirection    0.622737
+    Windspeed    0.117564
 
-Comparison of Feature Importance Across Models for SWC_10 Prediction (Normalized and Adjusted):
-               RNN (MSE)  CNN (MSE)  Custom AR  RNN (MAE)  CNN (MAE)  RNN (MAE %)  CNN (MAE %)
-Ppt             0.040121   0.163361   0.924527   0.072016   0.266252     0.072016     0.266252
-T_5             0.000001   0.261686   0.000001   0.000001   0.439659     0.000001     0.439659
-Tair            0.816568   0.999999   0.501505   0.833699   0.999999     0.833699     0.999999
-RH              0.104355   0.490840   0.973802   0.110489   0.725988     0.110489     0.725988
-Windspeed       0.999999   0.000001   0.999999   0.999999   0.000001     0.999999     0.000001
-Winddirection   0.093702   0.225498   0.997445   0.097381   0.391452     0.097381     0.391451
-Srad            0.396701   0.234073   0.972823   0.383524   0.331636     0.383524     0.331636
+Comparison of Feature Importance Across Models for SWC_10 Prediction (Normalized):
+               RNN (MSE)  CNN (MSE)  Custom AR (MSE)  RNN (MAE)  CNN (MAE)  Custom AR (MAE)  RNN (MAE %)  CNN (MAE %)  Custom AR (MAE %)  RNN (R²)  CNN (R²)  Custom AR (R²)
+Ppt             0.131372   0.504926         0.928827   0.141023   0.470715         0.967791     0.141023     0.470714           0.967791  0.131372  0.504926        0.071173
+T_10            1.000000   1.000000         0.000000   1.000000   1.000000         0.000000     1.000000     1.000000           0.000000  1.000000  1.000000        1.000000
+Tair            0.008523   0.438253         0.529905   0.034983   0.278363         0.520465     0.034983     0.278363           0.520465  0.008524  0.438252        0.470095
+RH              0.000000   0.170509         0.975294   0.000000   0.191393         0.970868     0.000000     0.191393           0.970868  0.000000  0.170509        0.024706
+Windspeed       0.051879   0.000000         1.000000   0.075074   0.000000         1.000000     0.075074     0.000000           1.000000  0.051880  0.000000        0.000000
+Winddirection   0.196270   0.146448         0.997567   0.210811   0.088265         0.997673     0.210811     0.088265           0.997673  0.196271  0.146447        0.002433
+Srad            0.603847   0.057117         0.974372   0.656068   0.122363         0.964958     0.656069     0.122363           0.964958  0.603847  0.057116        0.025628
 
 Model Performance Summary:
-RNN - MSE: 0.0563, MAE: 0.2040, MAE Percentage: 55.68%
-CNN - MSE: 0.0421, MAE: 0.1815, MAE Percentage: 49.53%
+RNN - MSE: 0.8972, MAE: 0.8324, MAE Percentage: 83.41%, R²: 0.0992
+CNN - MSE: 0.5213, MAE: 0.5521, MAE Percentage: 55.32%, R²: 0.4766
+Custom AR - MSE: 0.9234, MAE: 0.8279, MAE Percentage: 82.79%, R²: 0.0767
 Saving results to CSV file...
-Results saved to station5_swc_20_results.csv
+Results saved to station5_SWC_10_results.csv
 Finished running station5_swc_10.py
 
 ==================================================
 
 Running station5_swc_20.py...
-/Users/ayaannazir/Desktop/Research/tx-soil-moisture/Analysis/station-data-analysis/station5_swc_20.py:19: UserWarning: Creating a tensor from a list of numpy.ndarrays is extremely slow. Please consider converting the list to a single numpy.ndarray with numpy.array() before converting to a tensor. (Triggered internally at /private/var/folders/nz/j6p8yfhx1mv_0grj5xl4650h0000gp/T/abs_1aidzjezue/croot/pytorch_1687856425340/work/torch/csrc/utils/tensor_new.cpp:248.)
+/Users/ayaannazir/Desktop/Research/tx-soil-moisture/Analysis/station-data-analysis/station5_swc_20.py:20: UserWarning: Creating a tensor from a list of numpy.ndarrays is extremely slow. Please consider converting the list to a single numpy.ndarray with numpy.array() before converting to a tensor. (Triggered internally at /private/var/folders/nz/j6p8yfhx1mv_0grj5xl4650h0000gp/T/abs_1aidzjezue/croot/pytorch_1687856425340/work/torch/csrc/utils/tensor_new.cpp:248.)
   return torch.FloatTensor(sequences), torch.FloatTensor(targets)
 Starting RNN feature importance calculation...
 RNN Base Performance:
-MSE: 0.0536
-MAE: 0.1888
-MAE Percentage: 51.81%
+MSE: 0.9442
+MAE: 0.8241
+MAE Percentage: 82.47%
+R²: 0.0545
 RNN feature importance calculation completed.
 RNN Feature Importance (MSE):
-RH: 0.1165
-Windspeed: 0.0877
-T_5: 0.0507
-Tair: 0.0202
-Ppt: 0.0062
-Srad: 0.0062
-Winddirection: -0.0011
+Tair: -0.0097
+T_20: -0.0112
+Winddirection: -0.0188
+Srad: -0.0216
+Windspeed: -0.0392
+RH: -0.0692
+Ppt: -0.0710
 Starting CNN feature importance calculation...
 CNN Base Performance:
-MSE: 0.0366
-MAE: 0.1626
-MAE Percentage: 44.62%
+MSE: 0.6307
+MAE: 0.6215
+MAE Percentage: 62.20%
+R²: 0.3685
 CNN feature importance calculation completed.
 CNN Feature Importance (MSE):
-RH: 0.0011
-Windspeed: 0.0007
-Ppt: -0.0012
-Tair: -0.0015
-Srad: -0.0059
-T_5: -0.0063
-Winddirection: -0.0066
+Tair: 0.0831
+T_20: 0.0353
+RH: 0.0308
+Ppt: 0.0218
+Windspeed: 0.0048
+Srad: -0.0065
+Winddirection: -0.0372
+Starting Custom AR importance calculation...
+
+Custom AR Results for SWC_20:
+Ppt:
+  MSE: 0.9875
+  MAE: 0.8652
+  MAE Percentage: 86.52%
+  R²: 0.0125
+T_20:
+  MSE: 0.9116
+  MAE: 0.7657
+  MAE Percentage: 76.56%
+  R²: 0.0884
+Tair:
+  MSE: 0.8306
+  MAE: 0.7477
+  MAE Percentage: 74.76%
+  R²: 0.1695
+RH:
+  MSE: 0.9923
+  MAE: 0.8593
+  MAE Percentage: 85.93%
+  R²: 0.0078
+Windspeed:
+  MSE: 0.9955
+  MAE: 0.8664
+  MAE Percentage: 86.64%
+  R²: 0.0046
+Winddirection:
+  MSE: 0.9964
+  MAE: 0.8676
+  MAE Percentage: 86.76%
+  R²: 0.0037
+Srad:
+  MSE: 0.9833
+  MAE: 0.8556
+  MAE Percentage: 85.56%
+  R²: 0.0168
 
 RNN Feature Importance for SWC_20 (MSE):
       Feature  Importance
-           RH    0.116483
-    Windspeed    0.087677
-          T_5    0.050713
-         Tair    0.020224
-          Ppt    0.006227
-         Srad    0.006175
-Winddirection   -0.001138
+         Tair   -0.009674
+         T_20   -0.011171
+Winddirection   -0.018773
+         Srad   -0.021595
+    Windspeed   -0.039233
+           RH   -0.069157
+          Ppt   -0.071034
 
 RNN Feature Importance for SWC_20 (MAE):
       Feature  Importance
-           RH    0.184595
-    Windspeed    0.141179
-          T_5    0.089453
-         Tair    0.031000
-         Srad    0.009528
-          Ppt    0.008395
-Winddirection   -0.002505
+         T_20    0.010876
+Winddirection    0.002302
+         Tair   -0.001604
+         Srad   -0.002516
+    Windspeed   -0.012231
+           RH   -0.033748
+          Ppt   -0.039307
 
 RNN Feature Importance for SWC_20 (MAE Percentage):
       Feature  Importance
-           RH   50.645614
-    Windspeed   38.734031
-          T_5   24.542236
-         Tair    8.505088
-         Srad    2.614099
-          Ppt    2.303213
-Winddirection   -0.687402
+         T_20    1.088369
+Winddirection    0.230408
+         Tair   -0.160515
+         Srad   -0.251752
+    Windspeed   -1.223940
+           RH   -3.377140
+          Ppt   -3.933442
 
 CNN Feature Importance for SWC_20 (MSE):
       Feature  Importance
-           RH    0.001060
-    Windspeed    0.000658
-          Ppt   -0.001179
-         Tair   -0.001494
-         Srad   -0.005872
-          T_5   -0.006274
-Winddirection   -0.006630
+         Tair    0.083131
+         T_20    0.035284
+           RH    0.030836
+          Ppt    0.021773
+    Windspeed    0.004754
+         Srad   -0.006512
+Winddirection   -0.037232
 
 CNN Feature Importance for SWC_20 (MAE):
       Feature  Importance
-           RH    0.007145
-          Ppt    0.000026
-    Windspeed   -0.002495
-         Tair   -0.006950
-          T_5   -0.011680
-         Srad   -0.012092
-Winddirection   -0.014877
+           RH    0.027631
+         Tair    0.016026
+         T_20    0.003098
+          Ppt    0.000621
+    Windspeed   -0.001385
+         Srad   -0.017764
+Winddirection   -0.024566
 
 CNN Feature Importance for SWC_20 (MAE Percentage):
       Feature  Importance
-           RH    1.960397
-          Ppt    0.007242
-    Windspeed   -0.684628
-         Tair   -1.906833
-          T_5   -3.204399
-         Srad   -3.317657
-Winddirection   -4.081684
+           RH    2.764958
+         Tair    1.603752
+         T_20    0.310016
+          Ppt    0.062102
+    Windspeed   -0.138563
+         Srad   -1.777613
+Winddirection   -2.458340
 
-Comparison of Feature Importance Across Models for 20 Prediction (Normalized and Adjusted):
-               RNN (MSE)  CNN (MSE)  Custom AR  RNN (MAE)  CNN (MAE)  RNN (MAE %)  CNN (MAE %)
-Ppt             0.062621   0.708926   0.972630   0.058259   0.676741     0.058259     0.676741
-T_5             0.440830   0.046328   0.000001   0.491489   0.145196     0.491490     0.145196
-Tair            0.181615   0.667924   0.488004   0.179076   0.359951     0.179076     0.359951
-RH              0.999999   0.999999   0.987294   0.999999   0.999999     0.999999     0.999999
-Windspeed       0.755101   0.947783   0.997132   0.767955   0.562233     0.767955     0.562233
-Winddirection   0.000001   0.000001   0.999999   0.000001   0.000001     0.000001     0.000001
-Srad            0.062180   0.098676   0.959470   0.064315   0.126451     0.064315     0.126451
+Comparison of Feature Importance Across Models for SWC_20 Prediction (Normalized):
+               RNN (MSE)  CNN (MSE)  Custom AR (MSE)  RNN (MAE)  CNN (MAE)  Custom AR (MAE)  RNN (MAE %)  CNN (MAE %)  Custom AR (MAE %)  RNN (R²)  CNN (R²)  Custom AR (R²)
+Ppt             0.000000   0.490229         0.946514   0.000000   0.482538         0.979954     0.000000     0.482538           0.979954  0.000000  0.490229        0.053486
+T_20            0.975606   0.602481         0.488821   1.000000   0.530002         0.150079     1.000000     0.530001           0.150079  0.975606  0.602481        0.511179
+Tair            1.000000   1.000000         0.000000   0.751308   0.777686         0.000000     0.751308     0.777687           0.000000  1.000000  1.000000        1.000000
+RH              0.030598   0.565525         0.975154   0.110777   1.000000         0.930878     0.110777     1.000000           0.930878  0.030597  0.565525        0.024846
+Windspeed       0.518266   0.348824         0.994368   0.539547   0.444120         0.989938     0.539547     0.444121           0.989938  0.518266  0.348825        0.005632
+Winddirection   0.851713   0.000000         1.000000   0.829153   0.000000         1.000000     0.829153     0.000000           1.000000  0.851713  0.000000        0.000000
+Srad            0.805728   0.255229         0.920812   0.733140   0.130324         0.900028     0.733140     0.130325           0.900028  0.805727  0.255229        0.079188
 
 Model Performance Summary:
-RNN - MSE: 0.0536, MAE: 0.1888, MAE Percentage: 51.81%
-CNN - MSE: 0.0366, MAE: 0.1626, MAE Percentage: 44.62%
+RNN - MSE: 0.9442, MAE: 0.8241, MAE Percentage: 82.47%, R²: 0.0545
+CNN - MSE: 0.6307, MAE: 0.6215, MAE Percentage: 62.20%, R²: 0.3685
+Custom AR - MSE: 0.9567, MAE: 0.8325, MAE Percentage: 83.25%, R²: 0.0433
 Saving results to CSV file...
-Results saved to station5_swc_20_results.csv
+Results saved to station5_SWC_20_results.csv
 Finished running station5_swc_20.py
 
 ==================================================
 
 Running station5_swc_50.py...
-/Users/ayaannazir/Desktop/Research/tx-soil-moisture/Analysis/station-data-analysis/station5_swc_50.py:19: UserWarning: Creating a tensor from a list of numpy.ndarrays is extremely slow. Please consider converting the list to a single numpy.ndarray with numpy.array() before converting to a tensor. (Triggered internally at /private/var/folders/nz/j6p8yfhx1mv_0grj5xl4650h0000gp/T/abs_1aidzjezue/croot/pytorch_1687856425340/work/torch/csrc/utils/tensor_new.cpp:248.)
+/Users/ayaannazir/Desktop/Research/tx-soil-moisture/Analysis/station-data-analysis/station5_swc_50.py:20: UserWarning: Creating a tensor from a list of numpy.ndarrays is extremely slow. Please consider converting the list to a single numpy.ndarray with numpy.array() before converting to a tensor. (Triggered internally at /private/var/folders/nz/j6p8yfhx1mv_0grj5xl4650h0000gp/T/abs_1aidzjezue/croot/pytorch_1687856425340/work/torch/csrc/utils/tensor_new.cpp:248.)
   return torch.FloatTensor(sequences), torch.FloatTensor(targets)
 Starting RNN feature importance calculation...
 RNN Base Performance:
-MSE: 0.0432
-MAE: 0.1768
-MAE Percentage: 72.93%
+MSE: 0.9983
+MAE: 0.8645
+MAE Percentage: 86.27%
+R²: 0.0058
 RNN feature importance calculation completed.
 RNN Feature Importance (MSE):
-Srad: 0.0577
-RH: 0.0164
-Ppt: 0.0046
-Tair: 0.0040
-Winddirection: 0.0021
-Windspeed: 0.0018
-T_5: 0.0005
+T_50: -0.0063
+RH: -0.0305
+Srad: -0.0526
+Ppt: -0.0994
+Windspeed: -0.1019
+Tair: -0.1036
+Winddirection: -0.1121
 Starting CNN feature importance calculation...
 CNN Base Performance:
-MSE: 0.0378
-MAE: 0.1592
-MAE Percentage: 65.67%
+MSE: 0.6712
+MAE: 0.5937
+MAE Percentage: 59.25%
+R²: 0.3315
 CNN feature importance calculation completed.
 CNN Feature Importance (MSE):
-Ppt: 0.0095
-T_5: 0.0062
-RH: 0.0050
-Windspeed: 0.0048
-Winddirection: 0.0013
-Srad: -0.0007
-Tair: -0.0016
+T_50: 0.1428
+RH: 0.0141
+Srad: -0.0022
+Tair: -0.0053
+Winddirection: -0.0125
+Windspeed: -0.0127
+Ppt: -0.0150
+Starting Custom AR importance calculation...
+
+Custom AR Results for SWC_50:
+Ppt:
+  MSE: 0.9997
+  MAE: 0.8637
+  MAE Percentage: 86.37%
+  R²: 0.0004
+T_50:
+  MSE: 0.7210
+  MAE: 0.6169
+  MAE Percentage: 61.69%
+  R²: 0.2790
+Tair:
+  MSE: 0.9127
+  MAE: 0.7891
+  MAE Percentage: 78.91%
+  R²: 0.0874
+RH:
+  MSE: 0.9999
+  MAE: 0.8631
+  MAE Percentage: 86.31%
+  R²: 0.0001
+Windspeed:
+  MSE: 1.0000
+  MAE: 0.8638
+  MAE Percentage: 86.37%
+  R²: 0.0001
+Winddirection:
+  MSE: 0.9969
+  MAE: 0.8618
+  MAE Percentage: 86.17%
+  R²: 0.0031
+Srad:
+  MSE: 0.9956
+  MAE: 0.8593
+  MAE Percentage: 85.92%
+  R²: 0.0045
 
 RNN Feature Importance for SWC_50 (MSE):
       Feature  Importance
-         Srad    0.057683
-           RH    0.016411
-          Ppt    0.004568
-         Tair    0.004004
-Winddirection    0.002142
-    Windspeed    0.001779
-          T_5    0.000543
+         T_50   -0.006267
+           RH   -0.030522
+         Srad   -0.052576
+          Ppt   -0.099442
+    Windspeed   -0.101863
+         Tair   -0.103596
+Winddirection   -0.112127
 
 RNN Feature Importance for SWC_50 (MAE):
       Feature  Importance
-         Srad    0.065077
-Winddirection    0.008353
-          Ppt    0.004594
-           RH    0.004407
-          T_5    0.004138
-         Tair    0.002274
-    Windspeed    0.000082
+         T_50   -0.004124
+           RH   -0.017645
+         Srad   -0.029961
+    Windspeed   -0.061853
+          Ppt   -0.062631
+Winddirection   -0.066926
+         Tair   -0.070408
 
 RNN Feature Importance for SWC_50 (MAE Percentage):
       Feature  Importance
-         Srad   26.846075
-Winddirection    3.445750
-          Ppt    1.894987
-           RH    1.818150
-          T_5    1.707113
-         Tair    0.937957
-    Windspeed    0.033784
+         T_50   -0.411528
+           RH   -1.760852
+         Srad   -2.989882
+    Windspeed   -6.172550
+          Ppt   -6.250209
+Winddirection   -6.678820
+         Tair   -7.026345
 
 CNN Feature Importance for SWC_50 (MSE):
       Feature  Importance
-          Ppt    0.009520
-          T_5    0.006186
-           RH    0.005033
-    Windspeed    0.004772
-Winddirection    0.001282
-         Srad   -0.000691
-         Tair   -0.001636
+         T_50    0.142831
+           RH    0.014067
+         Srad   -0.002217
+         Tair   -0.005300
+Winddirection   -0.012494
+    Windspeed   -0.012743
+          Ppt   -0.014962
 
 CNN Feature Importance for SWC_50 (MAE):
       Feature  Importance
-          Ppt    0.017261
-          T_5    0.016686
-    Windspeed    0.013300
-           RH    0.011870
-Winddirection    0.008393
-         Srad   -0.000436
-         Tair   -0.005034
+         T_50    0.111392
+           RH    0.019114
+         Srad   -0.006761
+         Tair   -0.008817
+          Ppt   -0.010152
+Winddirection   -0.012175
+    Windspeed   -0.024037
 
 CNN Feature Importance for SWC_50 (MAE Percentage):
       Feature  Importance
-          Ppt    7.120830
-          T_5    6.883544
-    Windspeed    5.486441
-           RH    4.896569
-Winddirection    3.462523
-         Srad   -0.179780
-         Tair   -2.076715
+         T_50   11.116254
+           RH    1.907462
+         Srad   -0.674736
+         Tair   -0.879842
+          Ppt   -1.013064
+Winddirection   -1.214951
+    Windspeed   -2.398747
 
-Comparison of Feature Importance Across Models for SWC_50 Prediction (Normalized and Adjusted):
-               RNN (MSE)  CNN (MSE)  Custom AR  RNN (MAE)  CNN (MAE)  RNN (MAE %)  CNN (MAE %)
-Ppt             0.070436   0.999999   0.998452   0.069416   0.999999     0.069416     0.999999
-T_5             0.000001   0.701163   0.000001   0.062409   0.974201     0.062409     0.974201
-Tair            0.060560   0.000001   0.497893   0.033722   0.000001     0.033722     0.000001
-RH              0.277696   0.597798   0.999906   0.066550   0.758168     0.066550     0.758168
-Windspeed       0.021621   0.574439   0.999999   0.000001   0.822301     0.000001     0.822302
-Winddirection   0.027976   0.261619   0.982471   0.127254   0.602251     0.127254     0.602252
-Srad            0.999999   0.084743   0.974673   0.999999   0.206244     0.999999     0.206244
+Comparison of Feature Importance Across Models for SWC_50 Prediction (Normalized):
+               RNN (MSE)  CNN (MSE)  Custom AR (MSE)  RNN (MAE)  CNN (MAE)  Custom AR (MAE)  RNN (MAE %)  CNN (MAE %)  Custom AR (MAE %)  RNN (R²)  CNN (R²)  Custom AR (R²)
+Ppt             0.119825   0.000000         0.999035   0.117333   0.102529         0.999792     0.117333     0.102529           0.999792  0.119824  0.000000        0.000965
+T_50            1.000000   1.000000         0.000000   1.000000   1.000000         0.000000     1.000000     1.000000           0.000000  1.000000  1.000000        1.000000
+Tair            0.080589   0.061233         0.687082   0.000000   0.112387         0.697710     0.000000     0.112387           0.697710  0.080589  0.061233        0.312918
+RH              0.770877   0.183968         0.999942   0.796015   0.318624         0.997423     0.796015     0.318624           0.997423  0.770876  0.183969        0.000058
+Windspeed       0.096960   0.014064         1.000000   0.129074   0.000000         1.000000     0.129073     0.000000           1.000000  0.096959  0.014064        0.000000
+Winddirection   0.000000   0.015640         0.989028   0.052538   0.087591         0.991915     0.052537     0.087591           0.991915  0.000000  0.015640        0.010972
+Srad            0.562539   0.080772         0.984216   0.610216   0.127563         0.981817     0.610215     0.127563           0.981817  0.562539  0.080772        0.015784
 
 Model Performance Summary:
-RNN - MSE: 0.0432, MAE: 0.1768, MAE Percentage: 72.93%
-CNN - MSE: 0.0378, MAE: 0.1592, MAE Percentage: 65.67%
+RNN - MSE: 0.9983, MAE: 0.8645, MAE Percentage: 86.27%, R²: 0.0058
+CNN - MSE: 0.6712, MAE: 0.5937, MAE Percentage: 59.25%, R²: 0.3315
+Custom AR - MSE: 0.9465, MAE: 0.8168, MAE Percentage: 81.68%, R²: 0.0535
 Saving results to CSV file...
-Results saved to station5_swc_50_results.csv
+Results saved to station5_SWC_50_results.csv
 Finished running station5_swc_50.py
 
 ==================================================

@@ -13,13 +13,11 @@ scripts = [
     "station5_swc_50.py"
 ]
 
-# Directory containing the scripts
-script_dir = "Analysis/station-data-analysis"
 
 # Run each script
 for script in scripts:
     print(f"Running {script}...")
-    script_path = os.path.join(script_dir, script)
+    script_path = os.path.join(script)
     try:
         subprocess.run(["python", script_path], check=True)
         print(f"Finished running {script}")
