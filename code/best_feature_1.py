@@ -7,6 +7,12 @@ from tensorflow.keras.callbacks import EarlyStopping
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 from statsmodels.tsa.arima.model import ARIMA
 from sklearn.preprocessing import StandardScaler
+import os, csv
+
+model_dir = './saved_models/'
+
+if not os.path.exists(model_dir):
+    os.makedirs(model_dir)
 
 
 # Load your dataset
@@ -144,7 +150,7 @@ label_features = ['SWC_5', 'SWC_10', 'SWC_20', 'SWC_50']
 
 
 configurations = [
-        {"features": 'SWC_5', "input_steps": 48, "output_steps": 12},
+       {"features": 'SWC_5', "input_steps": 48, "output_steps": 12},
         {"features": 'SWC_10', "input_steps": 48, "output_steps": 12},
         {"features": 'SWC_20', "input_steps": 48, "output_steps": 12},
     ]
@@ -185,7 +191,7 @@ def train_and_evaluate_models(config, models, train_df, val_df, test_df):
         print(f'\nTraining {name} model for configuration: {config}')
         model.compile(loss=tf.keras.losses.MeanSquaredError(),
                 optimizer=tf.keras.optimizers.Adam(),
-                metrics=[tf.keras.metrics.MeanAbsoluteError()])
+                metrics=[tf.keras.metrics.MeanSquaredError(), tf.keras.metrics.MeanAbsoluteError(), tf.keras.metrics.MeanAbsolutePercentageError()])
         history = model.fit(
             window.train,
             validation_data=window.val,
@@ -242,7 +248,7 @@ def calculate_original_performance(models, config, train_df, val_df, test_df):
         # Compile and train each model using the full dataset
         model.compile(loss=tf.keras.losses.MeanSquaredError(),
                 optimizer=tf.keras.optimizers.Adam(),
-                metrics=[tf.keras.metrics.MeanAbsoluteError()])
+                metrics=[tf.keras.metrics.MeanSquaredError(), tf.keras.metrics.MeanAbsoluteError(), tf.keras.metrics.MeanAbsolutePercentageError()])
         history = model.fit(
             window.train,
             validation_data=window.val,
@@ -253,10 +259,47 @@ def calculate_original_performance(models, config, train_df, val_df, test_df):
         # Evaluate on the full test set to get the original MAE
         performance = model.evaluate(window.test, return_dict=True)
         original_performance[model_name] = performance
-
+        write_results_to_csv(config['features'], 'Baseline', model_name, performance)
         print(f"Original MAE for {model_name}: {performance['mean_absolute_error']:.4f}")
 
     return original_performance
+def write_results_to_csv(label_feature, dropped_feature, model_name, metrics, csv_filename='feature_importance_results.csv'):
+    """
+    Writes the results of a model to a CSV file.
+    
+    Parameters:
+    - label_feature (str): The label feature for the model
+    - dropped_feature (str): The feature that was dropped for the model
+    - model_name (str): The name of the model
+    - metrics (dict): Dictionary containing the metrics for the model, e.g., test MSE, test MAE, validation MSE, validation MAE
+    - csv_filename (str): The name of the CSV file to save results to (default is 'model_results.csv')
+    
+    Metrics dict format:
+    {
+        'test_mse': value,
+        'test_mae': value,
+        'val_mse': value,
+        'val_mae': value
+    }
+    """
+
+    # Ensure the metrics dictionary contains the necessary keys
+    required_keys = ['mean_absolute_error', 'mean_squared_error', 'mean_absolute_percentage_error']
+    for key in required_keys:
+        if key not in metrics:
+            raise ValueError(f"Missing required metric: {key}")
+
+    # Write results to the CSV file
+    with open(csv_filename, mode='a', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow([
+            label_feature,                # Label feature
+            dropped_feature,              # Dropped feature
+            model_name,                   # Model name
+            metrics['mean_squared_error'],          # Test MSE
+            metrics['mean_absolute_error'],          # Test MAE
+            metrics['mean_absolute_percentage_error']
+        ])
 
 def drop_feature_and_evaluate(models, config, original_mae, train_df, val_df, test_df, features, target):
     feature_importance = {}
@@ -348,7 +391,7 @@ def drop_feature_and_evaluate(models, config, original_mae, train_df, val_df, te
             # Recompile and retrain the model with the updated data (feature dropped)
             model.compile(loss=tf.keras.losses.MeanSquaredError(),
                 optimizer=tf.keras.optimizers.Adam(),
-                metrics=[tf.keras.metrics.MeanAbsoluteError()])
+                metrics=[tf.keras.metrics.MeanSquaredError(), tf.keras.metrics.MeanAbsoluteError(), tf.keras.metrics.MeanAbsolutePercentageError()])
             history = model.fit(
                 new_window.train,
                 validation_data=new_window.val,
@@ -358,11 +401,12 @@ def drop_feature_and_evaluate(models, config, original_mae, train_df, val_df, te
 
             # Evaluate the model on the test data without the dropped feature
             performance = model.evaluate(new_window.test, return_dict=True)
-
+            write_results_to_csv(config['features'], feature, model_name, performance)
             # Calculate the change in MAE
             mae_diff = performance['mean_absolute_error'] - original_mae[model_name]['mean_absolute_error']
             mae_diffs[model_name] = mae_diff
-
+            model_save_path = os.path.join(model_dir, f"{model_name}_drop_{feature}.keras")
+            model.save(model_save_path)
             print(f"Model: {model_name} - Original MAE: {original_mae[model_name]['mean_absolute_error']:.4f}, New MAE: {performance['mean_absolute_error']:.4f}, MAE Change: {mae_diff:.4f}")
 
         # Store the results of this feature drop in the feature_importance dictionary
@@ -374,7 +418,15 @@ def drop_feature_and_evaluate(models, config, original_mae, train_df, val_df, te
 
 # Initialize a dictionary to hold losses across configurations
 all_losses = {}
-
+csv_filename = 'feature_importance_results.csv'
+if not os.path.exists(csv_filename):
+    with open(csv_filename, 'w', newline='') as file:
+        writer = csv.writer(file)
+        # Write the header row
+        writer.writerow([
+            'Label Feature', 'Dropped Feature', 'Model Name', 
+            'Test MSE', 'Test MAE', 'Test MAPE'
+        ])
 # Loop through each configuration and compare models
 for config in configurations:
     print(f"\nEvaluating models for configuration: {config}")
@@ -451,7 +503,7 @@ for config in configurations:
             tf.keras.layers.Reshape([label_width, num_features])
         ]),
     }
-    
+
     # Example usage:
     print("\nDetermining feature importance...")
     # Assume 'all_features' contains the list of features in your dataset

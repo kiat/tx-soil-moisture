@@ -7,9 +7,12 @@ from tensorflow.keras.callbacks import EarlyStopping
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 from statsmodels.tsa.arima.model import ARIMA
 from sklearn.preprocessing import StandardScaler
-import csv
+import os, csv
 
+model_dir = './saved_models/'
 
+if not os.path.exists(model_dir):
+    os.makedirs(model_dir)
 # Load your dataset
 def load_data(filepath):
 
@@ -238,6 +241,8 @@ def train_and_evaluate_models(config, models, train_df, val_df, test_df):
             # val_performance[name] = val_results
             performance[name] = model.evaluate(window.test, return_dict = True)
             val_performance[name] = model.evaluate(window.val, return_dict = True)
+            model_save_path = os.path.join(model_dir, f"{name}.keras")
+            model.save(model_save_path)
             print(f'{name} Model Test Loss: {performance[name]}')
     
     min_loss_model = min(performance, key=lambda k: performance[k]['mean_absolute_error'])
@@ -397,8 +402,8 @@ for config in configurations:
 print_model_summaries(models, all_losses)
 write_results_to_csv(all_losses, filename='model_results.csv')
 
-for config_name, losses in all_losses.items():
-    print(f"\nPlotting performance for configuration: {config_name}")
+# for config_name, losses in all_losses.items():
+#     print(f"\nPlotting performance for configuration: {config_name}")
     
-    # Plot the performance for this configuration
-    plot_performance(losses[0], losses[1], title=config_name)
+#     # Plot the performance for this configuration
+#     plot_performance(losses[0], losses[1], title=config_name)
