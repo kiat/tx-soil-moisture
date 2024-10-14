@@ -328,7 +328,16 @@ def create_csv(csv_filename):
             'Station', 'Configuration', 'Model', 'MAE', 'MSE', 'MAPE'
         ])
 
-def write_results_to_csv(station, all_losses, filename='model_results.csv'):
+def create_feature_csv(csv_filename):
+    with open(csv_filename, 'w', newline='') as file:
+        writer = csv.writer(file)
+        # Write the header row
+        writer.writerow([
+            'Label Feature', 'Dropped Feature', 'Model Name', 
+            'Test MSE', 'Test MAE', 'Test MAPE'
+        ])
+
+def write_model_results_to_csv(station, all_losses, filename='model_results.csv'):
     
     with open(filename, mode='a', newline='') as file:
         writer = csv.writer(file)
@@ -344,3 +353,222 @@ def write_results_to_csv(station, all_losses, filename='model_results.csv'):
                     metrics['mean_squared_error'],
                     metrics['mean_absolute_percentage_error']
                 ])
+
+def write_feature_results_to_csv(label_feature, dropped_feature, model_name, metrics, csv_filename = 'feature_importance_results.csv'):
+    """
+    Writes the results of a model to a CSV file.
+    
+    Parameters:
+    - label_feature (str): The label feature for the model
+    - dropped_feature (str): The feature that was dropped for the model
+    - model_name (str): The name of the model
+    - metrics (dict): Dictionary containing the metrics for the model, e.g., test MSE, test MAE, validation MSE, validation MAE
+    - csv_filename (str): The name of the CSV file to save results to (default is 'model_results.csv')
+    
+    Metrics dict format:
+    {
+        'test_mse': value,
+        'test_mae': value,
+        'val_mse': value,
+        'val_mae': value
+    }
+    """
+
+    # Ensure the metrics dictionary contains the necessary keys
+    required_keys = ['mean_absolute_error', 'mean_squared_error', 'mean_absolute_percentage_error']
+    for key in required_keys:
+        if key not in metrics:
+            raise ValueError(f"Missing required metric: {key}")
+
+    # Write results to the CSV file
+    with open(csv_filename, mode='a', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow([
+            label_feature,                # Label feature
+            dropped_feature,              # Dropped feature
+            model_name,                   # Model name
+            metrics['mean_squared_error'],          # Test MSE
+            metrics['mean_absolute_error'],          # Test MAE
+            metrics['mean_absolute_percentage_error']
+        ])
+
+def calculate_original_performance(models, config, train_df, val_df, test_df):
+    original_performance = {}
+    window = create_window(
+        input_width=config['input_steps'],
+        label_width=config['output_steps'],
+        shift=config['output_steps'],
+        train_df=train_df,
+        val_df=val_df,
+        test_df=test_df,
+        label_columns=[config['features']]
+    )
+    early_stopping = EarlyStopping(monitor='val_loss', patience=3, restore_best_weights=True)
+    for model_name, model in models.items():
+        print(f"\nEvaluating original performance for model: {model_name}")
+
+        # Compile and train each model using the full dataset
+        model.compile(loss=tf.keras.losses.MeanSquaredError(),
+                optimizer=tf.keras.optimizers.Adam(),
+                metrics=[tf.keras.metrics.MeanSquaredError(), tf.keras.metrics.MeanAbsoluteError(), tf.keras.metrics.MeanAbsolutePercentageError()])
+        history = model.fit(
+            window.train,
+            validation_data=window.val,
+            epochs=10,
+            callbacks=[early_stopping]
+        )
+
+        # Evaluate on the full test set to get the original MAE
+        performance = model.evaluate(window.test, return_dict=True)
+        original_performance[model_name] = performance
+        write_feature_results_to_csv(config['features'], 'Baseline', model_name, performance)
+        print(f"Original MAE for {model_name}: {performance['mean_absolute_error']:.4f}")
+
+    return original_performance
+
+
+# def drop_feature_and_evaluate(config, original_mae, train_df, val_df, test_df, features, target, CONV_WIDTH, model_dir):
+#     feature_importance = {}
+#     early_stopping = EarlyStopping(monitor='val_loss', patience=3, restore_best_weights=True)
+#     # Iterate over all features and drop one feature at a time
+#     for feature in features:
+#         print(f"\nEvaluating the effect of dropping feature: {feature}")
+        
+#         # Drop the feature from the dataframe
+#         df_dropped = train_df.drop(columns=[feature])
+        
+#         # Update the window for training without the feature
+#         new_window = create_window(
+#             input_width=config['input_steps'],
+#             label_width=config['output_steps'],
+#             shift=config['output_steps'],
+#             train_df=df_dropped,  # Use the dataframe with the feature dropped
+#             val_df=val_df.drop(columns=[feature]),  # Similarly for validation data
+#             test_df=test_df.drop(columns=[feature]),  # Similarly for test data
+#             label_columns=[target]
+#         )
+#         label_width = config['output_steps']
+#         num_features = df_dropped.shape[1]
+#         # Initialize dictionary to store the MAE changes for each model
+#         mae_diffs = {}
+#         models = {
+#                 'Baseline': baseline(label_width, num_features),
+#                 'Multi-step Linear': linear(label_width, num_features),
+#                 'Multi-step Dense': dense(label_width, num_features),
+#                 'CNN': cnn(label_width, num_features, CONV_WIDTH),
+#                 'RNN': simple_rnn(label_width, num_features),
+#                 'LSTM': lstm(label_width, num_features),
+#                 'Autoregressive': autoregressive(label_width, num_features),
+#                 'Bi-LSTM': bi_lstm(label_width, num_features),
+#             }
+#         for model_name, model in models.items():
+#             print(f"\nRetraining model: {model_name} after dropping feature: {feature}")
+#             # Recompile and retrain the model with the updated data (feature dropped)
+#             model.compile(loss=tf.keras.losses.MeanSquaredError(),
+#                 optimizer=tf.keras.optimizers.Adam(),
+#                 metrics=[tf.keras.metrics.MeanSquaredError(), tf.keras.metrics.MeanAbsoluteError(), tf.keras.metrics.MeanAbsolutePercentageError()])
+#             history = model.fit(
+#                 new_window.train,
+#                 validation_data=new_window.val,
+#                 epochs=10,
+#                 callbacks=[early_stopping]
+#             )
+
+#             # Evaluate the model on the test data without the dropped feature
+#             performance = model.evaluate(new_window.test, return_dict=True)
+#             write_feature_results_to_csv(config['features'], feature, model_name, performance)
+#             # Calculate the change in MAE
+#             mae_diff = performance['mean_absolute_error'] - original_mae[model_name]['mean_absolute_error']
+#             mae_diffs[model_name] = mae_diff
+#             model_save_path = os.path.join(model_dir, f"{model_name}_drop_{feature}.keras")
+#             model.save(model_save_path)
+#             print(f"Model: {model_name} - Original MAE: {original_mae[model_name]['mean_absolute_error']:.4f}, New MAE: {performance['mean_absolute_error']:.4f}, MAE Change: {mae_diff:.4f}")
+
+#         # Store the results of this feature drop in the feature_importance dictionary
+#         feature_importance[feature] = mae_diffs
+
+#     return feature_importance
+
+def drop_feature_and_evaluate(config, original_performance, train_df, val_df, test_df, features, target, CONV_WIDTH, model_dir):
+    feature_importance = {}
+    early_stopping = EarlyStopping(monitor='val_loss', patience=3, restore_best_weights=True)
+
+    # Iterate over all features and drop one feature at a time
+    for feature in features:
+        print(f"\nEvaluating the effect of dropping feature: {feature}")
+        
+        # Drop the feature from the dataframe
+        df_dropped = train_df.drop(columns=[feature])
+        
+        # Update the window for training without the feature
+        new_window = create_window(
+            input_width=config['input_steps'],
+            label_width=config['output_steps'],
+            shift=config['output_steps'],
+            train_df=df_dropped,  # Use the dataframe with the feature dropped
+            val_df=val_df.drop(columns=[feature]),  # Similarly for validation data
+            test_df=test_df.drop(columns=[feature]),  # Similarly for test data
+            label_columns=[target]
+        )
+        
+        label_width = config['output_steps']
+        num_features = df_dropped.shape[1]
+        
+        # Initialize dictionary to store the performance changes for each model
+        metric_diffs = {}
+
+        models = {
+            'Baseline': baseline(label_width, num_features),
+            'Multi-step Linear': linear(label_width, num_features),
+            'Multi-step Dense': dense(label_width, num_features),
+            'CNN': cnn(label_width, num_features, CONV_WIDTH),
+            'RNN': simple_rnn(label_width, num_features),
+            'LSTM': lstm(label_width, num_features),
+            'Autoregressive': autoregressive(label_width, num_features),
+            'Bi-LSTM': bi_lstm(label_width, num_features),
+        }
+
+        for model_name, model in models.items():
+            print(f"\nRetraining model: {model_name} after dropping feature: {feature}")
+            
+            # Recompile and retrain the model with the updated data (feature dropped)
+            model.compile(loss=tf.keras.losses.MeanSquaredError(),
+                          optimizer=tf.keras.optimizers.Adam(),
+                          metrics=[tf.keras.metrics.MeanSquaredError(), 
+                                   tf.keras.metrics.MeanAbsoluteError(),
+                                   tf.keras.metrics.MeanAbsolutePercentageError()])
+            
+            history = model.fit(
+                new_window.train,
+                validation_data=new_window.val,
+                epochs=10,
+                callbacks=[early_stopping]
+            )
+
+            # Evaluate the model on the test data without the dropped feature
+            performance = model.evaluate(new_window.test, return_dict=True)
+            
+            # Calculate the change in all metrics and store them
+            metric_diff = {
+                'mean_absolute_error': performance['mean_absolute_error'] - original_performance[model_name]['mean_absolute_error'],
+                'mean_squared_error': performance['mean_squared_error'] - original_performance[model_name]['mean_squared_error'],
+                'mean_absolute_percentage_error': performance['mean_absolute_percentage_error'] - original_performance[model_name]['mean_absolute_percentage_error']
+            }
+            
+            metric_diffs[model_name] = metric_diff
+
+            model_save_path = os.path.join(model_dir, f"{model_name}_drop_{feature}.keras")
+            model.save(model_save_path)
+            
+            # Print out the changes in all metrics
+            print(f"Model: {model_name} - Original MAE: {original_performance[model_name]['mean_absolute_error']:.4f}, New MAE: {performance['mean_absolute_error']:.4f}, MAE Change: {metric_diff['mean_absolute_error']:.4f}")
+            print(f"Model: {model_name} - Original MSE: {original_performance[model_name]['mean_squared_error']:.4f}, New MSE: {performance['mean_squared_error']:.4f}, MSE Change: {metric_diff['mean_squared_error']:.4f}")
+            print(f"Model: {model_name} - Original MAPE: {original_performance[model_name]['mean_absolute_percentage_error']:.4f}, New MAPE: {performance['mean_absolute_percentage_error']:.4f}, MAPE Change: {metric_diff['mean_absolute_percentage_error']:.4f}")
+
+            # Write the performance differences to a CSV
+            write_feature_results_to_csv(config['features'], feature, model_name, metric_diff)
+
+        # Store the results of this feature drop in the feature_importance dictionary
+        feature_importance[feature] = metric_diffs
+
+    return feature_importance

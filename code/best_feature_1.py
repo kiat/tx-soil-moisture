@@ -263,6 +263,7 @@ def calculate_original_performance(models, config, train_df, val_df, test_df):
         print(f"Original MAE for {model_name}: {performance['mean_absolute_error']:.4f}")
 
     return original_performance
+
 def write_results_to_csv(label_feature, dropped_feature, model_name, metrics, csv_filename='feature_importance_results.csv'):
     """
     Writes the results of a model to a CSV file.
@@ -301,7 +302,7 @@ def write_results_to_csv(label_feature, dropped_feature, model_name, metrics, cs
             metrics['mean_absolute_percentage_error']
         ])
 
-def drop_feature_and_evaluate(models, config, original_mae, train_df, val_df, test_df, features, target):
+def drop_feature_and_evaluate(config, original_mae, train_df, val_df, test_df, features, target):
     feature_importance = {}
     early_stopping = EarlyStopping(monitor='val_loss', patience=3, restore_best_weights=True)
     num_features = df_copy.shape[1]
@@ -515,7 +516,7 @@ for config in configurations:
     original_mae = calculate_original_performance(models, config, train_df, val_df, test_df)
 
     # Call the function
-    feature_importance_results = drop_feature_and_evaluate(models, config, original_mae, train_df, val_df, test_df, all_features, target_feature)
+    feature_importance_results = drop_feature_and_evaluate(config, original_mae, train_df, val_df, test_df, all_features, target_feature)
 
     # Print the feature importance results
     for feature, importance in feature_importance_results.items():
