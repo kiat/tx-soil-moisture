@@ -12,30 +12,33 @@ def merge_datasets(merged_file, smap_file, amsr_file, output_file):
     with open(merged_file, 'r') as f:
         reader = csv.reader(f)
         headers_merged = next(reader)  # Save headers
+        sat_sm_index = headers_merged.index('Sat_SM')
+        headers_merged = headers_merged[:sat_sm_index] + headers_merged[sat_sm_index+1:]  # Remove Sat_SM from headers
         for row in reader:
             if len(row) > 0:
                 date = parse_date(row[0])
-                data[date] = row
+                # Remove Sat_SM column from data
+                data[date] = row[1:sat_sm_index+1] + row[sat_sm_index+2:]
 
-    # Read the SMAP file to get distance
-    smap_distances = {}
+    # Read the SMAP file to get SMAP soil moisture
+    smap_sm = {}
     with open(smap_file, 'r') as f:
         reader = csv.reader(f)
         next(reader)  # Skip header
         for row in reader:
             if len(row) > 0:
                 date = parse_date(row[0])
-                smap_distances[date] = row[2]  # distance is in the third column
+                smap_sm[date] = row[1]  # SMAP soil moisture is in the second column
 
-    # Read the AMSR file to get distance
-    amsr_distances = {}
+    # Read the AMSR file to get AMSR soil moisture
+    amsr_sm = {}
     with open(amsr_file, 'r') as f:
         reader = csv.reader(f)
         next(reader)  # Skip header
         for row in reader:
             if len(row) > 0:
                 date = parse_date(row[0])
-                amsr_distances[date] = row[2]  # distance is in the third column
+                amsr_sm[date] = row[1]  # AMSR soil moisture is in the second column
 
     # Ensure the output directory exists
     os.makedirs(os.path.dirname(output_file), exist_ok=True)
@@ -43,14 +46,15 @@ def merge_datasets(merged_file, smap_file, amsr_file, output_file):
     # Write the merged data to the output file
     with open(output_file, 'w', newline='') as f:
         writer = csv.writer(f)
-        # Add new headers for SMAP and AMSR distances
-        combined_headers = headers_merged + ['distance_SMAP', 'distance_AMSR']
+        # Add new headers for SMAP and AMSR soil moisture
+        combined_headers = ['Date'] + headers_merged + ['Sat_SM_SMAP', 'Sat_SM_AMSR']
         writer.writerow(combined_headers)
+        
         for date in sorted(data.keys()):
             row = data[date]
-            smap_distance = smap_distances.get(date, '')
-            amsr_distance = amsr_distances.get(date, '')
-            writer.writerow(row + [smap_distance, amsr_distance])
+            smap_sm_value = smap_sm.get(date, '')
+            amsr_sm_value = amsr_sm.get(date, '')
+            writer.writerow([date.strftime('%Y-%m-%d')] + row + [smap_sm_value, amsr_sm_value])
 
     print(f"Merged data written to {output_file}")
 

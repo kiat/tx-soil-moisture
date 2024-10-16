@@ -1,0 +1,103 @@
+import numpy as np
+import pandas as pd
+import tensorflow as tf
+from tensorflow.keras import layers
+import matplotlib.pyplot as plt
+from tensorflow.keras.callbacks import EarlyStopping
+from sklearn.metrics import mean_squared_error, mean_absolute_error
+from statsmodels.tsa.arima.model import ARIMA
+from sklearn.preprocessing import StandardScaler
+import os, csv
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+from helpers import load_data, preprocess, normalize, create_window, train_and_evaluate_models, \
+    plot_performance, print_model_summaries, write_model_results_to_csv, WindowGenerator, \
+    baseline, linear, dense, simple_rnn, cnn, lstm, autoregressive, bi_lstm, load_all_data, create_csv, \
+    calculate_original_performance, drop_feature_and_evaluate, create_feature_csv
+
+model_dir = './saved_models/'
+
+if not os.path.exists(model_dir):
+    os.makedirs(model_dir)
+
+# Load all datasets into a dictionary
+dfs = load_all_data()
+
+label_features = ['Sat_SM_SMAP', 'Sat_SM_AMSR']
+
+configurations = [
+    {"features": 'Sat_SM_SMAP', "input_steps": 24, "output_steps": 1},
+    {"features": 'Sat_SM_SMAP', "input_steps": 24, "output_steps": 6},
+    {"features": 'Sat_SM_SMAP', "input_steps": 48, "output_steps": 12},
+    {"features": 'Sat_SM_SMAP', "input_steps": 7*24, "output_steps": 24},
+    {"features": 'Sat_SM_SMAP', "input_steps": 7*24, "output_steps": 48},
+    {"features": 'Sat_SM_AMSR', "input_steps": 24, "output_steps": 1},
+    {"features": 'Sat_SM_AMSR', "input_steps": 24, "output_steps": 6},
+    {"features": 'Sat_SM_AMSR', "input_steps": 48, "output_steps": 12},
+    {"features": 'Sat_SM_AMSR', "input_steps": 7*24, "output_steps": 24},
+    {"features": 'Sat_SM_AMSR', "input_steps": 7*24, "output_steps": 48},
+]
+
+feature_configurations = [
+    {"features": 'Sat_SM_SMAP', "input_steps": 48, "output_steps": 12},
+    {"features": 'Sat_SM_AMSR', "input_steps": 48, "output_steps": 12},
+]
+
+create_csv('model_results.csv')
+create_feature_csv('feature_importance_results.csv')
+
+for station, df in dfs.items():
+    preprocess(df)
+    df = normalize(df)
+
+    # Initialize a dictionary to hold losses across configurations
+    all_losses = {}
+
+    # Loop through each configuration and compare models
+    for config in feature_configurations:
+        print(f"\nEvaluating models for configuration: {config}")
+        CONV_WIDTH = 3
+        label_width = config['output_steps']
+        n = len(df)
+        df_copy = df.copy()
+        label = config['features']
+
+        train_df = df_copy.iloc[0:int(n*0.7)]
+        val_df = df_copy.iloc[int(n*0.7):int(n*0.9)]
+        test_df = df_copy.iloc[int(n*0.9):]
+        num_features = df_copy.shape[1]
+        models = {
+            'Baseline': baseline(label_width, num_features),
+            'Multi-step Linear': linear(label_width, num_features),
+            'Multi-step Dense': dense(label_width, num_features),
+            'CNN': cnn(label_width, num_features, CONV_WIDTH),
+            'RNN': simple_rnn(label_width, num_features),
+            'LSTM': lstm(label_width, num_features),
+            'Autoregressive': autoregressive(label_width, num_features),
+            'Bi-LSTM': bi_lstm(label_width, num_features),
+        }
+
+        try:
+            # Example usage:
+            print("\nDetermining feature importance...")
+            all_features = train_df.columns.tolist()
+            target_feature = config['features']
+            all_features.remove(target_feature)
+
+            # Create a dictionary to store the original MAE values before feature dropping
+            original_mae = calculate_original_performance(models, config, train_df, val_df, test_df)
+
+            # Call the function
+            feature_importance_results = drop_feature_and_evaluate(config, original_mae, train_df, val_df, test_df, all_features, target_feature, CONV_WIDTH, model_dir)
+
+            # Print the feature importance results
+            for feature, importance in feature_importance_results.items():
+                print(f"\nFeature: {feature}")
+                for model_name, mae_diff in importance.items():
+                    print(f"Model: {model_name} - MAE Change: {mae_diff:.4f}")
+        except Exception as e:
+            print(f"An error occurred: {str(e)}")
+            # Handle the error appropriately

@@ -1,0 +1,900 @@
+Station1,RNN,Sat_SM_SMAP,mse,Ppt,-0.0000
+Station1,RNN,Sat_SM_SMAP,mse,Tair,0.0199
+Station1,RNN,Sat_SM_SMAP,mse,RH,-0.0216
+Station1,RNN,Sat_SM_SMAP,mse,Windspeed,-0.0335
+Station1,RNN,Sat_SM_SMAP,mse,Winddirection,0.0094
+Station1,RNN,Sat_SM_SMAP,mse,Srad,0.0159
+Station1,RNN,Sat_SM_SMAP,mae,Ppt,-0.0092
+Station1,RNN,Sat_SM_SMAP,mae,Tair,0.0071
+Station1,RNN,Sat_SM_SMAP,mae,RH,-0.0150
+Station1,RNN,Sat_SM_SMAP,mae,Windspeed,-0.0204
+Station1,RNN,Sat_SM_SMAP,mae,Winddirection,0.0029
+Station1,RNN,Sat_SM_SMAP,mae,Srad,0.0038
+Station1,RNN,Sat_SM_SMAP,mae_percentage,Ppt,-0.9280
+Station1,RNN,Sat_SM_SMAP,mae_percentage,Tair,0.7201
+Station1,RNN,Sat_SM_SMAP,mae_percentage,RH,-1.5157
+Station1,RNN,Sat_SM_SMAP,mae_percentage,Windspeed,-2.0652
+Station1,RNN,Sat_SM_SMAP,mae_percentage,Winddirection,0.2979
+Station1,RNN,Sat_SM_SMAP,mae_percentage,Srad,0.3844
+Station1,RNN,Sat_SM_SMAP,r2,Ppt,0.0000
+Station1,RNN,Sat_SM_SMAP,r2,Tair,-0.0204
+Station1,RNN,Sat_SM_SMAP,r2,RH,0.0222
+Station1,RNN,Sat_SM_SMAP,r2,Windspeed,0.0344
+Station1,RNN,Sat_SM_SMAP,r2,Winddirection,-0.0097
+Station1,RNN,Sat_SM_SMAP,r2,Srad,-0.0164
+Station1,RNN,Sat_SM_AMSR,mse,Ppt,-0.0178
+Station1,RNN,Sat_SM_AMSR,mse,Tair,-0.0128
+Station1,RNN,Sat_SM_AMSR,mse,RH,-0.0190
+Station1,RNN,Sat_SM_AMSR,mse,Windspeed,-0.0098
+Station1,RNN,Sat_SM_AMSR,mse,Winddirection,-0.0134
+Station1,RNN,Sat_SM_AMSR,mse,Srad,-0.0149
+Station1,RNN,Sat_SM_AMSR,mae,Ppt,-0.0149
+Station1,RNN,Sat_SM_AMSR,mae,Tair,-0.0132
+Station1,RNN,Sat_SM_AMSR,mae,RH,-0.0160
+Station1,RNN,Sat_SM_AMSR,mae,Windspeed,-0.0107
+Station1,RNN,Sat_SM_AMSR,mae,Winddirection,-0.0101
+Station1,RNN,Sat_SM_AMSR,mae,Srad,-0.0085
+Station1,RNN,Sat_SM_AMSR,mae_percentage,Ppt,-1.5604
+Station1,RNN,Sat_SM_AMSR,mae_percentage,Tair,-1.3798
+Station1,RNN,Sat_SM_AMSR,mae_percentage,RH,-1.6808
+Station1,RNN,Sat_SM_AMSR,mae_percentage,Windspeed,-1.1232
+Station1,RNN,Sat_SM_AMSR,mae_percentage,Winddirection,-1.0545
+Station1,RNN,Sat_SM_AMSR,mae_percentage,Srad,-0.8951
+Station1,RNN,Sat_SM_AMSR,r2,Ppt,0.0109
+Station1,RNN,Sat_SM_AMSR,r2,Tair,0.0054
+Station1,RNN,Sat_SM_AMSR,r2,RH,0.0122
+Station1,RNN,Sat_SM_AMSR,r2,Windspeed,0.0021
+Station1,RNN,Sat_SM_AMSR,r2,Winddirection,0.0061
+Station1,RNN,Sat_SM_AMSR,r2,Srad,0.0077
+Station1,RNN,Sat_SM_SMAP,performance,0.8722,0.7285,73.8146,0.1046
+Station1,RNN,Sat_SM_AMSR,performance,0.9189,0.6956,72.8734,0.0000
+Station1,CNN,Sat_SM_SMAP,mse,Ppt,0.1905
+Station1,CNN,Sat_SM_SMAP,mse,Tair,-0.0076
+Station1,CNN,Sat_SM_SMAP,mse,RH,0.0095
+Station1,CNN,Sat_SM_SMAP,mse,Windspeed,0.0446
+Station1,CNN,Sat_SM_SMAP,mse,Winddirection,-0.0053
+Station1,CNN,Sat_SM_SMAP,mse,Srad,0.0162
+Station1,CNN,Sat_SM_SMAP,mae,Ppt,0.0995
+Station1,CNN,Sat_SM_SMAP,mae,Tair,-0.0051
+Station1,CNN,Sat_SM_SMAP,mae,RH,0.0017
+Station1,CNN,Sat_SM_SMAP,mae,Windspeed,0.0232
+Station1,CNN,Sat_SM_SMAP,mae,Winddirection,-0.0106
+Station1,CNN,Sat_SM_SMAP,mae,Srad,0.0070
+Station1,CNN,Sat_SM_SMAP,mae_percentage,Ppt,10.0850
+Station1,CNN,Sat_SM_SMAP,mae_percentage,Tair,-0.5170
+Station1,CNN,Sat_SM_SMAP,mae_percentage,RH,0.1710
+Station1,CNN,Sat_SM_SMAP,mae_percentage,Windspeed,2.3535
+Station1,CNN,Sat_SM_SMAP,mae_percentage,Winddirection,-1.0709
+Station1,CNN,Sat_SM_SMAP,mae_percentage,Srad,0.7072
+Station1,CNN,Sat_SM_SMAP,r2,Ppt,-0.1955
+Station1,CNN,Sat_SM_SMAP,r2,Tair,0.0078
+Station1,CNN,Sat_SM_SMAP,r2,RH,-0.0097
+Station1,CNN,Sat_SM_SMAP,r2,Windspeed,-0.0458
+Station1,CNN,Sat_SM_SMAP,r2,Winddirection,0.0055
+Station1,CNN,Sat_SM_SMAP,r2,Srad,-0.0166
+Station1,CNN,Sat_SM_AMSR,mse,Ppt,0.0045
+Station1,CNN,Sat_SM_AMSR,mse,Tair,0.0154
+Station1,CNN,Sat_SM_AMSR,mse,RH,-0.0108
+Station1,CNN,Sat_SM_AMSR,mse,Windspeed,0.0060
+Station1,CNN,Sat_SM_AMSR,mse,Winddirection,0.0036
+Station1,CNN,Sat_SM_AMSR,mse,Srad,-0.0035
+Station1,CNN,Sat_SM_AMSR,mae,Ppt,0.0072
+Station1,CNN,Sat_SM_AMSR,mae,Tair,0.0051
+Station1,CNN,Sat_SM_AMSR,mae,RH,0.0070
+Station1,CNN,Sat_SM_AMSR,mae,Windspeed,0.0275
+Station1,CNN,Sat_SM_AMSR,mae,Winddirection,0.0060
+Station1,CNN,Sat_SM_AMSR,mae,Srad,0.0032
+Station1,CNN,Sat_SM_AMSR,mae_percentage,Ppt,0.7572
+Station1,CNN,Sat_SM_AMSR,mae_percentage,Tair,0.5355
+Station1,CNN,Sat_SM_AMSR,mae_percentage,RH,0.7349
+Station1,CNN,Sat_SM_AMSR,mae_percentage,Windspeed,2.8840
+Station1,CNN,Sat_SM_AMSR,mae_percentage,Winddirection,0.6302
+Station1,CNN,Sat_SM_AMSR,mae_percentage,Srad,0.3301
+Station1,CNN,Sat_SM_AMSR,r2,Ppt,-0.0049
+Station1,CNN,Sat_SM_AMSR,r2,Tair,-0.0157
+Station1,CNN,Sat_SM_AMSR,r2,RH,0.0119
+Station1,CNN,Sat_SM_AMSR,r2,Windspeed,-0.0066
+Station1,CNN,Sat_SM_AMSR,r2,Winddirection,-0.0040
+Station1,CNN,Sat_SM_AMSR,r2,Srad,0.0039
+Station1,CNN,Sat_SM_SMAP,performance,0.5973,0.5603,56.7681,0.3868
+Station1,CNN,Sat_SM_AMSR,performance,0.8967,0.6528,68.3915,0.0157
+Station1,Custom AR,Sat_SM_SMAP,mse,Ppt,0.4151
+Station1,Custom AR,Sat_SM_SMAP,mse,Tair,0.0516
+Station1,Custom AR,Sat_SM_SMAP,mse,RH,0.0837
+Station1,Custom AR,Sat_SM_SMAP,mse,Windspeed,0.0003
+Station1,Custom AR,Sat_SM_SMAP,mse,Winddirection,0.0010
+Station1,Custom AR,Sat_SM_SMAP,mse,Srad,0.0047
+Station1,Custom AR,Sat_SM_SMAP,mae,Ppt,0.2469
+Station1,Custom AR,Sat_SM_SMAP,mae,Tair,0.0393
+Station1,Custom AR,Sat_SM_SMAP,mae,RH,0.0499
+Station1,Custom AR,Sat_SM_SMAP,mae,Windspeed,0.0002
+Station1,Custom AR,Sat_SM_SMAP,mae,Winddirection,-0.0003
+Station1,Custom AR,Sat_SM_SMAP,mae,Srad,0.0051
+Station1,Custom AR,Sat_SM_SMAP,mae_percentage,Ppt,24.6887
+Station1,Custom AR,Sat_SM_SMAP,mae_percentage,Tair,3.9336
+Station1,Custom AR,Sat_SM_SMAP,mae_percentage,RH,4.9919
+Station1,Custom AR,Sat_SM_SMAP,mae_percentage,Windspeed,0.0184
+Station1,Custom AR,Sat_SM_SMAP,mae_percentage,Winddirection,-0.0308
+Station1,Custom AR,Sat_SM_SMAP,mae_percentage,Srad,0.5069
+Station1,Custom AR,Sat_SM_SMAP,r2,Ppt,0.4151
+Station1,Custom AR,Sat_SM_SMAP,r2,Tair,0.0516
+Station1,Custom AR,Sat_SM_SMAP,r2,RH,0.0837
+Station1,Custom AR,Sat_SM_SMAP,r2,Windspeed,0.0003
+Station1,Custom AR,Sat_SM_SMAP,r2,Winddirection,0.0010
+Station1,Custom AR,Sat_SM_SMAP,r2,Srad,0.0047
+Station1,Custom AR,Sat_SM_AMSR,mse,Ppt,0.0007
+Station1,Custom AR,Sat_SM_AMSR,mse,Tair,0.0644
+Station1,Custom AR,Sat_SM_AMSR,mse,RH,0.0783
+Station1,Custom AR,Sat_SM_AMSR,mse,Windspeed,0.0307
+Station1,Custom AR,Sat_SM_AMSR,mse,Winddirection,0.0024
+Station1,Custom AR,Sat_SM_AMSR,mse,Srad,0.0278
+Station1,Custom AR,Sat_SM_AMSR,mae,Ppt,0.0007
+Station1,Custom AR,Sat_SM_AMSR,mae,Tair,0.0313
+Station1,Custom AR,Sat_SM_AMSR,mae,RH,0.0222
+Station1,Custom AR,Sat_SM_AMSR,mae,Windspeed,0.0210
+Station1,Custom AR,Sat_SM_AMSR,mae,Winddirection,0.0026
+Station1,Custom AR,Sat_SM_AMSR,mae,Srad,0.0192
+Station1,Custom AR,Sat_SM_AMSR,mae_percentage,Ppt,0.0655
+Station1,Custom AR,Sat_SM_AMSR,mae_percentage,Tair,3.1337
+Station1,Custom AR,Sat_SM_AMSR,mae_percentage,RH,2.2216
+Station1,Custom AR,Sat_SM_AMSR,mae_percentage,Windspeed,2.1017
+Station1,Custom AR,Sat_SM_AMSR,mae_percentage,Winddirection,0.2553
+Station1,Custom AR,Sat_SM_AMSR,mae_percentage,Srad,1.9154
+Station1,Custom AR,Sat_SM_AMSR,r2,Ppt,0.0007
+Station1,Custom AR,Sat_SM_AMSR,r2,Tair,0.0473
+Station1,Custom AR,Sat_SM_AMSR,r2,RH,0.0473
+Station1,Custom AR,Sat_SM_AMSR,r2,Windspeed,0.0307
+Station1,Custom AR,Sat_SM_AMSR,r2,Winddirection,0.0024
+Station1,Custom AR,Sat_SM_AMSR,r2,Srad,0.0278
+Station1,Custom AR,Sat_SM_SMAP,performance,0.4436,0.4741,47.4095,0.5565
+Station1,Custom AR,Sat_SM_AMSR,performance,0.9527,0.6832,68.3234,0.0473
+Station2,RNN,Sat_SM_SMAP,mse,Ppt,-0.0048
+Station2,RNN,Sat_SM_SMAP,mse,Tair,-0.0336
+Station2,RNN,Sat_SM_SMAP,mse,RH,-0.0292
+Station2,RNN,Sat_SM_SMAP,mse,Windspeed,-0.0451
+Station2,RNN,Sat_SM_SMAP,mse,Winddirection,-0.0677
+Station2,RNN,Sat_SM_SMAP,mse,Srad,-0.0181
+Station2,RNN,Sat_SM_SMAP,mae,Ppt,-0.0005
+Station2,RNN,Sat_SM_SMAP,mae,Tair,-0.0102
+Station2,RNN,Sat_SM_SMAP,mae,RH,-0.0124
+Station2,RNN,Sat_SM_SMAP,mae,Windspeed,-0.0244
+Station2,RNN,Sat_SM_SMAP,mae,Winddirection,-0.0293
+Station2,RNN,Sat_SM_SMAP,mae,Srad,-0.0001
+Station2,RNN,Sat_SM_SMAP,mae_percentage,Ppt,-0.0511
+Station2,RNN,Sat_SM_SMAP,mae_percentage,Tair,-1.0351
+Station2,RNN,Sat_SM_SMAP,mae_percentage,RH,-1.2572
+Station2,RNN,Sat_SM_SMAP,mae_percentage,Windspeed,-2.4697
+Station2,RNN,Sat_SM_SMAP,mae_percentage,Winddirection,-2.9664
+Station2,RNN,Sat_SM_SMAP,mae_percentage,Srad,-0.0151
+Station2,RNN,Sat_SM_SMAP,r2,Ppt,0.0049
+Station2,RNN,Sat_SM_SMAP,r2,Tair,0.0345
+Station2,RNN,Sat_SM_SMAP,r2,RH,0.0300
+Station2,RNN,Sat_SM_SMAP,r2,Windspeed,0.0463
+Station2,RNN,Sat_SM_SMAP,r2,Winddirection,0.0695
+Station2,RNN,Sat_SM_SMAP,r2,Srad,0.0186
+Station2,RNN,Sat_SM_AMSR,mse,Ppt,0.0189
+Station2,RNN,Sat_SM_AMSR,mse,Tair,0.0110
+Station2,RNN,Sat_SM_AMSR,mse,RH,0.0268
+Station2,RNN,Sat_SM_AMSR,mse,Windspeed,0.0366
+Station2,RNN,Sat_SM_AMSR,mse,Winddirection,0.0150
+Station2,RNN,Sat_SM_AMSR,mse,Srad,0.0058
+Station2,RNN,Sat_SM_AMSR,mae,Ppt,0.0102
+Station2,RNN,Sat_SM_AMSR,mae,Tair,0.0070
+Station2,RNN,Sat_SM_AMSR,mae,RH,0.0152
+Station2,RNN,Sat_SM_AMSR,mae,Windspeed,0.0218
+Station2,RNN,Sat_SM_AMSR,mae,Winddirection,0.0097
+Station2,RNN,Sat_SM_AMSR,mae,Srad,0.0014
+Station2,RNN,Sat_SM_AMSR,mae_percentage,Ppt,1.0696
+Station2,RNN,Sat_SM_AMSR,mae_percentage,Tair,0.7341
+Station2,RNN,Sat_SM_AMSR,mae_percentage,RH,1.5952
+Station2,RNN,Sat_SM_AMSR,mae_percentage,Windspeed,2.2843
+Station2,RNN,Sat_SM_AMSR,mae_percentage,Winddirection,1.0206
+Station2,RNN,Sat_SM_AMSR,mae_percentage,Srad,0.1475
+Station2,RNN,Sat_SM_AMSR,r2,Ppt,-0.0207
+Station2,RNN,Sat_SM_AMSR,r2,Tair,-0.0121
+Station2,RNN,Sat_SM_AMSR,r2,RH,-0.0294
+Station2,RNN,Sat_SM_AMSR,r2,Windspeed,-0.0294
+Station2,RNN,Sat_SM_AMSR,r2,Winddirection,-0.0165
+Station2,RNN,Sat_SM_AMSR,r2,Srad,-0.0063
+Station2,RNN,Sat_SM_SMAP,performance,0.8893,0.7299,73.9565,0.0870
+Station2,RNN,Sat_SM_AMSR,performance,0.8842,0.6705,70.2490,0.0294
+Station2,CNN,Sat_SM_SMAP,mse,Ppt,0.1826
+Station2,CNN,Sat_SM_SMAP,mse,Tair,0.0193
+Station2,CNN,Sat_SM_SMAP,mse,RH,-0.0153
+Station2,CNN,Sat_SM_SMAP,mse,Windspeed,0.0309
+Station2,CNN,Sat_SM_SMAP,mse,Winddirection,0.0072
+Station2,CNN,Sat_SM_SMAP,mse,Srad,0.0436
+Station2,CNN,Sat_SM_SMAP,mae,Ppt,0.0947
+Station2,CNN,Sat_SM_SMAP,mae,Tair,0.0027
+Station2,CNN,Sat_SM_SMAP,mae,RH,-0.0056
+Station2,CNN,Sat_SM_SMAP,mae,Windspeed,0.0170
+Station2,CNN,Sat_SM_SMAP,mae,Winddirection,-0.0018
+Station2,CNN,Sat_SM_SMAP,mae,Srad,0.0223
+Station2,CNN,Sat_SM_SMAP,mae_percentage,Ppt,9.5975
+Station2,CNN,Sat_SM_SMAP,mae_percentage,Tair,0.2741
+Station2,CNN,Sat_SM_SMAP,mae_percentage,RH,-0.5678
+Station2,CNN,Sat_SM_SMAP,mae_percentage,Windspeed,1.7263
+Station2,CNN,Sat_SM_SMAP,mae_percentage,Winddirection,-0.1848
+Station2,CNN,Sat_SM_SMAP,mae_percentage,Srad,2.2556
+Station2,CNN,Sat_SM_SMAP,r2,Ppt,-0.1874
+Station2,CNN,Sat_SM_SMAP,r2,Tair,-0.0198
+Station2,CNN,Sat_SM_SMAP,r2,RH,0.0157
+Station2,CNN,Sat_SM_SMAP,r2,Windspeed,-0.0317
+Station2,CNN,Sat_SM_SMAP,r2,Winddirection,-0.0074
+Station2,CNN,Sat_SM_SMAP,r2,Srad,-0.0448
+Station2,CNN,Sat_SM_AMSR,mse,Ppt,0.0029
+Station2,CNN,Sat_SM_AMSR,mse,Tair,-0.0039
+Station2,CNN,Sat_SM_AMSR,mse,RH,-0.0060
+Station2,CNN,Sat_SM_AMSR,mse,Windspeed,-0.0160
+Station2,CNN,Sat_SM_AMSR,mse,Winddirection,-0.0079
+Station2,CNN,Sat_SM_AMSR,mse,Srad,0.0207
+Station2,CNN,Sat_SM_AMSR,mae,Ppt,0.0000
+Station2,CNN,Sat_SM_AMSR,mae,Tair,0.0063
+Station2,CNN,Sat_SM_AMSR,mae,RH,-0.0088
+Station2,CNN,Sat_SM_AMSR,mae,Windspeed,0.0122
+Station2,CNN,Sat_SM_AMSR,mae,Winddirection,-0.0030
+Station2,CNN,Sat_SM_AMSR,mae,Srad,-0.0029
+Station2,CNN,Sat_SM_AMSR,mae_percentage,Ppt,0.0020
+Station2,CNN,Sat_SM_AMSR,mae_percentage,Tair,0.6561
+Station2,CNN,Sat_SM_AMSR,mae_percentage,RH,-0.9190
+Station2,CNN,Sat_SM_AMSR,mae_percentage,Windspeed,1.2796
+Station2,CNN,Sat_SM_AMSR,mae_percentage,Winddirection,-0.3129
+Station2,CNN,Sat_SM_AMSR,mae_percentage,Srad,-0.3032
+Station2,CNN,Sat_SM_AMSR,r2,Ppt,-0.0032
+Station2,CNN,Sat_SM_AMSR,r2,Tair,0.0043
+Station2,CNN,Sat_SM_AMSR,r2,RH,0.0066
+Station2,CNN,Sat_SM_AMSR,r2,Windspeed,0.0176
+Station2,CNN,Sat_SM_AMSR,r2,Winddirection,0.0086
+Station2,CNN,Sat_SM_AMSR,r2,Srad,-0.0123
+Station2,CNN,Sat_SM_SMAP,performance,0.6032,0.5660,57.3451,0.3807
+Station2,CNN,Sat_SM_AMSR,performance,0.8998,0.6600,69.1484,0.0123
+Station2,Custom AR,Sat_SM_SMAP,mse,Ppt,0.4151
+Station2,Custom AR,Sat_SM_SMAP,mse,Tair,0.0516
+Station2,Custom AR,Sat_SM_SMAP,mse,RH,0.0837
+Station2,Custom AR,Sat_SM_SMAP,mse,Windspeed,0.0003
+Station2,Custom AR,Sat_SM_SMAP,mse,Winddirection,0.0010
+Station2,Custom AR,Sat_SM_SMAP,mse,Srad,0.0047
+Station2,Custom AR,Sat_SM_SMAP,mae,Ppt,0.2469
+Station2,Custom AR,Sat_SM_SMAP,mae,Tair,0.0393
+Station2,Custom AR,Sat_SM_SMAP,mae,RH,0.0499
+Station2,Custom AR,Sat_SM_SMAP,mae,Windspeed,0.0002
+Station2,Custom AR,Sat_SM_SMAP,mae,Winddirection,-0.0003
+Station2,Custom AR,Sat_SM_SMAP,mae,Srad,0.0051
+Station2,Custom AR,Sat_SM_SMAP,mae_percentage,Ppt,24.6887
+Station2,Custom AR,Sat_SM_SMAP,mae_percentage,Tair,3.9336
+Station2,Custom AR,Sat_SM_SMAP,mae_percentage,RH,4.9919
+Station2,Custom AR,Sat_SM_SMAP,mae_percentage,Windspeed,0.0184
+Station2,Custom AR,Sat_SM_SMAP,mae_percentage,Winddirection,-0.0308
+Station2,Custom AR,Sat_SM_SMAP,mae_percentage,Srad,0.5069
+Station2,Custom AR,Sat_SM_SMAP,r2,Ppt,0.4151
+Station2,Custom AR,Sat_SM_SMAP,r2,Tair,0.0516
+Station2,Custom AR,Sat_SM_SMAP,r2,RH,0.0837
+Station2,Custom AR,Sat_SM_SMAP,r2,Windspeed,0.0003
+Station2,Custom AR,Sat_SM_SMAP,r2,Winddirection,0.0010
+Station2,Custom AR,Sat_SM_SMAP,r2,Srad,0.0047
+Station2,Custom AR,Sat_SM_AMSR,mse,Ppt,0.0007
+Station2,Custom AR,Sat_SM_AMSR,mse,Tair,0.0644
+Station2,Custom AR,Sat_SM_AMSR,mse,RH,0.0783
+Station2,Custom AR,Sat_SM_AMSR,mse,Windspeed,0.0307
+Station2,Custom AR,Sat_SM_AMSR,mse,Winddirection,0.0024
+Station2,Custom AR,Sat_SM_AMSR,mse,Srad,0.0278
+Station2,Custom AR,Sat_SM_AMSR,mae,Ppt,0.0007
+Station2,Custom AR,Sat_SM_AMSR,mae,Tair,0.0313
+Station2,Custom AR,Sat_SM_AMSR,mae,RH,0.0222
+Station2,Custom AR,Sat_SM_AMSR,mae,Windspeed,0.0210
+Station2,Custom AR,Sat_SM_AMSR,mae,Winddirection,0.0026
+Station2,Custom AR,Sat_SM_AMSR,mae,Srad,0.0192
+Station2,Custom AR,Sat_SM_AMSR,mae_percentage,Ppt,0.0655
+Station2,Custom AR,Sat_SM_AMSR,mae_percentage,Tair,3.1337
+Station2,Custom AR,Sat_SM_AMSR,mae_percentage,RH,2.2216
+Station2,Custom AR,Sat_SM_AMSR,mae_percentage,Windspeed,2.1017
+Station2,Custom AR,Sat_SM_AMSR,mae_percentage,Winddirection,0.2553
+Station2,Custom AR,Sat_SM_AMSR,mae_percentage,Srad,1.9154
+Station2,Custom AR,Sat_SM_AMSR,r2,Ppt,0.0007
+Station2,Custom AR,Sat_SM_AMSR,r2,Tair,0.0473
+Station2,Custom AR,Sat_SM_AMSR,r2,RH,0.0473
+Station2,Custom AR,Sat_SM_AMSR,r2,Windspeed,0.0307
+Station2,Custom AR,Sat_SM_AMSR,r2,Winddirection,0.0024
+Station2,Custom AR,Sat_SM_AMSR,r2,Srad,0.0278
+Station2,Custom AR,Sat_SM_SMAP,performance,0.4436,0.4741,47.4095,0.5565
+Station2,Custom AR,Sat_SM_AMSR,performance,0.9527,0.6832,68.3234,0.0473
+Station3,RNN,Sat_SM_SMAP,mse,Ppt,0.0883
+Station3,RNN,Sat_SM_SMAP,mse,Tair,0.0176
+Station3,RNN,Sat_SM_SMAP,mse,RH,0.0358
+Station3,RNN,Sat_SM_SMAP,mse,Windspeed,-0.0318
+Station3,RNN,Sat_SM_SMAP,mse,Winddirection,0.0289
+Station3,RNN,Sat_SM_SMAP,mse,Srad,0.0636
+Station3,RNN,Sat_SM_SMAP,mae,Ppt,0.0570
+Station3,RNN,Sat_SM_SMAP,mae,Tair,0.0232
+Station3,RNN,Sat_SM_SMAP,mae,RH,0.0364
+Station3,RNN,Sat_SM_SMAP,mae,Windspeed,-0.0048
+Station3,RNN,Sat_SM_SMAP,mae,Winddirection,0.0289
+Station3,RNN,Sat_SM_SMAP,mae,Srad,0.0405
+Station3,RNN,Sat_SM_SMAP,mae_percentage,Ppt,5.7724
+Station3,RNN,Sat_SM_SMAP,mae_percentage,Tair,2.3506
+Station3,RNN,Sat_SM_SMAP,mae_percentage,RH,3.6854
+Station3,RNN,Sat_SM_SMAP,mae_percentage,Windspeed,-0.4826
+Station3,RNN,Sat_SM_SMAP,mae_percentage,Winddirection,2.9319
+Station3,RNN,Sat_SM_SMAP,mae_percentage,Srad,4.1019
+Station3,RNN,Sat_SM_SMAP,r2,Ppt,-0.0906
+Station3,RNN,Sat_SM_SMAP,r2,Tair,-0.0180
+Station3,RNN,Sat_SM_SMAP,r2,RH,-0.0367
+Station3,RNN,Sat_SM_SMAP,r2,Windspeed,0.0327
+Station3,RNN,Sat_SM_SMAP,r2,Winddirection,-0.0296
+Station3,RNN,Sat_SM_SMAP,r2,Srad,-0.0653
+Station3,RNN,Sat_SM_AMSR,mse,Ppt,-0.0131
+Station3,RNN,Sat_SM_AMSR,mse,Tair,-0.0275
+Station3,RNN,Sat_SM_AMSR,mse,RH,-0.0124
+Station3,RNN,Sat_SM_AMSR,mse,Windspeed,-0.0105
+Station3,RNN,Sat_SM_AMSR,mse,Winddirection,-0.0304
+Station3,RNN,Sat_SM_AMSR,mse,Srad,-0.0259
+Station3,RNN,Sat_SM_AMSR,mae,Ppt,-0.0035
+Station3,RNN,Sat_SM_AMSR,mae,Tair,-0.0168
+Station3,RNN,Sat_SM_AMSR,mae,RH,0.0040
+Station3,RNN,Sat_SM_AMSR,mae,Windspeed,-0.0017
+Station3,RNN,Sat_SM_AMSR,mae,Winddirection,-0.0119
+Station3,RNN,Sat_SM_AMSR,mae,Srad,-0.0147
+Station3,RNN,Sat_SM_AMSR,mae_percentage,Ppt,-0.3709
+Station3,RNN,Sat_SM_AMSR,mae_percentage,Tair,-1.7559
+Station3,RNN,Sat_SM_AMSR,mae_percentage,RH,0.4211
+Station3,RNN,Sat_SM_AMSR,mae_percentage,Windspeed,-0.1810
+Station3,RNN,Sat_SM_AMSR,mae_percentage,Winddirection,-1.2417
+Station3,RNN,Sat_SM_AMSR,mae_percentage,Srad,-1.5361
+Station3,RNN,Sat_SM_AMSR,r2,Ppt,0.0022
+Station3,RNN,Sat_SM_AMSR,r2,Tair,0.0180
+Station3,RNN,Sat_SM_AMSR,r2,RH,0.0014
+Station3,RNN,Sat_SM_AMSR,r2,Windspeed,0.0000
+Station3,RNN,Sat_SM_AMSR,r2,Winddirection,0.0211
+Station3,RNN,Sat_SM_AMSR,r2,Srad,0.0162
+Station3,RNN,Sat_SM_SMAP,performance,0.8161,0.6826,69.1614,0.1621
+Station3,RNN,Sat_SM_AMSR,performance,0.9221,0.6911,72.4093,0.0000
+Station3,CNN,Sat_SM_SMAP,mse,Ppt,0.1787
+Station3,CNN,Sat_SM_SMAP,mse,Tair,-0.0155
+Station3,CNN,Sat_SM_SMAP,mse,RH,0.0198
+Station3,CNN,Sat_SM_SMAP,mse,Windspeed,-0.0115
+Station3,CNN,Sat_SM_SMAP,mse,Winddirection,0.0077
+Station3,CNN,Sat_SM_SMAP,mse,Srad,0.0106
+Station3,CNN,Sat_SM_SMAP,mae,Ppt,0.0953
+Station3,CNN,Sat_SM_SMAP,mae,Tair,-0.0090
+Station3,CNN,Sat_SM_SMAP,mae,RH,0.0217
+Station3,CNN,Sat_SM_SMAP,mae,Windspeed,-0.0004
+Station3,CNN,Sat_SM_SMAP,mae,Winddirection,0.0021
+Station3,CNN,Sat_SM_SMAP,mae,Srad,0.0076
+Station3,CNN,Sat_SM_SMAP,mae_percentage,Ppt,9.6582
+Station3,CNN,Sat_SM_SMAP,mae_percentage,Tair,-0.9153
+Station3,CNN,Sat_SM_SMAP,mae_percentage,RH,2.1988
+Station3,CNN,Sat_SM_SMAP,mae_percentage,Windspeed,-0.0367
+Station3,CNN,Sat_SM_SMAP,mae_percentage,Winddirection,0.2163
+Station3,CNN,Sat_SM_SMAP,mae_percentage,Srad,0.7744
+Station3,CNN,Sat_SM_SMAP,r2,Ppt,-0.1834
+Station3,CNN,Sat_SM_SMAP,r2,Tair,0.0159
+Station3,CNN,Sat_SM_SMAP,r2,RH,-0.0203
+Station3,CNN,Sat_SM_SMAP,r2,Windspeed,0.0118
+Station3,CNN,Sat_SM_SMAP,r2,Winddirection,-0.0079
+Station3,CNN,Sat_SM_SMAP,r2,Srad,-0.0109
+Station3,CNN,Sat_SM_AMSR,mse,Ppt,0.0039
+Station3,CNN,Sat_SM_AMSR,mse,Tair,0.0197
+Station3,CNN,Sat_SM_AMSR,mse,RH,0.0090
+Station3,CNN,Sat_SM_AMSR,mse,Windspeed,0.0156
+Station3,CNN,Sat_SM_AMSR,mse,Winddirection,0.0105
+Station3,CNN,Sat_SM_AMSR,mse,Srad,0.0039
+Station3,CNN,Sat_SM_AMSR,mae,Ppt,-0.0021
+Station3,CNN,Sat_SM_AMSR,mae,Tair,0.0077
+Station3,CNN,Sat_SM_AMSR,mae,RH,-0.0023
+Station3,CNN,Sat_SM_AMSR,mae,Windspeed,0.0091
+Station3,CNN,Sat_SM_AMSR,mae,Winddirection,-0.0111
+Station3,CNN,Sat_SM_AMSR,mae,Srad,-0.0032
+Station3,CNN,Sat_SM_AMSR,mae_percentage,Ppt,-0.2158
+Station3,CNN,Sat_SM_AMSR,mae_percentage,Tair,0.8099
+Station3,CNN,Sat_SM_AMSR,mae_percentage,RH,-0.2413
+Station3,CNN,Sat_SM_AMSR,mae_percentage,Windspeed,0.9539
+Station3,CNN,Sat_SM_AMSR,mae_percentage,Winddirection,-1.1626
+Station3,CNN,Sat_SM_AMSR,mae_percentage,Srad,-0.3346
+Station3,CNN,Sat_SM_AMSR,r2,Ppt,-0.0043
+Station3,CNN,Sat_SM_AMSR,r2,Tair,-0.0216
+Station3,CNN,Sat_SM_AMSR,r2,RH,-0.0099
+Station3,CNN,Sat_SM_AMSR,r2,Windspeed,-0.0171
+Station3,CNN,Sat_SM_AMSR,r2,Winddirection,-0.0116
+Station3,CNN,Sat_SM_AMSR,r2,Srad,-0.0043
+Station3,CNN,Sat_SM_SMAP,performance,0.6068,0.5611,56.8538,0.3771
+Station3,CNN,Sat_SM_AMSR,performance,0.8891,0.6616,69.3166,0.0240
+Station3,Custom AR,Sat_SM_SMAP,mse,Ppt,0.4151
+Station3,Custom AR,Sat_SM_SMAP,mse,Tair,0.0516
+Station3,Custom AR,Sat_SM_SMAP,mse,RH,0.0837
+Station3,Custom AR,Sat_SM_SMAP,mse,Windspeed,0.0003
+Station3,Custom AR,Sat_SM_SMAP,mse,Winddirection,0.0010
+Station3,Custom AR,Sat_SM_SMAP,mse,Srad,0.0047
+Station3,Custom AR,Sat_SM_SMAP,mae,Ppt,0.2469
+Station3,Custom AR,Sat_SM_SMAP,mae,Tair,0.0393
+Station3,Custom AR,Sat_SM_SMAP,mae,RH,0.0499
+Station3,Custom AR,Sat_SM_SMAP,mae,Windspeed,0.0002
+Station3,Custom AR,Sat_SM_SMAP,mae,Winddirection,-0.0003
+Station3,Custom AR,Sat_SM_SMAP,mae,Srad,0.0051
+Station3,Custom AR,Sat_SM_SMAP,mae_percentage,Ppt,24.6887
+Station3,Custom AR,Sat_SM_SMAP,mae_percentage,Tair,3.9336
+Station3,Custom AR,Sat_SM_SMAP,mae_percentage,RH,4.9919
+Station3,Custom AR,Sat_SM_SMAP,mae_percentage,Windspeed,0.0184
+Station3,Custom AR,Sat_SM_SMAP,mae_percentage,Winddirection,-0.0308
+Station3,Custom AR,Sat_SM_SMAP,mae_percentage,Srad,0.5069
+Station3,Custom AR,Sat_SM_SMAP,r2,Ppt,0.4151
+Station3,Custom AR,Sat_SM_SMAP,r2,Tair,0.0516
+Station3,Custom AR,Sat_SM_SMAP,r2,RH,0.0837
+Station3,Custom AR,Sat_SM_SMAP,r2,Windspeed,0.0003
+Station3,Custom AR,Sat_SM_SMAP,r2,Winddirection,0.0010
+Station3,Custom AR,Sat_SM_SMAP,r2,Srad,0.0047
+Station3,Custom AR,Sat_SM_AMSR,mse,Ppt,0.0007
+Station3,Custom AR,Sat_SM_AMSR,mse,Tair,0.0644
+Station3,Custom AR,Sat_SM_AMSR,mse,RH,0.0783
+Station3,Custom AR,Sat_SM_AMSR,mse,Windspeed,0.0307
+Station3,Custom AR,Sat_SM_AMSR,mse,Winddirection,0.0024
+Station3,Custom AR,Sat_SM_AMSR,mse,Srad,0.0278
+Station3,Custom AR,Sat_SM_AMSR,mae,Ppt,0.0007
+Station3,Custom AR,Sat_SM_AMSR,mae,Tair,0.0313
+Station3,Custom AR,Sat_SM_AMSR,mae,RH,0.0222
+Station3,Custom AR,Sat_SM_AMSR,mae,Windspeed,0.0210
+Station3,Custom AR,Sat_SM_AMSR,mae,Winddirection,0.0026
+Station3,Custom AR,Sat_SM_AMSR,mae,Srad,0.0192
+Station3,Custom AR,Sat_SM_AMSR,mae_percentage,Ppt,0.0655
+Station3,Custom AR,Sat_SM_AMSR,mae_percentage,Tair,3.1337
+Station3,Custom AR,Sat_SM_AMSR,mae_percentage,RH,2.2216
+Station3,Custom AR,Sat_SM_AMSR,mae_percentage,Windspeed,2.1017
+Station3,Custom AR,Sat_SM_AMSR,mae_percentage,Winddirection,0.2553
+Station3,Custom AR,Sat_SM_AMSR,mae_percentage,Srad,1.9154
+Station3,Custom AR,Sat_SM_AMSR,r2,Ppt,0.0007
+Station3,Custom AR,Sat_SM_AMSR,r2,Tair,0.0473
+Station3,Custom AR,Sat_SM_AMSR,r2,RH,0.0473
+Station3,Custom AR,Sat_SM_AMSR,r2,Windspeed,0.0307
+Station3,Custom AR,Sat_SM_AMSR,r2,Winddirection,0.0024
+Station3,Custom AR,Sat_SM_AMSR,r2,Srad,0.0278
+Station3,Custom AR,Sat_SM_SMAP,performance,0.4436,0.4741,47.4095,0.5565
+Station3,Custom AR,Sat_SM_AMSR,performance,0.9527,0.6832,68.3234,0.0473
+Station4,RNN,Sat_SM_SMAP,mse,Ppt,0.0711
+Station4,RNN,Sat_SM_SMAP,mse,Tair,0.0094
+Station4,RNN,Sat_SM_SMAP,mse,RH,0.0535
+Station4,RNN,Sat_SM_SMAP,mse,Windspeed,0.0271
+Station4,RNN,Sat_SM_SMAP,mse,Winddirection,-0.0147
+Station4,RNN,Sat_SM_SMAP,mse,Srad,0.0336
+Station4,RNN,Sat_SM_SMAP,mae,Ppt,0.0432
+Station4,RNN,Sat_SM_SMAP,mae,Tair,0.0134
+Station4,RNN,Sat_SM_SMAP,mae,RH,0.0338
+Station4,RNN,Sat_SM_SMAP,mae,Windspeed,0.0177
+Station4,RNN,Sat_SM_SMAP,mae,Winddirection,0.0004
+Station4,RNN,Sat_SM_SMAP,mae,Srad,0.0292
+Station4,RNN,Sat_SM_SMAP,mae_percentage,Ppt,4.3782
+Station4,RNN,Sat_SM_SMAP,mae_percentage,Tair,1.3610
+Station4,RNN,Sat_SM_SMAP,mae_percentage,RH,3.4235
+Station4,RNN,Sat_SM_SMAP,mae_percentage,Windspeed,1.7936
+Station4,RNN,Sat_SM_SMAP,mae_percentage,Winddirection,0.0407
+Station4,RNN,Sat_SM_SMAP,mae_percentage,Srad,2.9545
+Station4,RNN,Sat_SM_SMAP,r2,Ppt,-0.0730
+Station4,RNN,Sat_SM_SMAP,r2,Tair,-0.0096
+Station4,RNN,Sat_SM_SMAP,r2,RH,-0.0549
+Station4,RNN,Sat_SM_SMAP,r2,Windspeed,-0.0279
+Station4,RNN,Sat_SM_SMAP,r2,Winddirection,0.0151
+Station4,RNN,Sat_SM_SMAP,r2,Srad,-0.0345
+Station4,RNN,Sat_SM_AMSR,mse,Ppt,-0.0016
+Station4,RNN,Sat_SM_AMSR,mse,Tair,0.0018
+Station4,RNN,Sat_SM_AMSR,mse,RH,0.0029
+Station4,RNN,Sat_SM_AMSR,mse,Windspeed,0.0099
+Station4,RNN,Sat_SM_AMSR,mse,Winddirection,0.0032
+Station4,RNN,Sat_SM_AMSR,mse,Srad,0.0161
+Station4,RNN,Sat_SM_AMSR,mae,Ppt,-0.0045
+Station4,RNN,Sat_SM_AMSR,mae,Tair,-0.0022
+Station4,RNN,Sat_SM_AMSR,mae,RH,-0.0011
+Station4,RNN,Sat_SM_AMSR,mae,Windspeed,0.0044
+Station4,RNN,Sat_SM_AMSR,mae,Winddirection,0.0055
+Station4,RNN,Sat_SM_AMSR,mae,Srad,0.0068
+Station4,RNN,Sat_SM_AMSR,mae_percentage,Ppt,-0.4734
+Station4,RNN,Sat_SM_AMSR,mae_percentage,Tair,-0.2304
+Station4,RNN,Sat_SM_AMSR,mae_percentage,RH,-0.1183
+Station4,RNN,Sat_SM_AMSR,mae_percentage,Windspeed,0.4661
+Station4,RNN,Sat_SM_AMSR,mae_percentage,Winddirection,0.5714
+Station4,RNN,Sat_SM_AMSR,mae_percentage,Srad,0.7126
+Station4,RNN,Sat_SM_AMSR,r2,Ppt,0.0018
+Station4,RNN,Sat_SM_AMSR,r2,Tair,-0.0020
+Station4,RNN,Sat_SM_AMSR,r2,RH,-0.0032
+Station4,RNN,Sat_SM_AMSR,r2,Windspeed,-0.0109
+Station4,RNN,Sat_SM_AMSR,r2,Winddirection,-0.0035
+Station4,RNN,Sat_SM_AMSR,r2,Srad,-0.0110
+Station4,RNN,Sat_SM_SMAP,performance,0.8396,0.6999,70.9162,0.1380
+Station4,RNN,Sat_SM_AMSR,performance,0.9010,0.6837,71.6339,0.0110
+Station4,CNN,Sat_SM_SMAP,mse,Ppt,0.1108
+Station4,CNN,Sat_SM_SMAP,mse,Tair,-0.0523
+Station4,CNN,Sat_SM_SMAP,mse,RH,-0.0152
+Station4,CNN,Sat_SM_SMAP,mse,Windspeed,-0.0044
+Station4,CNN,Sat_SM_SMAP,mse,Winddirection,-0.0557
+Station4,CNN,Sat_SM_SMAP,mse,Srad,-0.0025
+Station4,CNN,Sat_SM_SMAP,mae,Ppt,0.0645
+Station4,CNN,Sat_SM_SMAP,mae,Tair,-0.0295
+Station4,CNN,Sat_SM_SMAP,mae,RH,-0.0058
+Station4,CNN,Sat_SM_SMAP,mae,Windspeed,-0.0006
+Station4,CNN,Sat_SM_SMAP,mae,Winddirection,-0.0435
+Station4,CNN,Sat_SM_SMAP,mae,Srad,0.0007
+Station4,CNN,Sat_SM_SMAP,mae_percentage,Ppt,6.5405
+Station4,CNN,Sat_SM_SMAP,mae_percentage,Tair,-2.9867
+Station4,CNN,Sat_SM_SMAP,mae_percentage,RH,-0.5836
+Station4,CNN,Sat_SM_SMAP,mae_percentage,Windspeed,-0.0658
+Station4,CNN,Sat_SM_SMAP,mae_percentage,Winddirection,-4.4074
+Station4,CNN,Sat_SM_SMAP,mae_percentage,Srad,0.0666
+Station4,CNN,Sat_SM_SMAP,r2,Ppt,-0.1137
+Station4,CNN,Sat_SM_SMAP,r2,Tair,0.0537
+Station4,CNN,Sat_SM_SMAP,r2,RH,0.0156
+Station4,CNN,Sat_SM_SMAP,r2,Windspeed,0.0045
+Station4,CNN,Sat_SM_SMAP,r2,Winddirection,0.0572
+Station4,CNN,Sat_SM_SMAP,r2,Srad,0.0026
+Station4,CNN,Sat_SM_AMSR,mse,Ppt,0.0000
+Station4,CNN,Sat_SM_AMSR,mse,Tair,0.0149
+Station4,CNN,Sat_SM_AMSR,mse,RH,0.0058
+Station4,CNN,Sat_SM_AMSR,mse,Windspeed,0.0036
+Station4,CNN,Sat_SM_AMSR,mse,Winddirection,0.0016
+Station4,CNN,Sat_SM_AMSR,mse,Srad,0.0233
+Station4,CNN,Sat_SM_AMSR,mae,Ppt,-0.0071
+Station4,CNN,Sat_SM_AMSR,mae,Tair,0.0002
+Station4,CNN,Sat_SM_AMSR,mae,RH,0.0039
+Station4,CNN,Sat_SM_AMSR,mae,Windspeed,0.0092
+Station4,CNN,Sat_SM_AMSR,mae,Winddirection,-0.0091
+Station4,CNN,Sat_SM_AMSR,mae,Srad,0.0073
+Station4,CNN,Sat_SM_AMSR,mae_percentage,Ppt,-0.7421
+Station4,CNN,Sat_SM_AMSR,mae_percentage,Tair,0.0192
+Station4,CNN,Sat_SM_AMSR,mae_percentage,RH,0.4127
+Station4,CNN,Sat_SM_AMSR,mae_percentage,Windspeed,0.9601
+Station4,CNN,Sat_SM_AMSR,mae_percentage,Winddirection,-0.9534
+Station4,CNN,Sat_SM_AMSR,mae_percentage,Srad,0.7639
+Station4,CNN,Sat_SM_AMSR,r2,Ppt,-0.0000
+Station4,CNN,Sat_SM_AMSR,r2,Tair,-0.0163
+Station4,CNN,Sat_SM_AMSR,r2,RH,-0.0063
+Station4,CNN,Sat_SM_AMSR,r2,Windspeed,-0.0040
+Station4,CNN,Sat_SM_AMSR,r2,Winddirection,-0.0017
+Station4,CNN,Sat_SM_AMSR,r2,Srad,-0.0176
+Station4,CNN,Sat_SM_SMAP,performance,0.6470,0.5848,59.2587,0.3358
+Station4,CNN,Sat_SM_AMSR,performance,0.8950,0.6652,69.6981,0.0176
+Station4,Custom AR,Sat_SM_SMAP,mse,Ppt,0.4151
+Station4,Custom AR,Sat_SM_SMAP,mse,Tair,0.0516
+Station4,Custom AR,Sat_SM_SMAP,mse,RH,0.0837
+Station4,Custom AR,Sat_SM_SMAP,mse,Windspeed,0.0003
+Station4,Custom AR,Sat_SM_SMAP,mse,Winddirection,0.0010
+Station4,Custom AR,Sat_SM_SMAP,mse,Srad,0.0047
+Station4,Custom AR,Sat_SM_SMAP,mae,Ppt,0.2469
+Station4,Custom AR,Sat_SM_SMAP,mae,Tair,0.0393
+Station4,Custom AR,Sat_SM_SMAP,mae,RH,0.0499
+Station4,Custom AR,Sat_SM_SMAP,mae,Windspeed,0.0002
+Station4,Custom AR,Sat_SM_SMAP,mae,Winddirection,-0.0003
+Station4,Custom AR,Sat_SM_SMAP,mae,Srad,0.0051
+Station4,Custom AR,Sat_SM_SMAP,mae_percentage,Ppt,24.6887
+Station4,Custom AR,Sat_SM_SMAP,mae_percentage,Tair,3.9336
+Station4,Custom AR,Sat_SM_SMAP,mae_percentage,RH,4.9919
+Station4,Custom AR,Sat_SM_SMAP,mae_percentage,Windspeed,0.0184
+Station4,Custom AR,Sat_SM_SMAP,mae_percentage,Winddirection,-0.0308
+Station4,Custom AR,Sat_SM_SMAP,mae_percentage,Srad,0.5069
+Station4,Custom AR,Sat_SM_SMAP,r2,Ppt,0.4151
+Station4,Custom AR,Sat_SM_SMAP,r2,Tair,0.0516
+Station4,Custom AR,Sat_SM_SMAP,r2,RH,0.0837
+Station4,Custom AR,Sat_SM_SMAP,r2,Windspeed,0.0003
+Station4,Custom AR,Sat_SM_SMAP,r2,Winddirection,0.0010
+Station4,Custom AR,Sat_SM_SMAP,r2,Srad,0.0047
+Station4,Custom AR,Sat_SM_AMSR,mse,Ppt,0.0007
+Station4,Custom AR,Sat_SM_AMSR,mse,Tair,0.0644
+Station4,Custom AR,Sat_SM_AMSR,mse,RH,0.0783
+Station4,Custom AR,Sat_SM_AMSR,mse,Windspeed,0.0307
+Station4,Custom AR,Sat_SM_AMSR,mse,Winddirection,0.0024
+Station4,Custom AR,Sat_SM_AMSR,mse,Srad,0.0278
+Station4,Custom AR,Sat_SM_AMSR,mae,Ppt,0.0007
+Station4,Custom AR,Sat_SM_AMSR,mae,Tair,0.0313
+Station4,Custom AR,Sat_SM_AMSR,mae,RH,0.0222
+Station4,Custom AR,Sat_SM_AMSR,mae,Windspeed,0.0210
+Station4,Custom AR,Sat_SM_AMSR,mae,Winddirection,0.0026
+Station4,Custom AR,Sat_SM_AMSR,mae,Srad,0.0192
+Station4,Custom AR,Sat_SM_AMSR,mae_percentage,Ppt,0.0655
+Station4,Custom AR,Sat_SM_AMSR,mae_percentage,Tair,3.1337
+Station4,Custom AR,Sat_SM_AMSR,mae_percentage,RH,2.2216
+Station4,Custom AR,Sat_SM_AMSR,mae_percentage,Windspeed,2.1017
+Station4,Custom AR,Sat_SM_AMSR,mae_percentage,Winddirection,0.2553
+Station4,Custom AR,Sat_SM_AMSR,mae_percentage,Srad,1.9154
+Station4,Custom AR,Sat_SM_AMSR,r2,Ppt,0.0007
+Station4,Custom AR,Sat_SM_AMSR,r2,Tair,0.0473
+Station4,Custom AR,Sat_SM_AMSR,r2,RH,0.0473
+Station4,Custom AR,Sat_SM_AMSR,r2,Windspeed,0.0307
+Station4,Custom AR,Sat_SM_AMSR,r2,Winddirection,0.0024
+Station4,Custom AR,Sat_SM_AMSR,r2,Srad,0.0278
+Station4,Custom AR,Sat_SM_SMAP,performance,0.4436,0.4741,47.4095,0.5565
+Station4,Custom AR,Sat_SM_AMSR,performance,0.9527,0.6832,68.3234,0.0473
+Station5,RNN,Sat_SM_SMAP,mse,Ppt,0.1153
+Station5,RNN,Sat_SM_SMAP,mse,Tair,0.0749
+Station5,RNN,Sat_SM_SMAP,mse,RH,0.0306
+Station5,RNN,Sat_SM_SMAP,mse,Windspeed,0.0456
+Station5,RNN,Sat_SM_SMAP,mse,Winddirection,0.0616
+Station5,RNN,Sat_SM_SMAP,mse,Srad,0.0911
+Station5,RNN,Sat_SM_SMAP,mae,Ppt,0.0608
+Station5,RNN,Sat_SM_SMAP,mae,Tair,0.0354
+Station5,RNN,Sat_SM_SMAP,mae,RH,0.0183
+Station5,RNN,Sat_SM_SMAP,mae,Windspeed,0.0255
+Station5,RNN,Sat_SM_SMAP,mae,Winddirection,0.0331
+Station5,RNN,Sat_SM_SMAP,mae,Srad,0.0502
+Station5,RNN,Sat_SM_SMAP,mae_percentage,Ppt,6.1615
+Station5,RNN,Sat_SM_SMAP,mae_percentage,Tair,3.5850
+Station5,RNN,Sat_SM_SMAP,mae_percentage,RH,1.8530
+Station5,RNN,Sat_SM_SMAP,mae_percentage,Windspeed,2.5862
+Station5,RNN,Sat_SM_SMAP,mae_percentage,Winddirection,3.3554
+Station5,RNN,Sat_SM_SMAP,mae_percentage,Srad,5.0857
+Station5,RNN,Sat_SM_SMAP,r2,Ppt,-0.1184
+Station5,RNN,Sat_SM_SMAP,r2,Tair,-0.0769
+Station5,RNN,Sat_SM_SMAP,r2,RH,-0.0314
+Station5,RNN,Sat_SM_SMAP,r2,Windspeed,-0.0469
+Station5,RNN,Sat_SM_SMAP,r2,Winddirection,-0.0633
+Station5,RNN,Sat_SM_SMAP,r2,Srad,-0.0936
+Station5,RNN,Sat_SM_AMSR,mse,Ppt,-0.0057
+Station5,RNN,Sat_SM_AMSR,mse,Tair,0.0103
+Station5,RNN,Sat_SM_AMSR,mse,RH,-0.0042
+Station5,RNN,Sat_SM_AMSR,mse,Windspeed,0.0087
+Station5,RNN,Sat_SM_AMSR,mse,Winddirection,0.0078
+Station5,RNN,Sat_SM_AMSR,mse,Srad,-0.0022
+Station5,RNN,Sat_SM_AMSR,mae,Ppt,-0.0045
+Station5,RNN,Sat_SM_AMSR,mae,Tair,0.0048
+Station5,RNN,Sat_SM_AMSR,mae,RH,-0.0056
+Station5,RNN,Sat_SM_AMSR,mae,Windspeed,0.0088
+Station5,RNN,Sat_SM_AMSR,mae,Winddirection,0.0087
+Station5,RNN,Sat_SM_AMSR,mae,Srad,-0.0028
+Station5,RNN,Sat_SM_AMSR,mae_percentage,Ppt,-0.4758
+Station5,RNN,Sat_SM_AMSR,mae_percentage,Tair,0.5015
+Station5,RNN,Sat_SM_AMSR,mae_percentage,RH,-0.5913
+Station5,RNN,Sat_SM_AMSR,mae_percentage,Windspeed,0.9242
+Station5,RNN,Sat_SM_AMSR,mae_percentage,Winddirection,0.9077
+Station5,RNN,Sat_SM_AMSR,mae_percentage,Srad,-0.2914
+Station5,RNN,Sat_SM_AMSR,r2,Ppt,0.0062
+Station5,RNN,Sat_SM_AMSR,r2,Tair,-0.0100
+Station5,RNN,Sat_SM_AMSR,r2,RH,0.0046
+Station5,RNN,Sat_SM_AMSR,r2,Windspeed,-0.0095
+Station5,RNN,Sat_SM_AMSR,r2,Winddirection,-0.0085
+Station5,RNN,Sat_SM_AMSR,r2,Srad,0.0025
+Station5,RNN,Sat_SM_SMAP,performance,0.7941,0.6817,69.0743,0.1847
+Station5,RNN,Sat_SM_AMSR,performance,0.9019,0.6807,71.3137,0.0100
+Station5,CNN,Sat_SM_SMAP,mse,Ppt,0.1596
+Station5,CNN,Sat_SM_SMAP,mse,Tair,0.0035
+Station5,CNN,Sat_SM_SMAP,mse,RH,0.0219
+Station5,CNN,Sat_SM_SMAP,mse,Windspeed,0.0050
+Station5,CNN,Sat_SM_SMAP,mse,Winddirection,-0.0235
+Station5,CNN,Sat_SM_SMAP,mse,Srad,0.0244
+Station5,CNN,Sat_SM_SMAP,mae,Ppt,0.0849
+Station5,CNN,Sat_SM_SMAP,mae,Tair,0.0032
+Station5,CNN,Sat_SM_SMAP,mae,RH,0.0193
+Station5,CNN,Sat_SM_SMAP,mae,Windspeed,0.0101
+Station5,CNN,Sat_SM_SMAP,mae,Winddirection,-0.0139
+Station5,CNN,Sat_SM_SMAP,mae,Srad,0.0104
+Station5,CNN,Sat_SM_SMAP,mae_percentage,Ppt,8.5977
+Station5,CNN,Sat_SM_SMAP,mae_percentage,Tair,0.3200
+Station5,CNN,Sat_SM_SMAP,mae_percentage,RH,1.9581
+Station5,CNN,Sat_SM_SMAP,mae_percentage,Windspeed,1.0195
+Station5,CNN,Sat_SM_SMAP,mae_percentage,Winddirection,-1.4040
+Station5,CNN,Sat_SM_SMAP,mae_percentage,Srad,1.0494
+Station5,CNN,Sat_SM_SMAP,r2,Ppt,-0.1639
+Station5,CNN,Sat_SM_SMAP,r2,Tair,-0.0036
+Station5,CNN,Sat_SM_SMAP,r2,RH,-0.0225
+Station5,CNN,Sat_SM_SMAP,r2,Windspeed,-0.0051
+Station5,CNN,Sat_SM_SMAP,r2,Winddirection,0.0242
+Station5,CNN,Sat_SM_SMAP,r2,Srad,-0.0251
+Station5,CNN,Sat_SM_AMSR,mse,Ppt,-0.0006
+Station5,CNN,Sat_SM_AMSR,mse,Tair,0.0018
+Station5,CNN,Sat_SM_AMSR,mse,RH,-0.0188
+Station5,CNN,Sat_SM_AMSR,mse,Windspeed,-0.0038
+Station5,CNN,Sat_SM_AMSR,mse,Winddirection,-0.0072
+Station5,CNN,Sat_SM_AMSR,mse,Srad,0.0101
+Station5,CNN,Sat_SM_AMSR,mae,Ppt,0.0088
+Station5,CNN,Sat_SM_AMSR,mae,Tair,0.0140
+Station5,CNN,Sat_SM_AMSR,mae,RH,0.0072
+Station5,CNN,Sat_SM_AMSR,mae,Windspeed,0.0187
+Station5,CNN,Sat_SM_AMSR,mae,Winddirection,-0.0002
+Station5,CNN,Sat_SM_AMSR,mae,Srad,0.0047
+Station5,CNN,Sat_SM_AMSR,mae_percentage,Ppt,0.9220
+Station5,CNN,Sat_SM_AMSR,mae_percentage,Tair,1.4684
+Station5,CNN,Sat_SM_AMSR,mae_percentage,RH,0.7585
+Station5,CNN,Sat_SM_AMSR,mae_percentage,Windspeed,1.9618
+Station5,CNN,Sat_SM_AMSR,mae_percentage,Winddirection,-0.0223
+Station5,CNN,Sat_SM_AMSR,mae_percentage,Srad,0.4931
+Station5,CNN,Sat_SM_AMSR,r2,Ppt,0.0007
+Station5,CNN,Sat_SM_AMSR,r2,Tair,-0.0019
+Station5,CNN,Sat_SM_AMSR,r2,RH,0.0206
+Station5,CNN,Sat_SM_AMSR,r2,Windspeed,0.0042
+Station5,CNN,Sat_SM_AMSR,r2,Winddirection,0.0079
+Station5,CNN,Sat_SM_AMSR,r2,Srad,-0.0111
+Station5,CNN,Sat_SM_SMAP,performance,0.6136,0.5635,57.0990,0.3701
+Station5,CNN,Sat_SM_AMSR,performance,0.8986,0.6563,68.7655,0.0136
+Station5,Custom AR,Sat_SM_SMAP,mse,Ppt,0.4151
+Station5,Custom AR,Sat_SM_SMAP,mse,Tair,0.0516
+Station5,Custom AR,Sat_SM_SMAP,mse,RH,0.0837
+Station5,Custom AR,Sat_SM_SMAP,mse,Windspeed,0.0003
+Station5,Custom AR,Sat_SM_SMAP,mse,Winddirection,0.0010
+Station5,Custom AR,Sat_SM_SMAP,mse,Srad,0.0047
+Station5,Custom AR,Sat_SM_SMAP,mae,Ppt,0.2469
+Station5,Custom AR,Sat_SM_SMAP,mae,Tair,0.0393
+Station5,Custom AR,Sat_SM_SMAP,mae,RH,0.0499
+Station5,Custom AR,Sat_SM_SMAP,mae,Windspeed,0.0002
+Station5,Custom AR,Sat_SM_SMAP,mae,Winddirection,-0.0003
+Station5,Custom AR,Sat_SM_SMAP,mae,Srad,0.0051
+Station5,Custom AR,Sat_SM_SMAP,mae_percentage,Ppt,24.6887
+Station5,Custom AR,Sat_SM_SMAP,mae_percentage,Tair,3.9336
+Station5,Custom AR,Sat_SM_SMAP,mae_percentage,RH,4.9919
+Station5,Custom AR,Sat_SM_SMAP,mae_percentage,Windspeed,0.0184
+Station5,Custom AR,Sat_SM_SMAP,mae_percentage,Winddirection,-0.0308
+Station5,Custom AR,Sat_SM_SMAP,mae_percentage,Srad,0.5069
+Station5,Custom AR,Sat_SM_SMAP,r2,Ppt,0.4151
+Station5,Custom AR,Sat_SM_SMAP,r2,Tair,0.0516
+Station5,Custom AR,Sat_SM_SMAP,r2,RH,0.0837
+Station5,Custom AR,Sat_SM_SMAP,r2,Windspeed,0.0003
+Station5,Custom AR,Sat_SM_SMAP,r2,Winddirection,0.0010
+Station5,Custom AR,Sat_SM_SMAP,r2,Srad,0.0047
+Station5,Custom AR,Sat_SM_AMSR,mse,Ppt,0.0007
+Station5,Custom AR,Sat_SM_AMSR,mse,Tair,0.0644
+Station5,Custom AR,Sat_SM_AMSR,mse,RH,0.0783
+Station5,Custom AR,Sat_SM_AMSR,mse,Windspeed,0.0307
+Station5,Custom AR,Sat_SM_AMSR,mse,Winddirection,0.0024
+Station5,Custom AR,Sat_SM_AMSR,mse,Srad,0.0278
+Station5,Custom AR,Sat_SM_AMSR,mae,Ppt,0.0007
+Station5,Custom AR,Sat_SM_AMSR,mae,Tair,0.0313
+Station5,Custom AR,Sat_SM_AMSR,mae,RH,0.0222
+Station5,Custom AR,Sat_SM_AMSR,mae,Windspeed,0.0210
+Station5,Custom AR,Sat_SM_AMSR,mae,Winddirection,0.0026
+Station5,Custom AR,Sat_SM_AMSR,mae,Srad,0.0192
+Station5,Custom AR,Sat_SM_AMSR,mae_percentage,Ppt,0.0655
+Station5,Custom AR,Sat_SM_AMSR,mae_percentage,Tair,3.1337
+Station5,Custom AR,Sat_SM_AMSR,mae_percentage,RH,2.2216
+Station5,Custom AR,Sat_SM_AMSR,mae_percentage,Windspeed,2.1017
+Station5,Custom AR,Sat_SM_AMSR,mae_percentage,Winddirection,0.2553
+Station5,Custom AR,Sat_SM_AMSR,mae_percentage,Srad,1.9154
+Station5,Custom AR,Sat_SM_AMSR,r2,Ppt,0.0007
+Station5,Custom AR,Sat_SM_AMSR,r2,Tair,0.0473
+Station5,Custom AR,Sat_SM_AMSR,r2,RH,0.0473
+Station5,Custom AR,Sat_SM_AMSR,r2,Windspeed,0.0307
+Station5,Custom AR,Sat_SM_AMSR,r2,Winddirection,0.0024
+Station5,Custom AR,Sat_SM_AMSR,r2,Srad,0.0278
+Station5,Custom AR,Sat_SM_SMAP,performance,0.4436,0.4741,47.4095,0.5565
+Station5,Custom AR,Sat_SM_AMSR,performance,0.9527,0.6832,68.3234,0.0473
+Station6,RNN,Sat_SM_SMAP,mse,Ppt,-0.0068
+Station6,RNN,Sat_SM_SMAP,mse,Tair,-0.0013
+Station6,RNN,Sat_SM_SMAP,mse,RH,0.0299
+Station6,RNN,Sat_SM_SMAP,mse,Windspeed,0.0311
+Station6,RNN,Sat_SM_SMAP,mse,Winddirection,0.0190
+Station6,RNN,Sat_SM_SMAP,mse,Srad,0.0068
+Station6,RNN,Sat_SM_SMAP,mae,Ppt,-0.0142
+Station6,RNN,Sat_SM_SMAP,mae,Tair,0.0006
+Station6,RNN,Sat_SM_SMAP,mae,RH,0.0116
+Station6,RNN,Sat_SM_SMAP,mae,Windspeed,0.0124
+Station6,RNN,Sat_SM_SMAP,mae,Winddirection,-0.0003
+Station6,RNN,Sat_SM_SMAP,mae,Srad,-0.0002
+Station6,RNN,Sat_SM_SMAP,mae_percentage,Ppt,-1.4366
+Station6,RNN,Sat_SM_SMAP,mae_percentage,Tair,0.0578
+Station6,RNN,Sat_SM_SMAP,mae_percentage,RH,1.1800
+Station6,RNN,Sat_SM_SMAP,mae_percentage,Windspeed,1.2538
+Station6,RNN,Sat_SM_SMAP,mae_percentage,Winddirection,-0.0347
+Station6,RNN,Sat_SM_SMAP,mae_percentage,Srad,-0.0226
+Station6,RNN,Sat_SM_SMAP,r2,Ppt,0.0069
+Station6,RNN,Sat_SM_SMAP,r2,Tair,0.0014
+Station6,RNN,Sat_SM_SMAP,r2,RH,-0.0307
+Station6,RNN,Sat_SM_SMAP,r2,Windspeed,-0.0320
+Station6,RNN,Sat_SM_SMAP,r2,Winddirection,-0.0195
+Station6,RNN,Sat_SM_SMAP,r2,Srad,-0.0069
+Station6,RNN,Sat_SM_AMSR,mse,Ppt,-0.0325
+Station6,RNN,Sat_SM_AMSR,mse,Tair,-0.0298
+Station6,RNN,Sat_SM_AMSR,mse,RH,-0.0178
+Station6,RNN,Sat_SM_AMSR,mse,Windspeed,-0.0124
+Station6,RNN,Sat_SM_AMSR,mse,Winddirection,-0.0279
+Station6,RNN,Sat_SM_AMSR,mse,Srad,-0.0342
+Station6,RNN,Sat_SM_AMSR,mae,Ppt,-0.0164
+Station6,RNN,Sat_SM_AMSR,mae,Tair,-0.0113
+Station6,RNN,Sat_SM_AMSR,mae,RH,-0.0059
+Station6,RNN,Sat_SM_AMSR,mae,Windspeed,-0.0051
+Station6,RNN,Sat_SM_AMSR,mae,Winddirection,-0.0159
+Station6,RNN,Sat_SM_AMSR,mae,Srad,-0.0187
+Station6,RNN,Sat_SM_AMSR,mae_percentage,Ppt,-1.7206
+Station6,RNN,Sat_SM_AMSR,mae_percentage,Tair,-1.1801
+Station6,RNN,Sat_SM_AMSR,mae_percentage,RH,-0.6205
+Station6,RNN,Sat_SM_AMSR,mae_percentage,Windspeed,-0.5333
+Station6,RNN,Sat_SM_AMSR,mae_percentage,Winddirection,-1.6616
+Station6,RNN,Sat_SM_AMSR,mae_percentage,Srad,-1.9633
+Station6,RNN,Sat_SM_AMSR,r2,Ppt,0.0175
+Station6,RNN,Sat_SM_AMSR,r2,Tair,0.0146
+Station6,RNN,Sat_SM_AMSR,r2,RH,0.0014
+Station6,RNN,Sat_SM_AMSR,r2,Windspeed,0.0000
+Station6,RNN,Sat_SM_AMSR,r2,Winddirection,0.0124
+Station6,RNN,Sat_SM_AMSR,r2,Srad,0.0194
+Station6,RNN,Sat_SM_SMAP,performance,0.8662,0.7246,73.4193,0.1107
+Station6,RNN,Sat_SM_AMSR,performance,0.9275,0.6942,72.7323,0.0000
+Station6,CNN,Sat_SM_SMAP,mse,Ppt,0.1644
+Station6,CNN,Sat_SM_SMAP,mse,Tair,-0.0136
+Station6,CNN,Sat_SM_SMAP,mse,RH,-0.0048
+Station6,CNN,Sat_SM_SMAP,mse,Windspeed,-0.0213
+Station6,CNN,Sat_SM_SMAP,mse,Winddirection,0.0078
+Station6,CNN,Sat_SM_SMAP,mse,Srad,-0.0088
+Station6,CNN,Sat_SM_SMAP,mae,Ppt,0.0895
+Station6,CNN,Sat_SM_SMAP,mae,Tair,-0.0064
+Station6,CNN,Sat_SM_SMAP,mae,RH,-0.0003
+Station6,CNN,Sat_SM_SMAP,mae,Windspeed,-0.0098
+Station6,CNN,Sat_SM_SMAP,mae,Winddirection,0.0062
+Station6,CNN,Sat_SM_SMAP,mae,Srad,-0.0045
+Station6,CNN,Sat_SM_SMAP,mae_percentage,Ppt,9.0660
+Station6,CNN,Sat_SM_SMAP,mae_percentage,Tair,-0.6517
+Station6,CNN,Sat_SM_SMAP,mae_percentage,RH,-0.0348
+Station6,CNN,Sat_SM_SMAP,mae_percentage,Windspeed,-0.9902
+Station6,CNN,Sat_SM_SMAP,mae_percentage,Winddirection,0.6289
+Station6,CNN,Sat_SM_SMAP,mae_percentage,Srad,-0.4518
+Station6,CNN,Sat_SM_SMAP,r2,Ppt,-0.1688
+Station6,CNN,Sat_SM_SMAP,r2,Tair,0.0139
+Station6,CNN,Sat_SM_SMAP,r2,RH,0.0050
+Station6,CNN,Sat_SM_SMAP,r2,Windspeed,0.0219
+Station6,CNN,Sat_SM_SMAP,r2,Winddirection,-0.0080
+Station6,CNN,Sat_SM_SMAP,r2,Srad,0.0091
+Station6,CNN,Sat_SM_AMSR,mse,Ppt,-0.0123
+Station6,CNN,Sat_SM_AMSR,mse,Tair,0.0042
+Station6,CNN,Sat_SM_AMSR,mse,RH,-0.0113
+Station6,CNN,Sat_SM_AMSR,mse,Windspeed,0.0175
+Station6,CNN,Sat_SM_AMSR,mse,Winddirection,-0.0074
+Station6,CNN,Sat_SM_AMSR,mse,Srad,-0.0028
+Station6,CNN,Sat_SM_AMSR,mae,Ppt,0.0010
+Station6,CNN,Sat_SM_AMSR,mae,Tair,-0.0009
+Station6,CNN,Sat_SM_AMSR,mae,RH,-0.0054
+Station6,CNN,Sat_SM_AMSR,mae,Windspeed,0.0089
+Station6,CNN,Sat_SM_AMSR,mae,Winddirection,-0.0109
+Station6,CNN,Sat_SM_AMSR,mae,Srad,-0.0005
+Station6,CNN,Sat_SM_AMSR,mae_percentage,Ppt,0.1031
+Station6,CNN,Sat_SM_AMSR,mae_percentage,Tair,-0.0991
+Station6,CNN,Sat_SM_AMSR,mae_percentage,RH,-0.5684
+Station6,CNN,Sat_SM_AMSR,mae_percentage,Windspeed,0.9336
+Station6,CNN,Sat_SM_AMSR,mae_percentage,Winddirection,-1.1471
+Station6,CNN,Sat_SM_AMSR,mae_percentage,Srad,-0.0576
+Station6,CNN,Sat_SM_AMSR,r2,Ppt,0.0135
+Station6,CNN,Sat_SM_AMSR,r2,Tair,-0.0046
+Station6,CNN,Sat_SM_AMSR,r2,RH,0.0124
+Station6,CNN,Sat_SM_AMSR,r2,Windspeed,-0.0153
+Station6,CNN,Sat_SM_AMSR,r2,Winddirection,0.0082
+Station6,CNN,Sat_SM_AMSR,r2,Srad,0.0031
+Station6,CNN,Sat_SM_SMAP,performance,0.6320,0.5772,58.4862,0.3512
+Station6,CNN,Sat_SM_AMSR,performance,0.8971,0.6617,69.3314,0.0153
+Station6,Custom AR,Sat_SM_SMAP,mse,Ppt,0.4151
+Station6,Custom AR,Sat_SM_SMAP,mse,Tair,0.0516
+Station6,Custom AR,Sat_SM_SMAP,mse,RH,0.0837
+Station6,Custom AR,Sat_SM_SMAP,mse,Windspeed,0.0003
+Station6,Custom AR,Sat_SM_SMAP,mse,Winddirection,0.0010
+Station6,Custom AR,Sat_SM_SMAP,mse,Srad,0.0047
+Station6,Custom AR,Sat_SM_SMAP,mae,Ppt,0.2469
+Station6,Custom AR,Sat_SM_SMAP,mae,Tair,0.0393
+Station6,Custom AR,Sat_SM_SMAP,mae,RH,0.0499
+Station6,Custom AR,Sat_SM_SMAP,mae,Windspeed,0.0002
+Station6,Custom AR,Sat_SM_SMAP,mae,Winddirection,-0.0003
+Station6,Custom AR,Sat_SM_SMAP,mae,Srad,0.0051
+Station6,Custom AR,Sat_SM_SMAP,mae_percentage,Ppt,24.6887
+Station6,Custom AR,Sat_SM_SMAP,mae_percentage,Tair,3.9336
+Station6,Custom AR,Sat_SM_SMAP,mae_percentage,RH,4.9919
+Station6,Custom AR,Sat_SM_SMAP,mae_percentage,Windspeed,0.0184
+Station6,Custom AR,Sat_SM_SMAP,mae_percentage,Winddirection,-0.0308
+Station6,Custom AR,Sat_SM_SMAP,mae_percentage,Srad,0.5069
+Station6,Custom AR,Sat_SM_SMAP,r2,Ppt,0.4151
+Station6,Custom AR,Sat_SM_SMAP,r2,Tair,0.0516
+Station6,Custom AR,Sat_SM_SMAP,r2,RH,0.0837
+Station6,Custom AR,Sat_SM_SMAP,r2,Windspeed,0.0003
+Station6,Custom AR,Sat_SM_SMAP,r2,Winddirection,0.0010
+Station6,Custom AR,Sat_SM_SMAP,r2,Srad,0.0047
+Station6,Custom AR,Sat_SM_AMSR,mse,Ppt,0.0007
+Station6,Custom AR,Sat_SM_AMSR,mse,Tair,0.0644
+Station6,Custom AR,Sat_SM_AMSR,mse,RH,0.0783
+Station6,Custom AR,Sat_SM_AMSR,mse,Windspeed,0.0307
+Station6,Custom AR,Sat_SM_AMSR,mse,Winddirection,0.0024
+Station6,Custom AR,Sat_SM_AMSR,mse,Srad,0.0278
+Station6,Custom AR,Sat_SM_AMSR,mae,Ppt,0.0007
+Station6,Custom AR,Sat_SM_AMSR,mae,Tair,0.0313
+Station6,Custom AR,Sat_SM_AMSR,mae,RH,0.0222
+Station6,Custom AR,Sat_SM_AMSR,mae,Windspeed,0.0210
+Station6,Custom AR,Sat_SM_AMSR,mae,Winddirection,0.0026
+Station6,Custom AR,Sat_SM_AMSR,mae,Srad,0.0192
+Station6,Custom AR,Sat_SM_AMSR,mae_percentage,Ppt,0.0655
+Station6,Custom AR,Sat_SM_AMSR,mae_percentage,Tair,3.1337
+Station6,Custom AR,Sat_SM_AMSR,mae_percentage,RH,2.2216
+Station6,Custom AR,Sat_SM_AMSR,mae_percentage,Windspeed,2.1017
+Station6,Custom AR,Sat_SM_AMSR,mae_percentage,Winddirection,0.2553
+Station6,Custom AR,Sat_SM_AMSR,mae_percentage,Srad,1.9154
+Station6,Custom AR,Sat_SM_AMSR,r2,Ppt,0.0007
+Station6,Custom AR,Sat_SM_AMSR,r2,Tair,0.0473
+Station6,Custom AR,Sat_SM_AMSR,r2,RH,0.0473
+Station6,Custom AR,Sat_SM_AMSR,r2,Windspeed,0.0307
+Station6,Custom AR,Sat_SM_AMSR,r2,Winddirection,0.0024
+Station6,Custom AR,Sat_SM_AMSR,r2,Srad,0.0278
+Station6,Custom AR,Sat_SM_SMAP,performance,0.4436,0.4741,47.4095,0.5565
+Station6,Custom AR,Sat_SM_AMSR,performance,0.9527,0.6832,68.3234,0.0473
