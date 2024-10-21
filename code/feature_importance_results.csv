@@ -1,8 +1,7 @@
 Label Feature,Dropped Feature,Model Name,Test MSE,Test MAE,Test MAPE
-SWC_5,Baseline,Baseline,0.15382307767868042,0.18616552650928497,176.95169067382812
+SWC_5,Baseline,Baseline,0.15382300317287445,0.18616551160812378,176.95172119140625
 SWC_5,Baseline,Multi-step Linear,nan,nan,nan
 SWC_5,Baseline,Multi-step Dense,nan,nan,nan
 SWC_5,Baseline,CNN,nan,nan,nan
 SWC_5,Baseline,RNN,nan,nan,nan
 SWC_5,Baseline,LSTM,nan,nan,nan
-SWC_5,Baseline,Autoregressive,nan,nan,nan

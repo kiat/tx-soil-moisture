@@ -70,7 +70,7 @@ dfs = load_all_data()
 create_csv('model_results.csv')
 create_feature_csv('feature_importance_results.csv')
 for station, df in dfs.items():
-    preprocess(df)
+    df = preprocess(df)
 
 
     df = normalize(df)
@@ -79,50 +79,53 @@ for station, df in dfs.items():
     all_losses = {}
 
     # Loop through each configuration and compare models
-    # for config in configurations:
-    #     print(f"\nEvaluating models for configuration: {config}")
-    #     CONV_WIDTH = 3
-    #     # Define models in a dictionary
-    #     label_width = config['output_steps']
-    #     n = len(df)
-    #     df_copy = df.copy()
-    #     label = config['features']
-    #     label_index = label_features.index(label)
+    for config in configurations:
+        print(f"\nEvaluating models for configuration: {config}")
+        CONV_WIDTH = 3
+        # Define models in a dictionary
+        label_width = config['output_steps']
+        n = len(df)
+        df_copy = df.copy()
+        label = config['features']
+        label_index = label_features.index(label)
 
-    #     # Identify the temperature feature to keep based on the label feature
-    #     temp_to_keep = temp_features[label_index]
-    #     features_to_drop = [col for col in label_features if col != label]
-    #     features_to_drop += [col for col in temp_features if col != temp_to_keep]
-    #     # Drop the features
-    #     df_copy = df_copy.drop(columns=features_to_drop)
-
-
-    #     train_df = df_copy.iloc[0:int(n*0.7)]
-    #     val_df = df_copy.iloc[int(n*0.7):int(n*0.9)]
-    #     test_df = df_copy.iloc[int(n*0.9):]
-    #     num_features = df_copy.shape[1]
-    #     models = {
-    #             'Baseline': baseline(label_width, num_features),
-    #             'Multi-step Linear': linear(label_width, num_features),
-    #             'Multi-step Dense': dense(label_width, num_features),
-    #             'CNN': cnn(label_width, num_features, CONV_WIDTH),
-    #             'RNN': simple_rnn(label_width, num_features),
-    #             'LSTM': lstm(label_width, num_features),
-    #             'Autoregressive': autoregressive(label_width, num_features),
-    #             'Bi-LSTM': bi_lstm(label_width, num_features),
-    #         }
-
-    #     # make way to drop other features besides one in config
-    #     # Train and evaluate models for the current configuration
-    #     performance, val_performance = train_and_evaluate_models(config, models, train_df, val_df, test_df, model_dir)
-    #     model_losses = (performance, val_performance)
-    #     # Store the losses for this configuration
-    #     all_losses[f"{config['features']} - {config['input_steps']} input / {config['output_steps']} output"] = model_losses
+        # Identify the temperature feature to keep based on the label feature
+        temp_to_keep = temp_features[label_index]
+        features_to_drop = [col for col in label_features if col != label]
+        features_to_drop += [col for col in temp_features if col != temp_to_keep]
+        # Drop the features
+        df_copy = df_copy.drop(columns=features_to_drop)
 
 
-    # # Call the function to print the summaries
-    # print_model_summaries(models, all_losses)
-    # write_model_results_to_csv(station, all_losses, filename='model_results.csv')
+        train_df = df_copy.iloc[0:int(n*0.7)]
+        val_df = df_copy.iloc[int(n*0.7):int(n*0.9)]
+        test_df = df_copy.iloc[int(n*0.9):]
+        print(train_df.isnull().sum())
+        print(val_df.isnull().sum())
+        print(test_df.isnull().sum())
+        num_features = df_copy.shape[1]
+        models = {
+                'Baseline': baseline(label_width, num_features),
+                'Multi-step Linear': linear(label_width, num_features),
+                'Multi-step Dense': dense(label_width, num_features),
+                'CNN': cnn(label_width, num_features, CONV_WIDTH),
+                'RNN': simple_rnn(label_width, num_features),
+                'LSTM': lstm(label_width, num_features),
+                'Autoregressive': autoregressive(label_width, num_features),
+                'Bi-LSTM': bi_lstm(label_width, num_features),
+            }
+
+        # make way to drop other features besides one in config
+        # Train and evaluate models for the current configuration
+        performance, val_performance = train_and_evaluate_models(config, models, train_df, val_df, test_df, model_dir)
+        model_losses = (performance, val_performance)
+        # Store the losses for this configuration
+        all_losses[f"{config['features']} - {config['input_steps']} input / {config['output_steps']} output"] = model_losses
+
+
+    # Call the function to print the summaries
+    print_model_summaries(models, all_losses)
+    write_model_results_to_csv(station, all_losses, filename='model_results.csv')
 
 # for config_name, losses in all_losses.items():
 #     print(f"\nPlotting performance for configuration: {config_name}")
@@ -172,8 +175,8 @@ for station, df in dfs.items():
         # Call the function
         feature_importance_results = drop_feature_and_evaluate(config, original_mae, train_df, val_df, test_df, all_features, target_feature, CONV_WIDTH, model_dir)
 
-        # Print the feature importance results
-        for feature, importance in feature_importance_results.items():
-            print(f"\nFeature: {feature}")
-            for model_name, mae_diff in importance.items():
-                print(f"Model: {model_name} - MAE Change: {mae_diff:.4f}")
+        # # Print the feature importance results
+        # for feature, importance in feature_importance_results.items():
+        #     print(f"\nFeature: {feature}")
+        #     for model_name, mae_diff in importance.items():
+        #         print(f"Model: {model_name} - MAE Change: {mae_diff:.4f}")

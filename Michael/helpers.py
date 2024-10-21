@@ -89,7 +89,7 @@ def load_data(station, data_path="../datasets/Simulate_Cleaned_Merged"):
 
 def load_all_data(data_path="../datasets/Simulate_Cleaned_Merged"):
     dfs = {}
-    for station in range(1, 7):
+    for station in range(1, 2):
         dfs[station] = load_data(station, data_path)
     return dfs
 
@@ -115,6 +115,7 @@ def preprocess(df):
     df['Day cos'] = np.cos(timestamp_s * (2 * np.pi / day))
     df['Year sin'] = np.sin(timestamp_s * (2 * np.pi / year))
     df['Year cos'] = np.cos(timestamp_s * (2 * np.pi / year))
+    return df
 
 def normalize(data):
     # Normalize the data
