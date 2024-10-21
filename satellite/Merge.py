@@ -1,68 +1,51 @@
 import csv
 import os
-from datetime import datetime
+from datetime import datetime, time
+import pandas as pd
 
 def parse_date(date_string):
     return datetime.strptime(date_string, '%Y-%m-%d')
 
-def merge_datasets(merged_file, smap_file, amsr_file, output_file):
-    data = {}
+def merge_datasets(revised_final_file, smap_file, amsr_file, output_file):
+    # Read the revised final data
+    revised_final_df = pd.read_csv(revised_final_file, parse_dates=['Unnamed: 0'])
+    revised_final_df.set_index('Unnamed: 0', inplace=True)
+    revised_final_df.index.name = 'Date'
 
-    # Read the merged SMAP file
-    with open(merged_file, 'r') as f:
-        reader = csv.reader(f)
-        headers_merged = next(reader)  # Save headers
-        sat_sm_index = headers_merged.index('Sat_SM')
-        headers_merged = headers_merged[:sat_sm_index] + headers_merged[sat_sm_index+1:]  # Remove Sat_SM from headers
-        for row in reader:
-            if len(row) > 0:
-                date = parse_date(row[0])
-                # Remove Sat_SM column from data
-                data[date] = row[1:sat_sm_index+1] + row[sat_sm_index+2:]
+    # Select only 12 PM data from each day
+    revised_final_df = revised_final_df.at_time('12:00')
 
-    # Read the SMAP file to get SMAP soil moisture
-    smap_sm = {}
-    with open(smap_file, 'r') as f:
-        reader = csv.reader(f)
-        next(reader)  # Skip header
-        for row in reader:
-            if len(row) > 0:
-                date = parse_date(row[0])
-                smap_sm[date] = row[1]  # SMAP soil moisture is in the second column
+    # Read the SMAP file
+    smap_df = pd.read_csv(smap_file, parse_dates=['Date'])
+    smap_df.set_index('Date', inplace=True)
+    smap_df.rename(columns={'soil_moisture': 'Sat_SM_SMAP'}, inplace=True)
 
-    # Read the AMSR file to get AMSR soil moisture
-    amsr_sm = {}
-    with open(amsr_file, 'r') as f:
-        reader = csv.reader(f)
-        next(reader)  # Skip header
-        for row in reader:
-            if len(row) > 0:
-                date = parse_date(row[0])
-                amsr_sm[date] = row[1]  # AMSR soil moisture is in the second column
+    # Read the AMSR file
+    amsr_df = pd.read_csv(amsr_file, parse_dates=['Date'])
+    amsr_df.set_index('Date', inplace=True)
+    amsr_df.rename(columns={'soil_moisture': 'Sat_SM_AMSR'}, inplace=True)
+
+    # Merge all dataframes
+    merged_df = revised_final_df.join([smap_df['Sat_SM_SMAP'], amsr_df['Sat_SM_AMSR']], how='outer')
+
+    # Combine midnight and noon data
+    merged_df.reset_index(inplace=True)
+    merged_df['Date'] = pd.to_datetime(merged_df['Date'].dt.date)  # Remove time component
+    merged_df = merged_df.groupby('Date').first().reset_index()  # Keep first non-null value for each day
 
     # Ensure the output directory exists
     os.makedirs(os.path.dirname(output_file), exist_ok=True)
 
     # Write the merged data to the output file
-    with open(output_file, 'w', newline='') as f:
-        writer = csv.writer(f)
-        # Add new headers for SMAP and AMSR soil moisture
-        combined_headers = ['Date'] + headers_merged + ['Sat_SM_SMAP', 'Sat_SM_AMSR']
-        writer.writerow(combined_headers)
-        
-        for date in sorted(data.keys()):
-            row = data[date]
-            smap_sm_value = smap_sm.get(date, '')
-            amsr_sm_value = amsr_sm.get(date, '')
-            writer.writerow([date.strftime('%Y-%m-%d')] + row + [smap_sm_value, amsr_sm_value])
+    merged_df.to_csv(output_file, index=False)
 
     print(f"Merged data written to {output_file}")
 
 # Process all 6 stations
 for i in range(1, 7):
-    merged_file = f'satellite/merged_data/Station{i}_Merged.csv'
+    revised_final_file = f'datasets/Revised_Final_Data/Station{i}_Revised_Final_Data.csv'
     smap_file = f'satellite/satellite_data_csv/Station{i}_Satellite.csv'
     amsr_file = f'satellite/AMSR_data_csv/AMSR_station_{i}_data.csv'
     output_file = f'satellite/all_merged_data/Station{i}_AMSR_SMAP_Merged.csv'
     
-    merge_datasets(merged_file, smap_file, amsr_file, output_file)
+    merge_datasets(revised_final_file, smap_file, amsr_file, output_file)
