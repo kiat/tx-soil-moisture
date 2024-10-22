@@ -25,8 +25,6 @@ if not os.path.exists(model_dir):
 
 # Load the data
 
-# filepath = './datasets/Revised_Final_Data/Station3_Revised_Final_Data.csv'
-# df = load_data(filepath)
 label_features = ['SWC_5', 'SWC_10', 'SWC_20', 'SWC_50']
 temp_features = ['T_5', 'T_10', 'T_20', 'T_50']
 
@@ -171,8 +169,6 @@ for station, df in dfs.items():
 
         # Create a dictionary to store the original MAE values before feature dropping
         original_mae = calculate_original_performance(models, config, train_df, val_df, test_df)
-
-        # Call the function
         feature_importance_results = drop_feature_and_evaluate(config, original_mae, train_df, val_df, test_df, all_features, target_feature, CONV_WIDTH, model_dir)
 
         # # Print the feature importance results
