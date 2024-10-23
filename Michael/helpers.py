@@ -232,10 +232,10 @@ def train_and_evaluate_models(config, models, train_df, val_df, test_df, model_d
 
     performance = {}
     val_performance = {}
-    early_stopping = EarlyStopping(monitor='val_loss', patience=3, restore_best_weights=True)
-
+    history_dicts = dict()
     # Train, evaluate, and store losses for each model
     for name, model in models.items():
+        early_stopping = EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True)
         if name == 'ARIMA':  # Handle ARIMA separately
             print(f'\nTraining {name} model for configuration: {config}')
             y_train = train_df['SWC_5'].values
@@ -266,6 +266,8 @@ def train_and_evaluate_models(config, models, train_df, val_df, test_df, model_d
                 epochs=10,
                 callbacks=[early_stopping]
             )
+            config_name = f"{config['features']} - {config['input_steps']} input / {config['output_steps']} output"
+            history_dicts[name + config_name] = history.history
             performance[name] = model.evaluate(window.test, return_dict = True)
             val_performance[name] = model.evaluate(window.val, return_dict = True)
             model_save_path = os.path.join(model_dir, f"{name}.keras")
@@ -277,7 +279,7 @@ def train_and_evaluate_models(config, models, train_df, val_df, test_df, model_d
 
     print(f'\nModel with the lowest MAE: {min_loss_model} - MAE: {performance[min_loss_model]}')
     print(f'Model with the highest MAE: {max_loss_model} - MAE: {performance[max_loss_model]}')
-    return performance, val_performance
+    return performance, val_performance, history_dicts
 
 # Function to plot model performance
 # Maybe pass in Config name and also store config name in configurations dictionary
@@ -573,3 +575,16 @@ def drop_feature_and_evaluate(config, original_performance, train_df, val_df, te
         feature_importance[feature] = metric_diffs
 
     return feature_importance
+
+def plot_training_history(history_dicts):
+    plt.figure(figsize=(12, 8))
+    for model_name, history in history_dicts.items():
+        plt.plot(history['loss'], label=f'{model_name} - Train Loss', linestyle='dashed')
+        plt.plot(history['val_loss'], label=f'{model_name} - Val Loss')
+    
+        plt.title(model_name + ' Validation Loss Over Epochs')
+        plt.xlabel('Epochs')
+        plt.ylabel('Validation Loss')
+        plt.legend()
+        plt.grid(True)
+        plt.show()

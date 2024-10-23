@@ -12,7 +12,7 @@ import os, csv
 from helpers import load_data, preprocess, normalize, create_window, train_and_evaluate_models, \
     plot_performance, print_model_summaries, write_model_results_to_csv, WindowGenerator, \
     baseline, linear, dense, simple_rnn, cnn, lstm, autoregressive, bi_lstm, load_all_data, create_csv, \
-    calculate_original_performance, drop_feature_and_evaluate, create_feature_csv
+    calculate_original_performance, drop_feature_and_evaluate, create_feature_csv, plot_training_history
 
 model_dir = './saved_models/'
 
@@ -30,20 +30,20 @@ temp_features = ['T_5', 'T_10', 'T_20', 'T_50']
 
 configurations = [
         {"features": 'SWC_5', "input_steps": 24, "output_steps": 1},
-        {"features": 'SWC_5', "input_steps": 24, "output_steps": 6},
-        {"features": 'SWC_5', "input_steps": 48, "output_steps": 12},
-        {"features": 'SWC_5', "input_steps": 7*24, "output_steps": 24},
-        {"features": 'SWC_5', "input_steps": 7*24, "output_steps": 48},
-        {"features": 'SWC_10', "input_steps": 24, "output_steps": 1},
-        {"features": 'SWC_10', "input_steps": 24, "output_steps": 6},
-        {"features": 'SWC_10', "input_steps": 48, "output_steps": 12},
-        {"features": 'SWC_10', "input_steps": 7*24, "output_steps": 24},
-        {"features": 'SWC_10', "input_steps": 7*24, "output_steps": 48},
-        {"features": 'SWC_20', "input_steps": 24, "output_steps": 1},
-        {"features": 'SWC_20', "input_steps": 24, "output_steps": 6},
-        {"features": 'SWC_20', "input_steps": 48, "output_steps": 12},
-        {"features": 'SWC_20', "input_steps": 7*24, "output_steps": 24},
-        {"features": 'SWC_20', "input_steps": 7*24, "output_steps": 48},
+        # {"features": 'SWC_5', "input_steps": 24, "output_steps": 6},
+        # {"features": 'SWC_5', "input_steps": 48, "output_steps": 12},
+        # {"features": 'SWC_5', "input_steps": 7*24, "output_steps": 24},
+        # {"features": 'SWC_5', "input_steps": 7*24, "output_steps": 48},
+        # {"features": 'SWC_10', "input_steps": 24, "output_steps": 1},
+        # {"features": 'SWC_10', "input_steps": 24, "output_steps": 6},
+        # {"features": 'SWC_10', "input_steps": 48, "output_steps": 12},
+        # {"features": 'SWC_10', "input_steps": 7*24, "output_steps": 24},
+        # {"features": 'SWC_10', "input_steps": 7*24, "output_steps": 48},
+        # {"features": 'SWC_20', "input_steps": 24, "output_steps": 1},
+        # {"features": 'SWC_20', "input_steps": 24, "output_steps": 6},
+        # {"features": 'SWC_20', "input_steps": 48, "output_steps": 12},
+        # {"features": 'SWC_20', "input_steps": 7*24, "output_steps": 24},
+        # {"features": 'SWC_20', "input_steps": 7*24, "output_steps": 48},
     ]
 
 # Feature Importance - Dropping Features
@@ -115,10 +115,11 @@ for station, df in dfs.items():
 
         # make way to drop other features besides one in config
         # Train and evaluate models for the current configuration
-        performance, val_performance = train_and_evaluate_models(config, models, train_df, val_df, test_df, model_dir)
+        performance, val_performance, history_dicts = train_and_evaluate_models(config, models, train_df, val_df, test_df, model_dir)
         model_losses = (performance, val_performance)
         # Store the losses for this configuration
         all_losses[f"{config['features']} - {config['input_steps']} input / {config['output_steps']} output"] = model_losses
+        plot_training_history(history_dicts)
 
 
     # Call the function to print the summaries
