@@ -115,16 +115,16 @@ for station, df in dfs.items():
 
         # make way to drop other features besides one in config
         # Train and evaluate models for the current configuration
-        performance, val_performance, history_dicts = train_and_evaluate_models(config, models, train_df, val_df, test_df, model_dir)
+        performance, val_performance, history_dicts = train_and_evaluate_models(station, config, models, train_df, val_df, test_df, model_dir)
         model_losses = (performance, val_performance)
         # Store the losses for this configuration
         all_losses[f"{config['features']} - {config['input_steps']} input / {config['output_steps']} output"] = model_losses
-        plot_training_history(history_dicts)
-
+        #plot_training_history(history_dicts)
+        
 
     # Call the function to print the summaries
     print_model_summaries(models, all_losses)
-    write_model_results_to_csv(station, all_losses, filename='model_results.csv')
+    
 
 # for config_name, losses in all_losses.items():
 #     print(f"\nPlotting performance for configuration: {config_name}")
