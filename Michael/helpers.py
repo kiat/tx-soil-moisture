@@ -218,7 +218,7 @@ def create_window(input_width, label_width, shift, train_df, val_df, test_df, la
     )
 
 # Function to train and evaluate all models for a given configuration
-def train_and_evaluate_models(station, config, models, train_df, val_df, test_df, model_dir):
+def train_and_evaluate_models(station, config, models, train_df, val_df, test_df, model_dir, model_file, loss_file):
     # Adjust the window based on the current configuration  
     window = create_window(
         input_width=config['input_steps'],
@@ -270,12 +270,12 @@ def train_and_evaluate_models(station, config, models, train_df, val_df, test_df
             history_dicts[name + config_name] = history.history
             performance[name] = model.evaluate(window.test, return_dict = True)
             val_performance[name] = model.evaluate(window.val, return_dict = True)
-            write_model_results_to_csv(station, name, config, performance[name], filename='model_results.csv')
+            write_model_results_to_csv(station, name, config, performance[name], filename=model_file)
+            write_loss_history_to_csv(station, name, config, performance[name], history.history, filename=loss_file)
             model_save_path = os.path.join(model_dir, f"{name}.keras")
             model.save(model_save_path)
             print(f'{name} Model Test Loss: {performance[name]}')
     
-    write_loss_history_to_csv(history_dicts, filename='loss_history.csv')
     min_loss_model = min(performance, key=lambda k: performance[k]['mean_absolute_error'])
     max_loss_model = max(performance, key=lambda k: performance[k]['mean_absolute_error'])
 
@@ -330,7 +330,7 @@ def create_csv(csv_filename):
         writer = csv.writer(file)
         # Write the header row
         writer.writerow([
-            'Station', 'Label Feature', 'Input Length', 'Output Length', 'Model', 'MAE', 'MSE', 'MAPE'
+            'Station', 'Label_Feature', 'Input_Length', 'Output_Length', 'Model', 'MAE', 'MSE', 'MAPE'
         ])
 
 def create_feature_csv(csv_filename):
@@ -338,8 +338,16 @@ def create_feature_csv(csv_filename):
         writer = csv.writer(file)
         # Write the header row
         writer.writerow([
-            'Station', 'Label Feature', 'Dropped Feature', 'Model Name', 'Input Length', 'Output Length', 
-            'Test MSE', 'Test MAE', 'Test MAPE'
+            'Station', 'Label_Feature', 'Dropped_Feature', 'Model_Name', 'Input_Length', 'Output_Length', 
+            'Test_MSE', 'Test_MAE', 'Test_MAPE'
+        ])
+
+def create_loss_csv(csv_filename):
+    with open(csv_filename, 'w', newline='') as file:
+        writer = csv.writer(file)
+        # Write the header row
+        writer.writerow([
+            'Model_Name', 'Label_Feature', 'Input_Length', 'Output_Length', 'Epoch', 'Train_Loss', 'Val_Loss'
         ])
 
 def write_model_results_to_csv(station, model_name, config, metrics, filename='model_results.csv'):
@@ -593,7 +601,7 @@ def plot_training_history(history_dicts):
         plt.grid(True)
         plt.show()
 
-def write_loss_history_to_csv(history_dicts, filename='loss_history.csv'):
+def write_loss_history_to_csv(station, config, model_name, history, filename='loss_history.csv'):
     file_exists = os.path.isfile(filename)  # Check if the file already exists
 
     # Open the CSV file in append mode ('a') to add new entries
@@ -602,15 +610,17 @@ def write_loss_history_to_csv(history_dicts, filename='loss_history.csv'):
 
         # Write the header only if the file does not exist (to avoid duplication)
         if not file_exists:
-            writer.writerow(['Model Name', 'Epoch', 'Train Loss', 'Val Loss'])
+            writer.writerow(['Model_Name', 'Label_Feature', 'Input_Length', 'Output_Length', 'Epoch', 'Train_Loss', 'Val_Loss'])
 
         # Iterate through the models and their histories
-        for model_name, history in history_dicts.items():
-            train_losses = history['loss']
-            val_losses = history['val_loss']
-
-            # Write each epoch's losses to the CSV
-            for epoch, (train_loss, val_loss) in enumerate(zip(train_losses, val_losses)):
-                writer.writerow([model_name, epoch + 1, train_loss, val_loss])
+        writer.writerow([
+            station,
+            config['features'],
+            config['input_steps'],
+            config['output_steps'],
+            model_name,
+            history['loss'],
+            history['val_loss']
+        ])
 
     print(f'Loss history appended to {filename}')

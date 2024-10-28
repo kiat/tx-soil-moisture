@@ -13,7 +13,7 @@ import argparse
 from helpers import load_data, preprocess, normalize, create_window, train_and_evaluate_models, \
     plot_performance, print_model_summaries, write_model_results_to_csv, WindowGenerator, \
     baseline, linear, dense, simple_rnn, cnn, lstm, autoregressive, bi_lstm, load_all_data, create_csv, \
-    calculate_original_performance, drop_feature_and_evaluate, create_feature_csv, plot_training_history
+    calculate_original_performance, drop_feature_and_evaluate, create_feature_csv, plot_training_history, create_loss_csv
 
 def main():
     parser = argparse.ArgumentParser(description="Train model on a specific configuration.")
@@ -76,8 +76,11 @@ def main():
     #         ])
 
     dfs = load_all_data()
-    create_csv('model_results.csv')
+    model_filename = f"{args.features}_{args.input_steps}_{args.output_steps}_model_results.csv"
+    loss_filename = f"{args.features}_{args.input_steps}_{args.output_steps}_loss_history.csv"
+    create_csv(model_filename)
     create_feature_csv('feature_importance_results.csv')
+    create_loss_csv(loss_filename)
     for station, df in dfs.items():
         df = preprocess(df)
 
@@ -126,7 +129,7 @@ def main():
 
             # make way to drop other features besides one in config
             # Train and evaluate models for the current configuration
-            performance, val_performance, history_dicts = train_and_evaluate_models(station, config, models, train_df, val_df, test_df, model_dir)
+            performance, val_performance, history_dicts = train_and_evaluate_models(station, config, models, train_df, val_df, test_df, model_dir, model_filename, loss_filename)
             model_losses = (performance, val_performance)
             # Store the losses for this configuration
             all_losses[f"{config['features']} - {config['input_steps']} input / {config['output_steps']} output"] = model_losses
