@@ -33,6 +33,14 @@ Pandas and Time Series Data
 * https://www.manning.com/books/time-series-forecasting-in-python-book
 * https://www.youtube.com/watch?v=L4sYigvSx2s&list=UU-0lpiwlftqwC7znCcF83qg
 
+# Time Series with Keras - Timeseries classification
+
+* https://keras.io/examples/timeseries/timeseries_classification_from_scratch/
+* https://keras.io/examples/timeseries/timeseries_classification_transformer/
+* https://keras.io/examples/timeseries/eeg_signal_classification/
+* https://keras.io/examples/timeseries/event_classification_for_payment_card_fraud_detection/
+
+
 # Deep Learning with Tensorflow
 
 * https://www.tensorflow.org/tutorials/structured_data/time_series
