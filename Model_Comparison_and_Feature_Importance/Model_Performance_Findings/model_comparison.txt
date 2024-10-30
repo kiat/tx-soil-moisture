@@ -1,0 +1,393 @@
+Model Performance Summary Across All Configurations:
+
+Configuration: SWC_5 - 24 input / 1 output
+Model: Baseline - Loss: 0.0046, MAE: 0.0149
+Model: Multi-step Linear - Loss: 0.0646, MAE: 0.2153
+Model: Multi-step Dense - Loss: 0.0060, MAE: 0.0507
+Model: CNN - Loss: 0.0079, MAE: 0.0584
+Model: RNN - Loss: 0.0034, MAE: 0.0253
+Model: LSTM - Loss: 0.0110, MAE: 0.0788
+Model: Autoregressive - Loss: 0.0370, MAE: 0.1031
+Model: Bi-LSTM - Loss: 0.0102, MAE: 0.0749
+
+Model with the lowest MAE: Baseline - MAE: 0.014926760457456112
+Model with the highest MAE: Multi-step Linear - MAE: 0.21530325710773468
+
+Configuration: SWC_5 - 24 input / 6 output
+Model: Baseline - Loss: 0.0397, MAE: 0.0729
+Model: Multi-step Linear - Loss: 0.0216, MAE: 0.0434
+Model: Multi-step Dense - Loss: 0.0224, MAE: 0.0717
+Model: CNN - Loss: 0.0248, MAE: 0.0811
+Model: RNN - Loss: 0.0192, MAE: 0.0495
+Model: LSTM - Loss: 0.0238, MAE: 0.0749
+Model: Autoregressive - Loss: 0.0496, MAE: 0.1197
+Model: Bi-LSTM - Loss: 0.0613, MAE: 0.1931
+
+Model with the lowest MAE: Multi-step Linear - MAE: 0.043384749442338943
+Model with the highest MAE: Bi-LSTM - MAE: 0.19311939179897308
+
+Configuration: SWC_5 - 48 input / 12 output
+Model: Baseline - Loss: 0.0687, MAE: 0.1070
+Model: Multi-step Linear - Loss: 0.0379, MAE: 0.0693
+Model: Multi-step Dense - Loss: 0.0385, MAE: 0.0927
+Model: CNN - Loss: 0.0358, MAE: 0.0831
+Model: RNN - Loss: 0.0359, MAE: 0.0888
+Model: LSTM - Loss: 0.0423, MAE: 0.1168
+Model: Autoregressive - Loss: 0.0691, MAE: 0.1432
+Model: Bi-LSTM - Loss: 0.0561, MAE: 0.1443
+
+Model with the lowest MAE: Multi-step Linear - MAE: 0.06925001740455627
+Model with the highest MAE: Bi-LSTM - MAE: 0.14426426589488983
+
+Configuration: SWC_5 - 168 input / 24 output
+Model: Baseline - Loss: 0.0887, MAE: 0.1009
+Model: Multi-step Linear - Loss: 0.0570, MAE: 0.0883
+Model: Multi-step Dense - Loss: 0.0572, MAE: 0.1144
+Model: CNN - Loss: 0.0562, MAE: 0.1097
+Model: RNN - Loss: 0.0569, MAE: 0.1077
+Model: LSTM - Loss: 0.0702, MAE: 0.1512
+Model: Autoregressive - Loss: 0.2048, MAE: 0.3633
+Model: Bi-LSTM - Loss: 0.1434, MAE: 0.2419
+
+Model with the lowest MAE: Multi-step Linear - MAE: 0.08833001554012299
+Model with the highest MAE: Autoregressive - MAE: 0.36326563358306885
+
+Configuration: SWC_5 - 168 input / 48 output
+Model: Baseline - Loss: 0.1613, MAE: 0.1692
+Model: Multi-step Linear - Loss: 0.0878, MAE: 0.1309
+Model: Multi-step Dense - Loss: 0.0879, MAE: 0.1541
+Model: CNN - Loss: 0.1157, MAE: 0.2234
+Model: RNN - Loss: 0.0957, MAE: 0.1677
+Model: LSTM - Loss: 0.1393, MAE: 0.2019
+Model: Autoregressive - Loss: 0.2286, MAE: 0.3637
+Model: Bi-LSTM - Loss: nan, MAE: nan
+
+Model with the lowest MAE: Multi-step Linear - MAE: 0.1309162676334381
+Model with the highest MAE: Autoregressive - MAE: 0.36371156573295593
+
+Configuration: SWC_10 - 24 input / 1 output
+Model: Baseline - Loss: 0.1040, MAE: 0.2647
+Model: Multi-step Linear - Loss: 0.0025, MAE: 0.0158
+Model: Multi-step Dense - Loss: 0.0028, MAE: 0.0272
+Model: CNN - Loss: 0.0082, MAE: 0.0706
+Model: RNN - Loss: 0.0024, MAE: 0.0270
+Model: LSTM - Loss: 0.0072, MAE: 0.0613
+Model: Autoregressive - Loss: 0.0412, MAE: 0.1407
+Model: Bi-LSTM - Loss: 0.0134, MAE: 0.0887
+
+Model with the lowest MAE: Multi-step Linear - MAE: 0.015785953029990196
+Model with the highest MAE: Baseline - MAE: 0.26465848088264465
+
+Configuration: SWC_10 - 24 input / 6 output
+Model: Baseline - Loss: 0.1236, MAE: 0.2760
+Model: Multi-step Linear - Loss: 0.0136, MAE: 0.0425
+Model: Multi-step Dense - Loss: 0.0146, MAE: 0.0553
+Model: CNN - Loss: 0.0153, MAE: 0.0592
+Model: RNN - Loss: 0.0134, MAE: 0.0562
+Model: LSTM - Loss: 0.0157, MAE: 0.0608
+Model: Autoregressive - Loss: 0.0482, MAE: 0.1538
+Model: Bi-LSTM - Loss: 0.0217, MAE: 0.0927
+
+Model with the lowest MAE: Multi-step Linear - MAE: 0.042529407888650894
+Model with the highest MAE: Baseline - MAE: 0.2760375738143921
+
+Configuration: SWC_10 - 48 input / 12 output
+Model: Baseline - Loss: 0.1427, MAE: 0.2863
+Model: Multi-step Linear - Loss: 0.0240, MAE: 0.0511
+Model: Multi-step Dense - Loss: 0.0260, MAE: 0.0761
+Model: CNN - Loss: 0.0287, MAE: 0.0893
+Model: RNN - Loss: 0.0272, MAE: 0.0796
+Model: LSTM - Loss: 0.0485, MAE: 0.1489
+Model: Autoregressive - Loss: 0.0536, MAE: 0.1430
+Model: Bi-LSTM - Loss: 0.0411, MAE: 0.1402
+
+Model with the lowest MAE: Multi-step Linear - MAE: 0.05107926204800606
+Model with the highest MAE: Baseline - MAE: 0.2863081395626068
+
+Configuration: SWC_10 - 168 input / 24 output
+Model: Baseline - Loss: 0.1483, MAE: 0.2910
+Model: Multi-step Linear - Loss: 0.0374, MAE: 0.0848
+Model: Multi-step Dense - Loss: 0.0562, MAE: 0.1456
+Model: CNN - Loss: 0.0392, MAE: 0.0904
+Model: RNN - Loss: 0.0424, MAE: 0.1088
+Model: LSTM - Loss: 0.0719, MAE: 0.1918
+Model: Autoregressive - Loss: 0.1494, MAE: 0.2999
+Model: Bi-LSTM - Loss: 0.0550, MAE: 0.1500
+
+Model with the lowest MAE: Multi-step Linear - MAE: 0.08480609953403473
+Model with the highest MAE: Autoregressive - MAE: 0.29994145035743713
+
+Configuration: SWC_10 - 168 input / 48 output
+Model: Baseline - Loss: 0.1921, MAE: 0.3152
+Model: Multi-step Linear - Loss: 0.0631, MAE: 0.1343
+Model: Multi-step Dense - Loss: 0.0782, MAE: 0.1772
+Model: CNN - Loss: 0.0810, MAE: 0.1884
+Model: RNN - Loss: 0.1044, MAE: 0.2251
+Model: LSTM - Loss: 0.1320, MAE: 0.2587
+Model: Autoregressive - Loss: 0.2512, MAE: 0.4215
+Model: Bi-LSTM - Loss: 0.0790, MAE: 0.1605
+
+Model with the lowest MAE: Multi-step Linear - MAE: 0.13434605300426483
+Model with the highest MAE: Autoregressive - MAE: 0.4214521050453186
+
+Configuration: SWC_20 - 24 input / 1 output
+Model: Baseline - Loss: 0.2682, MAE: 0.3956
+Model: Multi-step Linear - Loss: 0.0010, MAE: 0.0084
+Model: Multi-step Dense - Loss: 0.0055, MAE: 0.0260
+Model: CNN - Loss: 0.0022, MAE: 0.0307
+Model: RNN - Loss: 0.0056, MAE: 0.0534
+Model: LSTM - Loss: 0.0098, MAE: 0.0661
+Model: Autoregressive - Loss: 0.0158, MAE: 0.0713
+Model: Bi-LSTM - Loss: 0.0115, MAE: 0.0839
+
+Model with the lowest MAE: Multi-step Linear - MAE: 0.008398319594562054
+Model with the highest MAE: Baseline - MAE: 0.3956223130226135
+
+Configuration: SWC_20 - 24 input / 6 output
+Model: Baseline - Loss: 0.2612, MAE: 0.3931
+Model: Multi-step Linear - Loss: 0.0067, MAE: 0.0224
+Model: Multi-step Dense - Loss: 0.0071, MAE: 0.0359
+Model: CNN - Loss: 0.0117, MAE: 0.0688
+Model: RNN - Loss: 0.0307, MAE: 0.1416
+Model: LSTM - Loss: 0.0169, MAE: 0.0821
+Model: Autoregressive - Loss: 0.0173, MAE: 0.0629
+Model: Bi-LSTM - Loss: 0.0140, MAE: 0.0761
+
+Model with the lowest MAE: Multi-step Linear - MAE: 0.022449851036071777
+Model with the highest MAE: Baseline - MAE: 0.39310890436172485
+
+Configuration: SWC_20 - 48 input / 12 output
+Model: Baseline - Loss: 0.2558, MAE: 0.3905
+Model: Multi-step Linear - Loss: 0.0123, MAE: 0.0368
+Model: Multi-step Dense - Loss: 0.0254, MAE: 0.1146
+Model: CNN - Loss: 0.0123, MAE: 0.0457
+Model: RNN - Loss: 0.0246, MAE: 0.1017
+Model: LSTM - Loss: 0.0241, MAE: 0.0951
+Model: Autoregressive - Loss: 0.0375, MAE: 0.1422
+Model: Bi-LSTM - Loss: 0.0247, MAE: 0.1043
+
+Model with the lowest MAE: Multi-step Linear - MAE: 0.03683025389909744
+Model with the highest MAE: Baseline - MAE: 0.39054426550865173
+
+Configuration: SWC_20 - 168 input / 24 output
+Model: Baseline - Loss: 0.2384, MAE: 0.3821
+Model: Multi-step Linear - Loss: 0.0200, MAE: 0.0572
+Model: Multi-step Dense - Loss: 0.0227, MAE: 0.0832
+Model: CNN - Loss: 0.0226, MAE: 0.0819
+Model: RNN - Loss: 0.0353, MAE: 0.1144
+Model: LSTM - Loss: 0.0442, MAE: 0.1378
+Model: Autoregressive - Loss: 0.1201, MAE: 0.2813
+Model: Bi-LSTM - Loss: 0.0421, MAE: 0.1509
+
+Model with the lowest MAE: Multi-step Linear - MAE: 0.05719339847564697
+Model with the highest MAE: Baseline - MAE: 0.3821398913860321
+
+Configuration: SWC_20 - 168 input / 48 output
+Model: Baseline - Loss: 0.2358, MAE: 0.3835
+Model: Multi-step Linear - Loss: 0.0346, MAE: 0.0904
+Model: Multi-step Dense - Loss: 0.0769, MAE: 0.2180
+Model: CNN - Loss: 0.0379, MAE: 0.1276
+Model: RNN - Loss: 0.0750, MAE: 0.1862
+Model: LSTM - Loss: 0.1249, MAE: 0.2604
+Model: Autoregressive - Loss: 0.1368, MAE: 0.2821
+Model: Bi-LSTM - Loss: nan, MAE: nan
+
+Model with the lowest MAE: Multi-step Linear - MAE: 0.09037024527788162
+Model with the highest MAE: Baseline - MAE: 0.3834894597530365
+
+Model Performance Summary Across All Configurations:
+
+Configuration: SWC_5 - 24 input / 1 output
+Model: Baseline - Loss: 0.0046, MAE: 0.0149
+Model: Multi-step Linear - Loss: 0.0041, MAE: 0.0193
+Model: Multi-step Dense - Loss: 0.0038, MAE: 0.0276
+Model: CNN - Loss: 0.0080, MAE: 0.0523
+Model: RNN - Loss: 0.0037, MAE: 0.0277
+Model: LSTM - Loss: 0.0084, MAE: 0.0596
+Model: Autoregressive - Loss: 0.0359, MAE: 0.0904
+Model: Bi-LSTM - Loss: 0.0083, MAE: 0.0599
+
+Model with the lowest MAE: Baseline - MAE: 0.014926755800843239
+Model with the highest MAE: Autoregressive - MAE: 0.09037265181541443
+
+Configuration: SWC_5 - 24 input / 6 output
+Model: Baseline - Loss: 0.0397, MAE: 0.0729
+Model: Multi-step Linear - Loss: 0.0212, MAE: 0.0412
+Model: Multi-step Dense - Loss: 0.0225, MAE: 0.0665
+Model: CNN - Loss: 0.0256, MAE: 0.0773
+Model: RNN - Loss: 0.0204, MAE: 0.0556
+Model: LSTM - Loss: 0.0251, MAE: 0.0761
+Model: Autoregressive - Loss: 0.0547, MAE: 0.1370
+Model: Bi-LSTM - Loss: 0.0234, MAE: 0.0745
+
+Model with the lowest MAE: Multi-step Linear - MAE: 0.04116973280906677
+Model with the highest MAE: Autoregressive - MAE: 0.13700565695762634
+
+Configuration: SWC_5 - 48 input / 12 output
+Model: Baseline - Loss: 0.0687, MAE: 0.1070
+Model: Multi-step Linear - Loss: 0.0366, MAE: 0.0605
+Model: Multi-step Dense - Loss: 0.0375, MAE: 0.0861
+Model: CNN - Loss: 0.0381, MAE: 0.0893
+Model: RNN - Loss: 0.0359, MAE: 0.0809
+Model: LSTM - Loss: 0.0604, MAE: 0.1726
+Model: Autoregressive - Loss: 0.1025, MAE: 0.2162
+Model: Bi-LSTM - Loss: 0.0532, MAE: 0.1478
+
+Model with the lowest MAE: Multi-step Linear - MAE: 0.06051741540431976
+Model with the highest MAE: Autoregressive - MAE: 0.21620510518550873
+
+Configuration: SWC_5 - 168 input / 24 output
+Model: Baseline - Loss: 0.0887, MAE: 0.1009
+Model: Multi-step Linear - Loss: 0.0550, MAE: 0.0899
+Model: Multi-step Dense - Loss: 0.0585, MAE: 0.1193
+Model: CNN - Loss: 0.0633, MAE: 0.1367
+Model: RNN - Loss: 0.0617, MAE: 0.1118
+Model: LSTM - Loss: 0.0918, MAE: 0.1949
+Model: Autoregressive - Loss: 0.2475, MAE: 0.3800
+Model: Bi-LSTM - Loss: 0.5355, MAE: 0.4785
+
+Model with the lowest MAE: Multi-step Linear - MAE: 0.08989962190389633
+Model with the highest MAE: Bi-LSTM - MAE: 0.4784906208515167
+
+Configuration: SWC_5 - 168 input / 48 output
+Model: Baseline - Loss: 0.1613, MAE: 0.1692
+Model: Multi-step Linear - Loss: 0.0878, MAE: 0.1415
+Model: Multi-step Dense - Loss: 0.0970, MAE: 0.1851
+Model: CNN - Loss: 0.1059, MAE: 0.1931
+Model: RNN - Loss: 0.1053, MAE: 0.1914
+Model: LSTM - Loss: 0.1815, MAE: 0.2624
+Model: Autoregressive - Loss: 0.2690, MAE: 0.4101
+Model: Bi-LSTM - Loss: 0.1869, MAE: 0.2976
+
+Model with the lowest MAE: Multi-step Linear - MAE: 0.141453817486763
+Model with the highest MAE: Autoregressive - MAE: 0.41008782386779785
+
+Configuration: SWC_10 - 24 input / 1 output
+Model: Baseline - Loss: 0.0026, MAE: 0.0122
+Model: Multi-step Linear - Loss: 0.0023, MAE: 0.0132
+Model: Multi-step Dense - Loss: 0.0170, MAE: 0.1038
+Model: CNN - Loss: 0.0050, MAE: 0.0377
+Model: RNN - Loss: 0.0027, MAE: 0.0283
+Model: LSTM - Loss: 0.0089, MAE: 0.0638
+Model: Autoregressive - Loss: 0.0337, MAE: 0.1101
+Model: Bi-LSTM - Loss: 0.0064, MAE: 0.0512
+
+Model with the lowest MAE: Baseline - MAE: 0.012247597798705101
+Model with the highest MAE: Autoregressive - MAE: 0.1100676879286766
+
+Configuration: SWC_10 - 24 input / 6 output
+Model: Baseline - Loss: 0.0255, MAE: 0.0611
+Model: Multi-step Linear - Loss: 0.0134, MAE: 0.0380
+Model: Multi-step Dense - Loss: 0.0135, MAE: 0.0535
+Model: CNN - Loss: 0.0175, MAE: 0.0690
+Model: RNN - Loss: 0.0192, MAE: 0.0776
+Model: LSTM - Loss: 0.0267, MAE: 0.1087
+Model: Autoregressive - Loss: 0.0411, MAE: 0.1277
+Model: Bi-LSTM - Loss: 0.0130, MAE: 0.0478
+
+Model with the lowest MAE: Multi-step Linear - MAE: 0.03803885355591774
+Model with the highest MAE: Autoregressive - MAE: 0.1276584267616272
+
+Configuration: SWC_10 - 48 input / 12 output
+Model: Baseline - Loss: 0.0439, MAE: 0.0871
+Model: Multi-step Linear - Loss: 0.0240, MAE: 0.0524
+Model: Multi-step Dense - Loss: 0.0289, MAE: 0.0744
+Model: CNN - Loss: 0.0350, MAE: 0.1152
+Model: RNN - Loss: 0.0250, MAE: 0.0710
+Model: LSTM - Loss: 0.0571, MAE: 0.1797
+Model: Autoregressive - Loss: 0.0522, MAE: 0.1350
+Model: Bi-LSTM - Loss: 0.0348, MAE: 0.1078
+
+Model with the lowest MAE: Multi-step Linear - MAE: 0.05243687331676483
+Model with the highest MAE: LSTM - MAE: 0.17968963086605072
+
+Configuration: SWC_10 - 168 input / 24 output
+Model: Baseline - Loss: 0.0543, MAE: 0.0739
+Model: Multi-step Linear - Loss: 0.0353, MAE: 0.0748
+Model: Multi-step Dense - Loss: 0.0439, MAE: 0.1155
+Model: CNN - Loss: 0.0415, MAE: 0.1033
+Model: RNN - Loss: 0.0506, MAE: 0.1307
+Model: LSTM - Loss: 0.0724, MAE: 0.1666
+Model: Autoregressive - Loss: 0.1686, MAE: 0.3250
+Model: Bi-LSTM - Loss: nan, MAE: nan
+
+Model with the lowest MAE: Baseline - MAE: 0.073894202709198
+Model with the highest MAE: Autoregressive - MAE: 0.32496652007102966
+
+Configuration: SWC_10 - 168 input / 48 output
+Model: Baseline - Loss: 0.1032, MAE: 0.1245
+Model: Multi-step Linear - Loss: 0.0606, MAE: 0.1251
+Model: Multi-step Dense - Loss: 0.0786, MAE: 0.1763
+Model: CNN - Loss: 0.0626, MAE: 0.1361
+Model: RNN - Loss: 0.0935, MAE: 0.2062
+Model: LSTM - Loss: 0.1179, MAE: 0.2341
+Model: Autoregressive - Loss: 0.2258, MAE: 0.3787
+Model: Bi-LSTM - Loss: nan, MAE: nan
+
+Model with the lowest MAE: Baseline - MAE: 0.12449181079864502
+Model with the highest MAE: Autoregressive - MAE: 0.3787126839160919
+
+Configuration: SWC_20 - 24 input / 1 output
+Model: Baseline - Loss: 0.0014, MAE: 0.0066
+Model: Multi-step Linear - Loss: 0.0010, MAE: 0.0087
+Model: Multi-step Dense - Loss: 0.0037, MAE: 0.0427
+Model: CNN - Loss: 0.0050, MAE: 0.0531
+Model: RNN - Loss: 0.0054, MAE: 0.0465
+Model: LSTM - Loss: 0.0177, MAE: 0.0822
+Model: Autoregressive - Loss: 0.0212, MAE: 0.0866
+Model: Bi-LSTM - Loss: 0.0139, MAE: 0.0911
+
+Model with the lowest MAE: Baseline - MAE: 0.00663914205506444
+Model with the highest MAE: Bi-LSTM - MAE: 0.09107185155153275
+
+Configuration: SWC_20 - 24 input / 6 output
+Model: Baseline - Loss: 0.0131, MAE: 0.0333
+Model: Multi-step Linear - Loss: 0.0067, MAE: 0.0213
+Model: Multi-step Dense - Loss: 0.0086, MAE: 0.0453
+Model: CNN - Loss: 0.0084, MAE: 0.0377
+Model: RNN - Loss: 0.0161, MAE: 0.0837
+Model: LSTM - Loss: 0.0191, MAE: 0.0870
+Model: Autoregressive - Loss: 0.0237, MAE: 0.0843
+Model: Bi-LSTM - Loss: 0.0419, MAE: 0.1678
+
+Model with the lowest MAE: Multi-step Linear - MAE: 0.021291352808475494
+Model with the highest MAE: Bi-LSTM - MAE: 0.16781336069107056
+
+Configuration: SWC_20 - 48 input / 12 output
+Model: Baseline - Loss: 0.0242, MAE: 0.0493
+Model: Multi-step Linear - Loss: 0.0127, MAE: 0.0306
+Model: Multi-step Dense - Loss: 0.0182, MAE: 0.0770
+Model: CNN - Loss: 0.0178, MAE: 0.0747
+Model: RNN - Loss: 0.0242, MAE: 0.0957
+Model: LSTM - Loss: 0.0291, MAE: 0.1035
+Model: Autoregressive - Loss: 0.0508, MAE: 0.1677
+Model: Bi-LSTM - Loss: 0.0349, MAE: 0.1314
+
+Model with the lowest MAE: Multi-step Linear - MAE: 0.030558757483959198
+Model with the highest MAE: Autoregressive - MAE: 0.16772547364234924
+
+Configuration: SWC_20 - 168 input / 24 output
+Model: Baseline - Loss: 0.0387, MAE: 0.0557
+Model: Multi-step Linear - Loss: 0.0215, MAE: 0.0455
+Model: Multi-step Dense - Loss: 0.0287, MAE: 0.0927
+Model: CNN - Loss: 0.0292, MAE: 0.0895
+Model: RNN - Loss: 0.0394, MAE: 0.1219
+Model: LSTM - Loss: 0.1223, MAE: 0.2777
+Model: Autoregressive - Loss: 0.1053, MAE: 0.2381
+Model: Bi-LSTM - Loss: 0.0464, MAE: 0.1544
+
+Model with the lowest MAE: Multi-step Linear - MAE: 0.04552261531352997
+Model with the highest MAE: LSTM - MAE: 0.27772149443626404
+
+Configuration: SWC_20 - 168 input / 48 output
+Model: Baseline - Loss: 0.0734, MAE: 0.0979
+Model: Multi-step Linear - Loss: 0.0383, MAE: 0.0855
+Model: Multi-step Dense - Loss: 0.0404, MAE: 0.1015
+Model: CNN - Loss: 0.0431, MAE: 0.1072
+Model: RNN - Loss: 0.0652, MAE: 0.1764
+Model: LSTM - Loss: 0.1304, MAE: 0.2852
+Model: Autoregressive - Loss: 0.1881, MAE: 0.3469
+Model: Bi-LSTM - Loss: 0.0542, MAE: 0.1713
+
+Model with the lowest MAE: Multi-step Linear - MAE: 0.08547447621822357
+Model with the highest MAE: Autoregressive - MAE: 0.3468790054321289
