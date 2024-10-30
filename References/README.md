@@ -39,6 +39,9 @@ Pandas and Time Series Data
 * https://keras.io/examples/timeseries/timeseries_classification_transformer/
 * https://keras.io/examples/timeseries/eeg_signal_classification/
 * https://keras.io/examples/timeseries/event_classification_for_payment_card_fraud_detection/
+* https://keras.io/examples/timeseries/timeseries_traffic_forecasting/
+* https://keras.io/examples/timeseries/timeseries_weather_forecasting/
+* https://keras.io/examples/timeseries/timeseries_anomaly_detection/
 
 
 # Deep Learning with Tensorflow
