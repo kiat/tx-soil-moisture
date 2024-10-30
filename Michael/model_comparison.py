@@ -13,7 +13,7 @@ import argparse
 from helpers import load_data, preprocess, normalize, create_window, train_and_evaluate_models, \
     plot_performance, print_model_summaries, write_model_results_to_csv, WindowGenerator, \
     baseline, linear, dense, simple_rnn, cnn, lstm, autoregressive, bi_lstm, load_all_data, create_csv, \
-    calculate_original_performance, drop_feature_and_evaluate, create_feature_csv, plot_training_history, create_loss_csv
+    calculate_original_performance, drop_feature_and_evaluate, create_feature_csv, plot_training_history, evaluate_single_feature_models, create_loss_csv, lstm_attention, bi_lstm_attention
 
 def main():
     parser = argparse.ArgumentParser(description="Train model on a specific configuration.")
@@ -79,8 +79,8 @@ def main():
     model_filename = f"{args.features}_{args.input_steps}_{args.output_steps}_model_results.csv"
     loss_filename = f"{args.features}_{args.input_steps}_{args.output_steps}_loss_history.csv"
     create_csv(model_filename)
-    create_feature_csv('feature_importance_results.csv')
     create_loss_csv(loss_filename)
+    create_feature_csv('feature_importance_results.csv')
     for station, df in dfs.items():
         df = preprocess(df)
 
@@ -125,11 +125,13 @@ def main():
                     'LSTM': lstm(label_width, num_features),
                     'Autoregressive': autoregressive(label_width, num_features),
                     'Bi-LSTM': bi_lstm(label_width, num_features),
+                    'LSTM_Attention': lstm_attention(label_width, num_features),
+                    'BiLSTM_Attention': bi_lstm_attention(label_width, num_features)
                 }
 
             # make way to drop other features besides one in config
             # Train and evaluate models for the current configuration
-            performance, val_performance, history_dicts = train_and_evaluate_models(station, config, models, train_df, val_df, test_df, model_dir, model_filename, loss_filename)
+            performance, val_performance, history_dicts = train_and_evaluate_models(station, config, models, train_df, val_df, test_df, model_dir, model_filename, loss_filename  )
             model_losses = (performance, val_performance)
             # Store the losses for this configuration
             all_losses[f"{config['features']} - {config['input_steps']} input / {config['output_steps']} output"] = model_losses
@@ -173,6 +175,8 @@ def main():
                         'LSTM': lstm(label_width, num_features),
                         'Autoregressive': autoregressive(label_width, num_features),
                         'Bi-LSTM': bi_lstm(label_width, num_features),
+                        'LSTM_Attention': lstm_attention(label_width, num_features),
+                        'BiLSTM_Attention': bi_lstm_attention(label_width, num_features)
                     }
 
             # Example usage:
@@ -185,7 +189,7 @@ def main():
             # Create a dictionary to store the original MAE values before feature dropping
             original_mae = calculate_original_performance(models, config, train_df, val_df, test_df)
             feature_importance_results = drop_feature_and_evaluate(config, original_mae, train_df, val_df, test_df, all_features, target_feature, CONV_WIDTH, model_dir)
-
+            feature_importance_singular = feature_importance_singular(config, original_mae, train_df, val_df, test_df, all_features, target_feature, CONV_WIDTH, model_dir)
             # # Print the feature importance results
             # for feature, importance in feature_importance_results.items():
             #     print(f"\nFeature: {feature}")
@@ -194,3 +198,6 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+
+

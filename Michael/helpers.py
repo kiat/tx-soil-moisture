@@ -7,6 +7,7 @@ from tensorflow.keras.callbacks import EarlyStopping
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 from statsmodels.tsa.arima.model import ARIMA
 from sklearn.preprocessing import StandardScaler
+from keras_self_attention import SeqSelfAttention
 import os, csv
 
 
@@ -80,6 +81,28 @@ def bi_lstm(label_width, num_features):
                             kernel_initializer=tf.initializers.zeros()),
             tf.keras.layers.Reshape([label_width, num_features])
         ])
+
+def bi_lstm_attention(label_width, num_features):
+    return tf.keras.models.Sequential([
+        layers.Bidirectional(layers.LSTM(64, return_sequences=True)), 
+        layers.Bidirectional(layers.LSTM(32, return_sequences=True)), 
+        SeqSelfAttention(attention_activation='softmax'),  # Self-attention layer
+
+        layers.GlobalAveragePooling1D(),
+        layers.Dense(label_width * num_features, kernel_initializer=tf.initializers.zeros()),  
+        layers.Reshape([label_width, num_features]) 
+    ])
+
+def lstm_attention(label_width, num_features):
+    return tf.keras.models.Sequential([
+        layers.LSTM(64, return_sequences=True),
+        layers.LSTM(32, return_sequences=True),
+        SeqSelfAttention(attention_activation='softmax'),
+        layers.GlobalAveragePooling1D(),  # Pool across the sequence dimension
+        layers.Dense(label_width * num_features, kernel_initializer=tf.initializers.zeros()),
+        layers.Reshape([label_width, num_features])  # Output shape matches [label_width, num_features]
+    ])
+
 
 def load_data(station, data_path="../datasets/Simulate_Cleaned_Merged"):
     station_filepath = f"{data_path}/Station{station}_simulated_cleaned_merged_data.csv"
@@ -270,8 +293,11 @@ def train_and_evaluate_models(station, config, models, train_df, val_df, test_df
             history_dicts[name + config_name] = history.history
             performance[name] = model.evaluate(window.test, return_dict = True)
             val_performance[name] = model.evaluate(window.val, return_dict = True)
+            # print("Calling write_loss_history_to_csv with filename:", loss_file)
+            print("Calling model_file with filename:", model_file)
+
             write_model_results_to_csv(station, name, config, performance[name], filename=model_file)
-            write_loss_history_to_csv(station, name, config, performance[name], history.history, filename=loss_file)
+            write_loss_history_to_csv(station, config, name, history.history, loss_file)
             model_save_path = os.path.join(model_dir, f"{name}.keras")
             model.save(model_save_path)
             print(f'{name} Model Test Loss: {performance[name]}')
@@ -350,7 +376,7 @@ def create_loss_csv(csv_filename):
             'Model_Name', 'Label_Feature', 'Input_Length', 'Output_Length', 'Epoch', 'Train_Loss', 'Val_Loss'
         ])
 
-def write_model_results_to_csv(station, model_name, config, metrics, filename='model_results.csv'):
+def write_model_results_to_csv(station, model_name, config, metrics, filename='fake_results.csv'):
     
     with open(filename, mode='a', newline='') as file:
         writer = csv.writer(file)
@@ -541,6 +567,8 @@ def drop_feature_and_evaluate(config, original_performance, train_df, val_df, te
             'LSTM': lstm(label_width, num_features),
             'Autoregressive': autoregressive(label_width, num_features),
             'Bi-LSTM': bi_lstm(label_width, num_features),
+            'LSTM_Attention': lstm_attention(label_width, num_features),
+            'BiLSTM_Attention': bi_lstm_attention(label_width, num_features)
         }
 
         for model_name, model in models.items():
@@ -562,7 +590,7 @@ def drop_feature_and_evaluate(config, original_performance, train_df, val_df, te
 
             # Evaluate the model on the test data without the dropped feature
             performance = model.evaluate(new_window.test, return_dict=True)
-            
+            print('PERF/ORMING ', performance)
             # Calculate the change in all metrics and store them
             metric_diff = {
                 'mean_absolute_error': performance['mean_absolute_error'] - original_performance[model_name]['mean_absolute_error'],
@@ -588,6 +616,197 @@ def drop_feature_and_evaluate(config, original_performance, train_df, val_df, te
 
     return feature_importance
 
+
+def evaluate_single_feature_models(config, original_performance, train_df, val_df, test_df, features, target, CONV_WIDTH, model_dir):
+    feature_performance = {}
+    early_stopping = EarlyStopping(monitor='val_loss', patience=3, restore_best_weights=True)
+
+    # Evaluate each feature independently
+    for feature in features:
+        print(f"\nEvaluating single feature: {feature}")
+        
+        # Select only the current feature and the target for training
+        df_single_feature = train_df[[feature, target]]
+        val_single_feature = val_df[[feature, target]]
+        test_single_feature = test_df[[feature, target]]
+
+        # Update the window for training with only the selected feature
+        new_window = create_window(
+            input_width=config['input_steps'],
+            label_width=config['output_steps'],
+            shift=config['output_steps'],
+            train_df=df_single_feature,
+            val_df=val_single_feature,
+            test_df=test_single_feature,
+            label_columns=[target]
+        )
+
+        label_width = config['output_steps']
+        num_features = 1  # Single feature setup
+        best_mae = float('inf')  # Initialize with a high value for comparison
+        
+        for model_name, model in {
+            'Baseline': baseline(label_width, num_features),
+            'Multi-step Linear': linear(label_width, num_features),
+            'Multi-step Dense': dense(label_width, num_features),
+            'CNN': cnn(label_width, num_features, CONV_WIDTH),
+            'RNN': simple_rnn(label_width, num_features),
+            'LSTM': lstm(label_width, num_features),
+            'Autoregressive': autoregressive(label_width, num_features),
+            'Bi-LSTM': bi_lstm(label_width, num_features),
+            'LSTM_Attention': lstm_attention(label_width, num_features),
+            'BiLSTM_Attention': bi_lstm_attention(label_width, num_features)
+        }.items():
+            print(f"Training model: {model_name} with feature: {feature}")
+
+            # Compile and fit the model
+            model.compile(loss=tf.keras.losses.MeanSquaredError(),
+                          optimizer=tf.keras.optimizers.Adam(),
+                          metrics=[tf.keras.metrics.MeanSquaredError(),
+                                   tf.keras.metrics.MeanAbsoluteError(),
+                                   tf.keras.metrics.MeanAbsolutePercentageError()])
+
+            try:
+                history = model.fit(
+                    new_window.train,
+                    validation_data=new_window.val,
+                    epochs=10,
+                    callbacks=[early_stopping]
+                )
+
+                # Evaluate model performance
+                performance = model.evaluate(new_window.test, return_dict=True)
+                mae = performance['mean_absolute_error']
+                
+                # Track the best MAE for the feature across models
+                if mae < best_mae:
+                    best_mae = mae
+
+            except Exception as e:
+                print(f"Error with model {model_name} and feature {feature}: {e}")
+        
+        # Store the best MAE for this feature
+        feature_performance[feature] = best_mae
+        print(f"Feature: {feature} - Best MAE: {best_mae:.4f}")
+
+    # Rank features by best MAE (lower is better)
+    ranked_features = sorted(feature_performance, key=feature_performance.get)
+    print(f"Ranked Features by MAE: {ranked_features}")
+
+    # Call the incremental feature evaluation function with the ranked features
+    feature_importance_results = evaluate_incremental_feature_models(
+        config=config,
+        original_performance=original_performance,
+        train_df=train_df,
+        val_df=val_df,
+        test_df=test_df,
+        ranked_features=ranked_features,
+        target=target,
+        CONV_WIDTH=CONV_WIDTH,
+        model_dir=model_dir
+    )
+
+    return feature_importance_results
+
+def evaluate_incremental_feature_models(config, original_performance, train_df, val_df, test_df, ranked_features, target, CONV_WIDTH, model_dir):
+    feature_importance = {}
+    early_stopping = EarlyStopping(monitor='val_loss', patience=3, restore_best_weights=True)
+
+    # Iterate over incremental feature sets, starting with the top 2 features up to all features
+    for i in range(2, len(ranked_features) + 1):
+        selected_features = ranked_features[:i]  # Select top i features
+        print(f"\nEvaluating model with top {i} features: {selected_features}")
+        
+        # Create DataFrames with selected features and target
+        df_selected_features = train_df[selected_features + [target]]
+        val_selected_features = val_df[selected_features + [target]]
+        test_selected_features = test_df[selected_features + [target]]
+
+        # Update the window with selected features and target
+        new_window = create_window(
+            input_width=config['input_steps'],
+            label_width=config['output_steps'],
+            shift=config['output_steps'],
+            train_df=df_selected_features,
+            val_df=val_selected_features,
+            test_df=test_selected_features,
+            label_columns=[target]
+        )
+
+        # Debugging to confirm data structure
+        try:
+            for x, y in new_window.train.take(1):
+                print(f"Sample train feature batch shape: {x.shape}, label batch shape: {y.shape}")
+        except Exception as e:
+            print(f"Error in inspecting window data structure: {e}")
+            continue  # Skip to the next feature set if there is an error
+
+        label_width = config['output_steps']
+        num_features = len(selected_features)  # Update feature count
+        metric_diffs = {}
+
+        models = {
+            'Baseline': baseline(label_width, num_features),
+            'Multi-step Linear': linear(label_width, num_features),
+            'Multi-step Dense': dense(label_width, num_features),
+            'CNN': cnn(label_width, num_features, CONV_WIDTH),
+            'RNN': simple_rnn(label_width, num_features),
+            'LSTM': lstm(label_width, num_features),
+            'Autoregressive': autoregressive(label_width, num_features),
+            'Bi-LSTM': bi_lstm(label_width, num_features),
+            'LSTM_Attention': lstm_attention(label_width, num_features),
+            'BiLSTM_Attention': bi_lstm_attention(label_width, num_features)
+        }
+
+        for model_name, model in models.items():
+            print(f"\nTraining model: {model_name} with top {i} features: {selected_features}")
+
+            # Compile the model
+            model.compile(loss=tf.keras.losses.MeanSquaredError(),
+                          optimizer=tf.keras.optimizers.Adam(),
+                          metrics=[tf.keras.metrics.MeanSquaredError(), 
+                                   tf.keras.metrics.MeanAbsoluteError(),
+                                   tf.keras.metrics.MeanAbsolutePercentageError()])
+
+            # Fit the model
+            try:
+                history = model.fit(
+                    new_window.train,
+                    validation_data=new_window.val,
+                    epochs=10,
+                    callbacks=[early_stopping]
+                )
+
+                # Evaluate the model
+                performance = model.evaluate(new_window.test, return_dict=True)
+                print(f"Performance of {model_name} with top {i} features: {performance}")
+
+                # Calculate metric differences
+                metric_diff = {
+                    'mean_absolute_error': performance['mean_absolute_error'] - original_performance[model_name]['mean_absolute_error'],
+                    'mean_squared_error': performance['mean_squared_error'] - original_performance[model_name]['mean_squared_error'],
+                    'mean_absolute_percentage_error': performance['mean_absolute_percentage_error'] - original_performance[model_name]['mean_absolute_percentage_error']
+                }
+                
+                metric_diffs[model_name] = metric_diff
+                model_save_path = os.path.join(model_dir, f"{model_name}_top_{i}_features.keras")
+                model.save(model_save_path)
+
+                # Output results
+                print(f"Model: {model_name} - New MAE: {performance['mean_absolute_error']:.4f}, MSE: {performance['mean_squared_error']:.4f}, MAPE: {performance['mean_absolute_percentage_error']:.4f}")
+
+            except KeyError as e:
+                print(f"KeyError during model fit/evaluate for feature set '{selected_features}': {e}")
+            except ValueError as e:
+                print(f"ValueError: Data shape or type issue with feature set '{selected_features}' - {e}")
+            except Exception as e:
+                print(f"Unexpected error during model fitting/evaluation with feature set '{selected_features}': {e}")
+
+        feature_importance[f"top_{i}_features"] = metric_diffs
+
+    return feature_importance
+
+
 def plot_training_history(history_dicts):
     plt.figure(figsize=(12, 8))
     for model_name, history in history_dicts.items():
@@ -601,26 +820,26 @@ def plot_training_history(history_dicts):
         plt.grid(True)
         plt.show()
 
-def write_loss_history_to_csv(station, config, model_name, history, filename='loss_history.csv'):
-    file_exists = os.path.isfile(filename)  # Check if the file already exists
+def write_loss_history_to_csv(station, config, model_name, history, filename='loss.csv'):
+    # file_exists = os.path.isfile(filename)  # Check if the file already exists
 
     # Open the CSV file in append mode ('a') to add new entries
     with open(filename, mode='a', newline='') as file:
         writer = csv.writer(file)
 
         # Write the header only if the file does not exist (to avoid duplication)
-        if not file_exists:
-            writer.writerow(['Model_Name', 'Label_Feature', 'Input_Length', 'Output_Length', 'Epoch', 'Train_Loss', 'Val_Loss'])
+        
+        # writer.writerow(['Model_Name', 'Label_Feature', 'Input_Length', 'Output_Length', 'Epoch', 'Train_Loss', 'Val_Loss'])
 
         # Iterate through the models and their histories
-        writer.writerow([
-            station,
-            config['features'],
-            config['input_steps'],
-            config['output_steps'],
-            model_name,
-            history['loss'],
-            history['val_loss']
-        ])
-
+        for epoch, (train_loss, val_loss) in enumerate(zip(history['loss'], history['val_loss']), start=1):
+            writer.writerow([
+                model_name,
+                config['features'],
+                config['input_steps'],
+                config['output_steps'],
+                epoch,         # Epoch number
+                train_loss,    # Training loss for the current epoch
+                val_loss       # Validation loss for the current epoch
+            ])
     print(f'Loss history appended to {filename}')
