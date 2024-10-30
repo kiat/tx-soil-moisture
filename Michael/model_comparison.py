@@ -189,8 +189,21 @@ def main():
 
             # Create a dictionary to store the original MAE values before feature dropping
             original_mae = calculate_original_performance(models, config, train_df, val_df, test_df)
-            feature_importance_results = drop_feature_and_evaluate(config, original_mae, train_df, val_df, test_df, all_features, target_feature, CONV_WIDTH, model_dir)
-            feature_importance_singular = feature_importance_singular(config, original_mae, train_df, val_df, test_df, all_features, target_feature, CONV_WIDTH, model_dir)
+            # feature_importance_results = drop_feature_and_evaluate(config, original_mae, train_df, val_df, test_df, all_features, target_feature, CONV_WIDTH, model_dir)
+            # feature_importance_singular = feature_importance_singular(config, original_mae, train_df, val_df, test_df, all_features, target_feature, CONV_WIDTH, model_dir)
+            
+            run_evaluation_and_save_results(
+                config=config,
+                original_performance=original_mae,
+                train_df=train_df,
+                val_df=val_df,
+                test_df=test_df,
+                features=all_features,
+                target=target_feature,
+                CONV_WIDTH=CONV_WIDTH,
+                model_dir=model_dir,
+                output_csv="evaluation_results.csv"
+            )
             # # Print the feature importance results
             # for feature, importance in feature_importance_results.items():
             #     print(f"\nFeature: {feature}")
