@@ -13,7 +13,8 @@ import argparse
 from helpers import load_data, preprocess, normalize, create_window, train_and_evaluate_models, \
     plot_performance, print_model_summaries, write_model_results_to_csv, WindowGenerator, \
     baseline, linear, dense, simple_rnn, cnn, lstm, autoregressive, bi_lstm, load_all_data, create_csv, \
-    calculate_original_performance, drop_feature_and_evaluate, create_feature_csv, plot_training_history, evaluate_single_feature_models, create_loss_csv, lstm_attention, bi_lstm_attention
+    calculate_original_performance, drop_feature_and_evaluate, create_feature_csv, plot_training_history, \
+    evaluate_single_feature_models, create_loss_csv, lstm_attention, bi_lstm_attention, run_evaluation_and_save_results
 
 def main():
     parser = argparse.ArgumentParser(description="Train model on a specific configuration.")

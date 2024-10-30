@@ -689,11 +689,9 @@ def evaluate_single_feature_models(config, original_performance, train_df, val_d
         feature_performance[feature] = best_mae
         print(f"Feature: {feature} - Best MAE: {best_mae:.4f}")
 
-    # Rank features by best MAE (lower is better)
     ranked_features = sorted(feature_performance, key=feature_performance.get)
     print(f"Ranked Features by MAE: {ranked_features}")
 
-    # Call the incremental feature evaluation function with the ranked features
     feature_importance_results = evaluate_incremental_feature_models(
         config=config,
         original_performance=original_performance,
@@ -843,3 +841,73 @@ def write_loss_history_to_csv(station, config, model_name, history, filename='lo
                 val_loss       # Validation loss for the current epoch
             ])
     print(f'Loss history appended to {filename}')
+
+
+def run_evaluation_and_save_results(config, original_performance, train_df, val_df, test_df, features, target, CONV_WIDTH, model_dir, output_csv="evaluation_results.csv"):
+    # Run the single feature evaluation
+    single_feature_results = evaluate_single_feature_models(
+        config=config,
+        original_performance=original_performance,
+        train_df=train_df,
+        val_df=val_df,
+        test_df=test_df,
+        features=features,
+        target=target,
+        CONV_WIDTH=CONV_WIDTH,
+        model_dir=model_dir
+    )
+
+    # Run the incremental feature evaluation based on ranked features from single-feature results
+    incremental_feature_results = evaluate_incremental_feature_models(
+        config=config,
+        original_performance=original_performance,
+        train_df=train_df,
+        val_df=val_df,
+        test_df=test_df,
+        ranked_features=sorted(single_feature_results, key=single_feature_results.get),
+        target=target,
+        CONV_WIDTH=CONV_WIDTH,
+        model_dir=model_dir
+    )
+
+    # Combine results from both evaluations into a single dictionary for CSV output
+    combined_results = []
+    for feature, best_mae in single_feature_results.items():
+        combined_results.append({
+            'Evaluation_Type': 'Single Feature',
+            'Features': feature,
+            'Mean_Absolute_Error': best_mae
+        })
+
+    for top_features, model_diffs in incremental_feature_results.items():
+        for model_name, diffs in model_diffs.items():
+            combined_results.append({
+                'Evaluation_Type': f"Incremental {top_features}",
+                'Features': ', '.join(top_features.split('_')[1:]),
+                'Model': model_name,
+                'Mean_Absolute_Error_Diff': diffs['mean_absolute_error'],
+                'Mean_Squared_Error_Diff': diffs['mean_squared_error'],
+                'Mean_Absolute_Percentage_Error_Diff': diffs['mean_absolute_percentage_error']
+            })
+
+    # Write combined results to CSV
+    with open(output_csv, mode='w', newline='') as file:
+        writer = csv.DictWriter(file, fieldnames=combined_results[0].keys())
+        writer.writeheader()
+        writer.writerows(combined_results)
+
+    print(f"Results have been written to {output_csv}")
+
+    # Basic analysis on feature performance
+    single_feature_sorted = sorted(single_feature_results.items(), key=lambda x: x[1])
+    best_single_feature, best_mae = single_feature_sorted[0]
+    print(f"Best single feature: {best_single_feature} with MAE: {best_mae:.4f}")
+    
+    incremental_analysis = {
+        top_features: min(model_diffs.values(), key=lambda x: x['mean_absolute_error'])
+        for top_features, model_diffs in incremental_feature_results.items()
+    }
+
+    print("\nIncremental feature analysis:")
+    for top_features, best_metrics in incremental_analysis.items():
+        print(f"{top_features} - Best MAE Improvement: {best_metrics['mean_absolute_error']:.4f}")
