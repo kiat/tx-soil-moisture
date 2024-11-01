@@ -108,6 +108,7 @@ def load_data(station, data_path="../datasets/Simulate_Cleaned_Merged"):
     station_filepath = f"{data_path}/Station{station}_simulated_cleaned_merged_data.csv"
     data = pd.read_csv(station_filepath, index_col=0, parse_dates=True)
     data = data[~data.index.duplicated(keep='first')]
+    data = data.iloc[:24 * 365]
     return data
 
 def load_all_data(data_path="../datasets/Simulate_Cleaned_Merged"):
