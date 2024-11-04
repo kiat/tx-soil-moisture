@@ -13,7 +13,7 @@ import os, csv
 
 def baseline(label_width, num_features):
     return tf.keras.Sequential([
-            tf.keras.layers.Lambda(lambda x: x[:, -label_width:, 1])  # predicts last swc_5 value
+            tf.keras.layers.Lambda(lambda x: x[:, -label_width:, :])  # Return all features
         ])
 
 def linear(label_width, num_features):
@@ -104,42 +104,59 @@ def lstm_attention(label_width, num_features):
     ])
 
 
-def load_data(station, data_path="../datasets/Simulate_Cleaned_Merged"):
-    station_filepath = f"{data_path}/Station{station}_simulated_cleaned_merged_data.csv"
-    data = pd.read_csv(station_filepath, index_col=0, parse_dates=True)
+def load_data(station, data_path="satellite/met_merged_satelite_data"):
+    station_filepath = f"{data_path}/Station{station}_Met_AMSR_SMAP.csv"
+    data = pd.read_csv(station_filepath)
+    data['Date'] = pd.to_datetime(data['Date'])
+    data = data.set_index('Date')
     data = data[~data.index.duplicated(keep='first')]
     return data
 
 def load_all_data(data_path="satellite/met_merged_satelite_data"):
     dfs = {}
-    for station in range(1, 7):  # Changed to include all 6 stations
-        station_filepath = f"{data_path}/Station{station}_Met_AMSR_SMAP.csv"
-        df = pd.read_csv(station_filepath, index_col=0, parse_dates=True)
-        df = df[~df.index.duplicated(keep='first')]
-        dfs[station] = df
+    for station in range(1, 7):  # Changed to range 1-6 for satellite stations
+        dfs[station] = load_data(station, data_path)
     return dfs
 
 
 def preprocess(df):
-    # Convert index to datetime if not already
-    if not isinstance(df.index, pd.DatetimeIndex):
-        df.index = pd.to_datetime(df.index)
+    """Modified to handle satellite data features and ensure no NaN values"""
+    # First check for NaN values
+    if df.isna().any().any():
+        print("Initial NaN value counts:")
+        print(df.isna().sum())
     
-    # Handle wind components
-    wv = df.pop('Windspeed')
-    wd_rad = df.pop('Winddirection')*np.pi / 180
-    df['Wx'] = wv*np.cos(wd_rad)
-    df['Wy'] = wv*np.sin(wd_rad)
-
-    # Add time-based features
-    timestamp_s = df.index.map(pd.Timestamp.timestamp)
-    day = 24*60*60
-    year = (365.2425)*day
-
-    df['Day sin'] = np.sin(timestamp_s * (2 * np.pi / day))
-    df['Day cos'] = np.cos(timestamp_s * (2 * np.pi / day))
-    df['Year sin'] = np.sin(timestamp_s * (2 * np.pi / year))
-    df['Year cos'] = np.cos(timestamp_s * (2 * np.pi / year))
+    # Print initial shape
+    print(f"\nInitial shape: {df.shape}")
+    
+    # Drop rows where both AMSR and SMAP are NaN
+    mask_both_nan = df['Sat_SM_AMSR'].isna() & df['Sat_SM_SMAP'].isna()
+    df = df[~mask_both_nan]
+    print(f"Shape after dropping rows where both AMSR and SMAP are NaN: {df.shape}")
+    
+    # For remaining rows, if one is NaN, use the other
+    mask_amsr = df['Sat_SM_AMSR'].isna()
+    mask_smap = df['Sat_SM_SMAP'].isna()
+    
+    # Where AMSR is missing but SMAP exists, use SMAP value
+    df.loc[mask_amsr & ~mask_smap, 'Sat_SM_AMSR'] = df.loc[mask_amsr & ~mask_smap, 'Sat_SM_SMAP']
+    
+    # Where SMAP is missing but AMSR exists, use AMSR value
+    df.loc[mask_smap & ~mask_amsr, 'Sat_SM_SMAP'] = df.loc[mask_smap & ~mask_amsr, 'Sat_SM_AMSR']
+    
+    # Drop distance columns as they're not needed for prediction
+    df = df.drop(['distance_AMSR', 'distance_SMAP'], axis=1, errors='ignore')
+    
+    # Fill any remaining NaN values with forward fill then backward fill
+    df = df.fillna(method='ffill').fillna(method='bfill')
+    
+    # Final NaN check
+    if df.isna().any().any():
+        print("\nRemaining NaN values after preprocessing:")
+        print(df.isna().sum())
+        print(f"\nShape before dropping remaining NaNs: {df.shape}")
+        df = df.dropna()
+        print(f"Shape after dropping remaining NaNs: {df.shape}")
     
     return df
 
@@ -355,19 +372,20 @@ def print_model_summaries(models, all_losses):
         print(f'Model with the highest MAE: {max_loss_model} - MAE: {max_result}')
 
 def create_csv(csv_filename):
+    """Modified headers for satellite data"""
     with open(csv_filename, 'w', newline='') as file:
         writer = csv.writer(file)
-        # Write the header row
         writer.writerow([
-            'Station', 'Label_Feature', 'Input_Length', 'Output_Length', 'Model', 'MAE', 'MSE', 'MAPE'
+            'Station', 'Target_Feature', 'Input_Length', 'Output_Length', 
+            'Model', 'MAE', 'MSE', 'MAPE'
         ])
 
 def create_feature_csv(csv_filename):
+    """Modified headers for satellite feature importance"""
     with open(csv_filename, 'w', newline='') as file:
         writer = csv.writer(file)
-        # Write the header row
         writer.writerow([
-            'Station', 'Label_Feature', 'Dropped_Feature', 'Model_Name', 'Input_Length', 'Output_Length', 
+            'Target_Feature', 'Dropped_Feature', 'Model_Name', 
             'Test_MSE', 'Test_MAE', 'Test_MAPE'
         ])
 
@@ -379,17 +397,13 @@ def create_loss_csv(csv_filename):
             'Model_Name', 'Label_Feature', 'Input_Length', 'Output_Length', 'Epoch', 'Train_Loss', 'Val_Loss'
         ])
 
-def write_model_results_to_csv(station, model_name, config, metrics, filename='fake_results.csv'):
-    
+def write_model_results_to_csv(station, model_name, config, metrics, filename='model_results.csv'):
+    """Modified to handle satellite metrics"""
     with open(filename, mode='a', newline='') as file:
         writer = csv.writer(file)
-        #writer.writeheader()
-        
-        #for config_name, (test_results, _) in all_losses.items():
-            #for model_name, metrics in test_results.items():
         writer.writerow([
             station,
-            config['features'],
+            config['features'],  # This will be either Sat_SM_AMSR or Sat_SM_SMAP
             config['input_steps'],
             config['output_steps'],
             model_name,
@@ -398,41 +412,16 @@ def write_model_results_to_csv(station, model_name, config, metrics, filename='f
             metrics['mean_absolute_percentage_error']
         ])
 
-def write_feature_results_to_csv(label_feature, dropped_feature, model_name, metrics, csv_filename = 'feature_importance_results.csv'):
-    """
-    Writes the results of a model to a CSV file.
-    
-    Parameters:
-    - label_feature (str): The label feature for the model
-    - dropped_feature (str): The feature that was dropped for the model
-    - model_name (str): The name of the model
-    - metrics (dict): Dictionary containing the metrics for the model, e.g., test MSE, test MAE, validation MSE, validation MAE
-    - csv_filename (str): The name of the CSV file to save results to (default is 'model_results.csv')
-    
-    Metrics dict format:
-    {
-        'test_mse': value,
-        'test_mae': value,
-        'val_mse': value,
-        'val_mae': value
-    }
-    """
-
-    # Ensure the metrics dictionary contains the necessary keys
-    required_keys = ['mean_absolute_error', 'mean_squared_error', 'mean_absolute_percentage_error']
-    for key in required_keys:
-        if key not in metrics:
-            raise ValueError(f"Missing required metric: {key}")
-
-    # Write results to the CSV file
+def write_feature_results_to_csv(label_feature, dropped_feature, model_name, metrics, csv_filename='feature_importance_results.csv'):
+    """Modified to handle satellite feature importance results"""
     with open(csv_filename, mode='a', newline='') as file:
         writer = csv.writer(file)
         writer.writerow([
-            label_feature,                # Label feature
+            label_feature,                # Will be either Sat_SM_AMSR or Sat_SM_SMAP
             dropped_feature,              # Dropped feature
             model_name,                   # Model name
-            metrics['mean_squared_error'],          # Test MSE
-            metrics['mean_absolute_error'],          # Test MAE
+            metrics['mean_squared_error'],          
+            metrics['mean_absolute_error'],         
             metrics['mean_absolute_percentage_error']
         ])
 
@@ -718,90 +707,54 @@ def evaluate_incremental_feature_models(config, original_performance, train_df, 
         selected_features = ranked_features[:i]  # Select top i features
         print(f"\nEvaluating model with top {i} features: {selected_features}")
         
-        # Create DataFrames with selected features and target
-        df_selected_features = train_df[selected_features + [target]]
-        val_selected_features = val_df[selected_features + [target]]
-        test_selected_features = test_df[selected_features + [target]]
-
-        # Update the window with selected features and target
-        new_window = create_window(
-            input_width=config['input_steps'],
-            label_width=config['output_steps'],
-            shift=config['output_steps'],
-            train_df=df_selected_features,
-            val_df=val_selected_features,
-            test_df=test_selected_features,
-            label_columns=[target]
-        )
-
-        # Debugging to confirm data structure
         try:
-            for x, y in new_window.train.take(1):
-                print(f"Sample train feature batch shape: {x.shape}, label batch shape: {y.shape}")
+            # Create DataFrames with selected features and target
+            features_to_use = selected_features + [target]
+            print(f"Attempting to use columns: {features_to_use}")
+            print(f"Available columns: {train_df.columns.tolist()}")
+            
+            df_selected_features = train_df[features_to_use]
+            val_selected_features = val_df[features_to_use]
+            test_selected_features = test_df[features_to_use]
+
+            # Update the window with selected features and target
+            new_window = create_window(
+                input_width=config['input_steps'],
+                label_width=config['output_steps'],
+                shift=config['output_steps'],
+                train_df=df_selected_features,
+                val_df=val_selected_features,
+                test_df=test_selected_features,
+                label_columns=[target]
+            )
+
+            # Rest of your existing code...
+            label_width = config['output_steps']
+            num_features = len(selected_features)
+            metric_diffs = {}
+
+            models = {
+                'Baseline': baseline(label_width, num_features),
+                'Multi-step Linear': linear(label_width, num_features),
+                'Multi-step Dense': dense(label_width, num_features),
+                'CNN': cnn(label_width, num_features, CONV_WIDTH),
+                'RNN': simple_rnn(label_width, num_features),
+                'LSTM': lstm(label_width, num_features),
+                'Autoregressive': autoregressive(label_width, num_features),
+                'Bi-LSTM': bi_lstm(label_width, num_features),
+                'LSTM_Attention': lstm_attention(label_width, num_features),
+                'BiLSTM_Attention': bi_lstm_attention(label_width, num_features)
+            }
+
+            # Your existing model training code...
+
+        except KeyError as e:
+            print(f"Error: Could not find one or more columns: {e}")
+            print(f"Available columns: {train_df.columns.tolist()}")
+            continue
         except Exception as e:
-            print(f"Error in inspecting window data structure: {e}")
-            continue  # Skip to the next feature set if there is an error
-
-        label_width = config['output_steps']
-        num_features = len(selected_features)  # Update feature count
-        metric_diffs = {}
-
-        models = {
-            'Baseline': baseline(label_width, num_features),
-            'Multi-step Linear': linear(label_width, num_features),
-            'Multi-step Dense': dense(label_width, num_features),
-            'CNN': cnn(label_width, num_features, CONV_WIDTH),
-            'RNN': simple_rnn(label_width, num_features),
-            'LSTM': lstm(label_width, num_features),
-            'Autoregressive': autoregressive(label_width, num_features),
-            'Bi-LSTM': bi_lstm(label_width, num_features),
-            'LSTM_Attention': lstm_attention(label_width, num_features),
-            'BiLSTM_Attention': bi_lstm_attention(label_width, num_features)
-        }
-
-        for model_name, model in models.items():
-            print(f"\nTraining model: {model_name} with top {i} features: {selected_features}")
-
-            # Compile the model
-            model.compile(loss=tf.keras.losses.MeanSquaredError(),
-                          optimizer=tf.keras.optimizers.Adam(),
-                          metrics=[tf.keras.metrics.MeanSquaredError(), 
-                                   tf.keras.metrics.MeanAbsoluteError(),
-                                   tf.keras.metrics.MeanAbsolutePercentageError()])
-
-            # Fit the model
-            try:
-                history = model.fit(
-                    new_window.train,
-                    validation_data=new_window.val,
-                    epochs=10,
-                    callbacks=[early_stopping]
-                )
-
-                # Evaluate the model
-                performance = model.evaluate(new_window.test, return_dict=True)
-                print(f"Performance of {model_name} with top {i} features: {performance}")
-
-                # Calculate metric differences
-                metric_diff = {
-                    'mean_absolute_error': performance['mean_absolute_error'] - original_performance[model_name]['mean_absolute_error'],
-                    'mean_squared_error': performance['mean_squared_error'] - original_performance[model_name]['mean_squared_error'],
-                    'mean_absolute_percentage_error': performance['mean_absolute_percentage_error'] - original_performance[model_name]['mean_absolute_percentage_error']
-                }
-                
-                metric_diffs[model_name] = metric_diff
-                model_save_path = os.path.join(model_dir, f"{model_name}_top_{i}_features.keras")
-                model.save(model_save_path)
-
-                # Output results
-                print(f"Model: {model_name} - New MAE: {performance['mean_absolute_error']:.4f}, MSE: {performance['mean_squared_error']:.4f}, MAPE: {performance['mean_absolute_percentage_error']:.4f}")
-
-            except KeyError as e:
-                print(f"KeyError during model fit/evaluate for feature set '{selected_features}': {e}")
-            except ValueError as e:
-                print(f"ValueError: Data shape or type issue with feature set '{selected_features}' - {e}")
-            except Exception as e:
-                print(f"Unexpected error during model fitting/evaluation with feature set '{selected_features}': {e}")
+            print(f"Unexpected error during evaluation of feature set: {e}")
+            continue
 
         feature_importance[f"top_{i}_features"] = metric_diffs
 
@@ -860,14 +813,43 @@ def run_evaluation_and_save_results(config, original_performance, train_df, val_
         model_dir=model_dir
     )
 
-    # Run the incremental feature evaluation based on ranked features from single-feature results
+    # Debug print
+    print("\nSingle feature results structure:")
+    print(single_feature_results)
+
+    # Sort features by their performance
+    try:
+        # First attempt: if results contain dictionaries with metrics
+        ranked_features = [
+            item[0] for item in sorted(
+                single_feature_results.items(), 
+                key=lambda x: x[1]['mean_absolute_error'] if isinstance(x[1], dict) and 'mean_absolute_error' in x[1] else float('inf')
+            )
+        ]
+    except (KeyError, TypeError):
+        try:
+            # Second attempt: if results are simple feature-value pairs
+            ranked_features = [
+                item[0] for item in sorted(
+                    single_feature_results.items(), 
+                    key=lambda x: float(x[1]) if x[1] is not None else float('inf')
+                )
+            ]
+        except (ValueError, TypeError):
+            print("Warning: Could not sort features by performance. Using original order.")
+            ranked_features = list(single_feature_results.keys())
+
+    print("\nRanked features:")
+    print(ranked_features)
+
+    # Run the incremental feature evaluation based on ranked features
     incremental_feature_results = evaluate_incremental_feature_models(
         config=config,
         original_performance=original_performance,
         train_df=train_df,
         val_df=val_df,
         test_df=test_df,
-        ranked_features=sorted(single_feature_results, key=single_feature_results.get),
+        ranked_features=ranked_features,  # Now passing the sorted list of feature names
         target=target,
         CONV_WIDTH=CONV_WIDTH,
         model_dir=model_dir
@@ -902,15 +884,46 @@ def run_evaluation_and_save_results(config, original_performance, train_df, val_
     print(f"Results have been written to {output_csv}")
 
     # Basic analysis on feature performance
-    single_feature_sorted = sorted(single_feature_results.items(), key=lambda x: x[1])
-    best_single_feature, best_mae = single_feature_sorted[0]
-    print(f"Best single feature: {best_single_feature} with MAE: {best_mae:.4f}")
+    try:
+        # Sort by mean_absolute_error if it exists in the dictionary
+        single_feature_sorted = sorted(
+            single_feature_results.items(), 
+            key=lambda x: x[1]['mean_absolute_error'] if isinstance(x[1], dict) and 'mean_absolute_error' in x[1] else float('inf')
+        )
+    except (KeyError, TypeError):
+        try:
+            # If simple numeric values, sort directly
+            single_feature_sorted = sorted(
+                single_feature_results.items(),
+                key=lambda x: float(x[1]) if x[1] is not None else float('inf')
+            )
+        except (ValueError, TypeError):
+            print("Warning: Could not sort features by performance. Using original order.")
+            single_feature_sorted = list(single_feature_results.items())
+
+    if single_feature_sorted:
+        best_single_feature, best_mae = single_feature_sorted[0]
+        if isinstance(best_mae, dict):
+            best_mae_value = best_mae.get('mean_absolute_error', 'N/A')
+        else:
+            best_mae_value = best_mae
+        print(f"Best single feature: {best_single_feature} with MAE: {best_mae_value}")
     
-    incremental_analysis = {
-        top_features: min(model_diffs.values(), key=lambda x: x['mean_absolute_error'])
-        for top_features, model_diffs in incremental_feature_results.items()
-    }
+    incremental_analysis = {}
+    for top_features, model_diffs in incremental_feature_results.items():
+        try:
+            best_metric = min(
+                model_diffs.values(),
+                key=lambda x: x['mean_absolute_error'] if isinstance(x, dict) and 'mean_absolute_error' in x else float('inf')
+            )
+            incremental_analysis[top_features] = best_metric
+        except (KeyError, TypeError, ValueError) as e:
+            print(f"Warning: Could not process metrics for {top_features}: {e}")
+            continue
 
     print("\nIncremental feature analysis:")
     for top_features, best_metrics in incremental_analysis.items():
-        print(f"{top_features} - Best MAE Improvement: {best_metrics['mean_absolute_error']:.4f}")
+        if isinstance(best_metrics, dict) and 'mean_absolute_error' in best_metrics:
+            print(f"{top_features} - Best MAE Improvement: {best_metrics['mean_absolute_error']:.4f}")
+        else:
+            print(f"{top_features} - Best MAE Improvement: {best_metrics}")
