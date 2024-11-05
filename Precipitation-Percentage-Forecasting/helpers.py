@@ -914,12 +914,12 @@ def run_evaluation_and_save_results(config, original_performance, train_df, val_
     for top_features, best_metrics in incremental_analysis.items():
         print(f"{top_features} - Best MAE Improvement: {best_metrics['mean_absolute_error']:.4f}")
 
-def compile_and_fit(model, window, patience=2):
+def compile_and_fit(model, window, patience=5):
     early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss',
                                                         patience=patience,
                                                         mode='min')
 
-    model.compile(loss=tf.keras.losses.MeanSquaredError(),
+    model.compile(loss=custom_loss,
                     optimizer=tf.keras.optimizers.Adam(),
                     metrics=[tf.keras.metrics.MeanAbsoluteError()])
 
@@ -927,3 +927,9 @@ def compile_and_fit(model, window, patience=2):
                         validation_data=window.val,
                         callbacks=[early_stopping])
     return history
+
+def custom_loss(y_true, y_pred):
+    # Define a threshold for high rainfall
+    threshold = 5.0  # example threshold for mm of rain
+    weights = tf.where(y_true > threshold, 2.0, 1.0)  # Double the weight for high rainfall
+    return tf.reduce_mean(weights * tf.square(y_true - y_pred)) 
