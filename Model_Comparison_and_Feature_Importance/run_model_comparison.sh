@@ -3,19 +3,19 @@
 # Array of configurations as JSON-like strings
 configurations=(
     '{"features": "SWC_5", "input_steps": 24, "output_steps": 6}'
-    '{"features": "SWC_5", "input_steps": 48, "output_steps": 12}'
-    '{"features": "SWC_5", "input_steps": 168, "output_steps": 24}'  # 7*24 is 168
-    '{"features": "SWC_5", "input_steps": 168, "output_steps": 48}'
-    '{"features": "SWC_10", "input_steps": 24, "output_steps": 1}'
-    '{"features": "SWC_10", "input_steps": 24, "output_steps": 6}'
-    '{"features": "SWC_10", "input_steps": 48, "output_steps": 12}'
-    '{"features": "SWC_10", "input_steps": 168, "output_steps": 24}'
-    '{"features": "SWC_10", "input_steps": 168, "output_steps": 48}'
-    '{"features": "SWC_20", "input_steps": 24, "output_steps": 1}'
-    '{"features": "SWC_20", "input_steps": 24, "output_steps": 6}'
-    '{"features": "SWC_20", "input_steps": 48, "output_steps": 12}'
-    '{"features": "SWC_20", "input_steps": 168, "output_steps": 24}'
-    '{"features": "SWC_20", "input_steps": 168, "output_steps": 48}'
+    # '{"features": "SWC_5", "input_steps": 48, "output_steps": 12}'
+    # '{"features": "SWC_5", "input_steps": 168, "output_steps": 24}'  # 7*24 is 168
+    # '{"features": "SWC_5", "input_steps": 168, "output_steps": 48}'
+    # '{"features": "SWC_10", "input_steps": 24, "output_steps": 1}'
+    # '{"features": "SWC_10", "input_steps": 24, "output_steps": 6}'
+    # '{"features": "SWC_10", "input_steps": 48, "output_steps": 12}'
+    # '{"features": "SWC_10", "input_steps": 168, "output_steps": 24}'
+    # '{"features": "SWC_10", "input_steps": 168, "output_steps": 48}'
+    # '{"features": "SWC_20", "input_steps": 24, "output_steps": 1}'
+    # '{"features": "SWC_20", "input_steps": 24, "output_steps": 6}'
+    # '{"features": "SWC_20", "input_steps": 48, "output_steps": 12}'
+    # '{"features": "SWC_20", "input_steps": 168, "output_steps": 24}'
+    # '{"features": "SWC_20", "input_steps": 168, "output_steps": 48}'
 )
 
 # Loop through each configuration and run the command
