@@ -33,6 +33,17 @@ Pandas and Time Series Data
 * https://www.manning.com/books/time-series-forecasting-in-python-book
 * https://www.youtube.com/watch?v=L4sYigvSx2s&list=UU-0lpiwlftqwC7znCcF83qg
 
+# Time Series with Keras - Timeseries classification
+
+* https://keras.io/examples/timeseries/timeseries_classification_from_scratch/
+* https://keras.io/examples/timeseries/timeseries_classification_transformer/
+* https://keras.io/examples/timeseries/eeg_signal_classification/
+* https://keras.io/examples/timeseries/event_classification_for_payment_card_fraud_detection/
+* https://keras.io/examples/timeseries/timeseries_traffic_forecasting/
+* https://keras.io/examples/timeseries/timeseries_weather_forecasting/
+* https://keras.io/examples/timeseries/timeseries_anomaly_detection/
+
+
 # Deep Learning with Tensorflow
 
 * https://www.tensorflow.org/tutorials/structured_data/time_series
@@ -67,3 +78,9 @@ https://towardsdatascience.com/pytorch-lstms-for-time-series-data-cd16190929d7
 
 * https://rubikscode.net/2021/09/06/stock-price-prediction-using-hidden-markov-model/
 * https://www.tutorialspoint.com/artificial_intelligence_with_python/artificial_intelligence_with_python_analyzing_time_series_data.htm
+
+  # How to use Google Cloud GPUS
+
+  https://utexas.zoom.us/rec/share/GQnueuzHhOjf0NVHlEhk1OvTd03tOM99rhihI-MTQgBI9ZW1G523A9Cb0ikL1aBV.0Pgul2eZR8DRSU0S
+
+  

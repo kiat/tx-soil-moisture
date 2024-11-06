@@ -8,6 +8,7 @@ import io
 #Reads in Simulated-Cleaned-Merged-Data and drops all indexes not withi the intersection of all 6 stations
 def read_data():
     dfs = {}
+    print(os.getcwd())
     for index in range(0, 6):
         path = '../datasets/Revised_Final_Data/Station' + str(index + 1) + '_Revised_Final_Data.csv'
         df = pd.read_csv(path, sep="," , 
