@@ -1,0 +1,101 @@
+Model_Name,Label_Feature,Input_Length,Output_Length,Epoch,Train_Loss,Val_Loss
+Baseline,Sat_SM_SMAP,48,12,1,nan,nan
+Baseline,Sat_SM_SMAP,48,12,2,nan,nan
+Baseline,Sat_SM_SMAP,48,12,3,nan,nan
+Baseline,Sat_SM_SMAP,48,12,4,nan,nan
+Baseline,Sat_SM_SMAP,48,12,5,nan,nan
+Baseline,Sat_SM_SMAP,48,12,6,nan,nan
+Baseline,Sat_SM_SMAP,48,12,7,nan,nan
+Baseline,Sat_SM_SMAP,48,12,8,nan,nan
+Baseline,Sat_SM_SMAP,48,12,9,nan,nan
+Baseline,Sat_SM_SMAP,48,12,10,nan,nan
+Multi-step Linear,Sat_SM_SMAP,48,12,1,nan,nan
+Multi-step Linear,Sat_SM_SMAP,48,12,2,nan,nan
+Multi-step Linear,Sat_SM_SMAP,48,12,3,nan,nan
+Multi-step Linear,Sat_SM_SMAP,48,12,4,nan,nan
+Multi-step Linear,Sat_SM_SMAP,48,12,5,nan,nan
+Multi-step Linear,Sat_SM_SMAP,48,12,6,nan,nan
+Multi-step Linear,Sat_SM_SMAP,48,12,7,nan,nan
+Multi-step Linear,Sat_SM_SMAP,48,12,8,nan,nan
+Multi-step Linear,Sat_SM_SMAP,48,12,9,nan,nan
+Multi-step Linear,Sat_SM_SMAP,48,12,10,nan,nan
+Multi-step Dense,Sat_SM_SMAP,48,12,1,nan,nan
+Multi-step Dense,Sat_SM_SMAP,48,12,2,nan,nan
+Multi-step Dense,Sat_SM_SMAP,48,12,3,nan,nan
+Multi-step Dense,Sat_SM_SMAP,48,12,4,nan,nan
+Multi-step Dense,Sat_SM_SMAP,48,12,5,nan,nan
+Multi-step Dense,Sat_SM_SMAP,48,12,6,nan,nan
+Multi-step Dense,Sat_SM_SMAP,48,12,7,nan,nan
+Multi-step Dense,Sat_SM_SMAP,48,12,8,nan,nan
+Multi-step Dense,Sat_SM_SMAP,48,12,9,nan,nan
+Multi-step Dense,Sat_SM_SMAP,48,12,10,nan,nan
+CNN,Sat_SM_SMAP,48,12,1,nan,nan
+CNN,Sat_SM_SMAP,48,12,2,nan,nan
+CNN,Sat_SM_SMAP,48,12,3,nan,nan
+CNN,Sat_SM_SMAP,48,12,4,nan,nan
+CNN,Sat_SM_SMAP,48,12,5,nan,nan
+CNN,Sat_SM_SMAP,48,12,6,nan,nan
+CNN,Sat_SM_SMAP,48,12,7,nan,nan
+CNN,Sat_SM_SMAP,48,12,8,nan,nan
+CNN,Sat_SM_SMAP,48,12,9,nan,nan
+CNN,Sat_SM_SMAP,48,12,10,nan,nan
+RNN,Sat_SM_SMAP,48,12,1,nan,nan
+RNN,Sat_SM_SMAP,48,12,2,nan,nan
+RNN,Sat_SM_SMAP,48,12,3,nan,nan
+RNN,Sat_SM_SMAP,48,12,4,nan,nan
+RNN,Sat_SM_SMAP,48,12,5,nan,nan
+RNN,Sat_SM_SMAP,48,12,6,nan,nan
+RNN,Sat_SM_SMAP,48,12,7,nan,nan
+RNN,Sat_SM_SMAP,48,12,8,nan,nan
+RNN,Sat_SM_SMAP,48,12,9,nan,nan
+RNN,Sat_SM_SMAP,48,12,10,nan,nan
+LSTM,Sat_SM_SMAP,48,12,1,nan,nan
+LSTM,Sat_SM_SMAP,48,12,2,nan,nan
+LSTM,Sat_SM_SMAP,48,12,3,nan,nan
+LSTM,Sat_SM_SMAP,48,12,4,nan,nan
+LSTM,Sat_SM_SMAP,48,12,5,nan,nan
+LSTM,Sat_SM_SMAP,48,12,6,nan,nan
+LSTM,Sat_SM_SMAP,48,12,7,nan,nan
+LSTM,Sat_SM_SMAP,48,12,8,nan,nan
+LSTM,Sat_SM_SMAP,48,12,9,nan,nan
+LSTM,Sat_SM_SMAP,48,12,10,nan,nan
+Autoregressive,Sat_SM_SMAP,48,12,1,nan,nan
+Autoregressive,Sat_SM_SMAP,48,12,2,nan,nan
+Autoregressive,Sat_SM_SMAP,48,12,3,nan,nan
+Autoregressive,Sat_SM_SMAP,48,12,4,nan,nan
+Autoregressive,Sat_SM_SMAP,48,12,5,nan,nan
+Autoregressive,Sat_SM_SMAP,48,12,6,nan,nan
+Autoregressive,Sat_SM_SMAP,48,12,7,nan,nan
+Autoregressive,Sat_SM_SMAP,48,12,8,nan,nan
+Autoregressive,Sat_SM_SMAP,48,12,9,nan,nan
+Autoregressive,Sat_SM_SMAP,48,12,10,nan,nan
+Bi-LSTM,Sat_SM_SMAP,48,12,1,nan,nan
+Bi-LSTM,Sat_SM_SMAP,48,12,2,nan,nan
+Bi-LSTM,Sat_SM_SMAP,48,12,3,nan,nan
+Bi-LSTM,Sat_SM_SMAP,48,12,4,nan,nan
+Bi-LSTM,Sat_SM_SMAP,48,12,5,nan,nan
+Bi-LSTM,Sat_SM_SMAP,48,12,6,nan,nan
+Bi-LSTM,Sat_SM_SMAP,48,12,7,nan,nan
+Bi-LSTM,Sat_SM_SMAP,48,12,8,nan,nan
+Bi-LSTM,Sat_SM_SMAP,48,12,9,nan,nan
+Bi-LSTM,Sat_SM_SMAP,48,12,10,nan,nan
+LSTM_Attention,Sat_SM_SMAP,48,12,1,nan,nan
+LSTM_Attention,Sat_SM_SMAP,48,12,2,nan,nan
+LSTM_Attention,Sat_SM_SMAP,48,12,3,nan,nan
+LSTM_Attention,Sat_SM_SMAP,48,12,4,nan,nan
+LSTM_Attention,Sat_SM_SMAP,48,12,5,nan,nan
+LSTM_Attention,Sat_SM_SMAP,48,12,6,nan,nan
+LSTM_Attention,Sat_SM_SMAP,48,12,7,nan,nan
+LSTM_Attention,Sat_SM_SMAP,48,12,8,nan,nan
+LSTM_Attention,Sat_SM_SMAP,48,12,9,nan,nan
+LSTM_Attention,Sat_SM_SMAP,48,12,10,nan,nan
+BiLSTM_Attention,Sat_SM_SMAP,48,12,1,nan,nan
+BiLSTM_Attention,Sat_SM_SMAP,48,12,2,nan,nan
+BiLSTM_Attention,Sat_SM_SMAP,48,12,3,nan,nan
+BiLSTM_Attention,Sat_SM_SMAP,48,12,4,nan,nan
+BiLSTM_Attention,Sat_SM_SMAP,48,12,5,nan,nan
+BiLSTM_Attention,Sat_SM_SMAP,48,12,6,nan,nan
+BiLSTM_Attention,Sat_SM_SMAP,48,12,7,nan,nan
+BiLSTM_Attention,Sat_SM_SMAP,48,12,8,nan,nan
+BiLSTM_Attention,Sat_SM_SMAP,48,12,9,nan,nan
+BiLSTM_Attention,Sat_SM_SMAP,48,12,10,nan,nan

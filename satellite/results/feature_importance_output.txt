@@ -1,0 +1,292 @@
+
+Processing Station1_AMSR_SMAP_Merged.csv...
+Starting RNN feature importance calculation...
+RNN Base Performance:
+SMAP - MSE: 0.8722, MAE: 0.7285, MAE%: 73.81%, R²: 0.1046
+AMSR - MSE: 0.9189, MAE: 0.6956, MAE%: 72.87%, R²: 0.0000
+RNN feature importance calculation completed.
+Starting CNN feature importance calculation...
+CNN Base Performance:
+SMAP - MSE: 0.5973, MAE: 0.5603, MAE%: 56.77%, R²: 0.3868
+AMSR - MSE: 0.8967, MAE: 0.6528, MAE%: 68.39%, R²: 0.0157
+CNN feature importance calculation completed.
+Starting Custom AR importance calculation...
+Custom AR Base Performance:
+Sat_SM_SMAP - MSE: 0.4436, MAE: 0.4741, MAE%: 47.41%, R²: 0.5565
+Sat_SM_AMSR - MSE: 0.9527, MAE: 0.6832, MAE%: 68.32%, R²: 0.0473
+
+Processing Station2_AMSR_SMAP_Merged.csv...
+Starting RNN feature importance calculation...
+RNN Base Performance:
+SMAP - MSE: 0.8893, MAE: 0.7299, MAE%: 73.96%, R²: 0.0870
+AMSR - MSE: 0.8842, MAE: 0.6705, MAE%: 70.25%, R²: 0.0294
+RNN feature importance calculation completed.
+Starting CNN feature importance calculation...
+CNN Base Performance:
+SMAP - MSE: 0.6032, MAE: 0.5660, MAE%: 57.35%, R²: 0.3807
+AMSR - MSE: 0.8998, MAE: 0.6600, MAE%: 69.15%, R²: 0.0123
+CNN feature importance calculation completed.
+Starting Custom AR importance calculation...
+Custom AR Base Performance:
+Sat_SM_SMAP - MSE: 0.4436, MAE: 0.4741, MAE%: 47.41%, R²: 0.5565
+Sat_SM_AMSR - MSE: 0.9527, MAE: 0.6832, MAE%: 68.32%, R²: 0.0473
+
+Processing Station3_AMSR_SMAP_Merged.csv...
+Starting RNN feature importance calculation...
+RNN Base Performance:
+SMAP - MSE: 0.8161, MAE: 0.6826, MAE%: 69.16%, R²: 0.1621
+AMSR - MSE: 0.9221, MAE: 0.6911, MAE%: 72.41%, R²: 0.0000
+RNN feature importance calculation completed.
+Starting CNN feature importance calculation...
+CNN Base Performance:
+SMAP - MSE: 0.6068, MAE: 0.5611, MAE%: 56.85%, R²: 0.3771
+AMSR - MSE: 0.8891, MAE: 0.6616, MAE%: 69.32%, R²: 0.0240
+CNN feature importance calculation completed.
+Starting Custom AR importance calculation...
+Custom AR Base Performance:
+Sat_SM_SMAP - MSE: 0.4436, MAE: 0.4741, MAE%: 47.41%, R²: 0.5565
+Sat_SM_AMSR - MSE: 0.9527, MAE: 0.6832, MAE%: 68.32%, R²: 0.0473
+
+Processing Station4_AMSR_SMAP_Merged.csv...
+Starting RNN feature importance calculation...
+RNN Base Performance:
+SMAP - MSE: 0.8396, MAE: 0.6999, MAE%: 70.92%, R²: 0.1380
+AMSR - MSE: 0.9010, MAE: 0.6837, MAE%: 71.63%, R²: 0.0110
+RNN feature importance calculation completed.
+Starting CNN feature importance calculation...
+CNN Base Performance:
+SMAP - MSE: 0.6470, MAE: 0.5848, MAE%: 59.26%, R²: 0.3358
+AMSR - MSE: 0.8950, MAE: 0.6652, MAE%: 69.70%, R²: 0.0176
+CNN feature importance calculation completed.
+Starting Custom AR importance calculation...
+Custom AR Base Performance:
+Sat_SM_SMAP - MSE: 0.4436, MAE: 0.4741, MAE%: 47.41%, R²: 0.5565
+Sat_SM_AMSR - MSE: 0.9527, MAE: 0.6832, MAE%: 68.32%, R²: 0.0473
+
+Processing Station5_AMSR_SMAP_Merged.csv...
+Starting RNN feature importance calculation...
+RNN Base Performance:
+SMAP - MSE: 0.7941, MAE: 0.6817, MAE%: 69.07%, R²: 0.1847
+AMSR - MSE: 0.9019, MAE: 0.6807, MAE%: 71.31%, R²: 0.0100
+RNN feature importance calculation completed.
+Starting CNN feature importance calculation...
+CNN Base Performance:
+SMAP - MSE: 0.6136, MAE: 0.5635, MAE%: 57.10%, R²: 0.3701
+AMSR - MSE: 0.8986, MAE: 0.6563, MAE%: 68.77%, R²: 0.0136
+CNN feature importance calculation completed.
+Starting Custom AR importance calculation...
+Custom AR Base Performance:
+Sat_SM_SMAP - MSE: 0.4436, MAE: 0.4741, MAE%: 47.41%, R²: 0.5565
+Sat_SM_AMSR - MSE: 0.9527, MAE: 0.6832, MAE%: 68.32%, R²: 0.0473
+
+Processing Station6_AMSR_SMAP_Merged.csv...
+Starting RNN feature importance calculation...
+RNN Base Performance:
+SMAP - MSE: 0.8662, MAE: 0.7246, MAE%: 73.42%, R²: 0.1107
+AMSR - MSE: 0.9275, MAE: 0.6942, MAE%: 72.73%, R²: 0.0000
+RNN feature importance calculation completed.
+Starting CNN feature importance calculation...
+CNN Base Performance:
+SMAP - MSE: 0.6320, MAE: 0.5772, MAE%: 58.49%, R²: 0.3512
+AMSR - MSE: 0.8971, MAE: 0.6617, MAE%: 69.33%, R²: 0.0153
+CNN feature importance calculation completed.
+Starting Custom AR importance calculation...
+Custom AR Base Performance:
+Sat_SM_SMAP - MSE: 0.4436, MAE: 0.4741, MAE%: 47.41%, R²: 0.5565
+Sat_SM_AMSR - MSE: 0.9527, MAE: 0.6832, MAE%: 68.32%, R²: 0.0473
+
+All results saved to satellite/all_stations_satellite_sm_results.csv
+
+Final Summary:
+
+Station1:
+  RNN_SMAP:
+    MSE: 0.8722
+    MAE: 0.7285
+    MAE%: 73.81%
+    R²: 0.1046
+  RNN_AMSR:
+    MSE: 0.9189
+    MAE: 0.6956
+    MAE%: 72.87%
+    R²: 0.0000
+  CNN_SMAP:
+    MSE: 0.5973
+    MAE: 0.5603
+    MAE%: 56.77%
+    R²: 0.3868
+  CNN_AMSR:
+    MSE: 0.8967
+    MAE: 0.6528
+    MAE%: 68.39%
+    R²: 0.0157
+  Custom AR_SMAP:
+    MSE: 0.4436
+    MAE: 0.4741
+    MAE%: 47.41%
+    R²: 0.5565
+  Custom AR_AMSR:
+    MSE: 0.9527
+    MAE: 0.6832
+    MAE%: 68.32%
+    R²: 0.0473
+
+Station2:
+  RNN_SMAP:
+    MSE: 0.8893
+    MAE: 0.7299
+    MAE%: 73.96%
+    R²: 0.0870
+  RNN_AMSR:
+    MSE: 0.8842
+    MAE: 0.6705
+    MAE%: 70.25%
+    R²: 0.0294
+  CNN_SMAP:
+    MSE: 0.6032
+    MAE: 0.5660
+    MAE%: 57.35%
+    R²: 0.3807
+  CNN_AMSR:
+    MSE: 0.8998
+    MAE: 0.6600
+    MAE%: 69.15%
+    R²: 0.0123
+  Custom AR_SMAP:
+    MSE: 0.4436
+    MAE: 0.4741
+    MAE%: 47.41%
+    R²: 0.5565
+  Custom AR_AMSR:
+    MSE: 0.9527
+    MAE: 0.6832
+    MAE%: 68.32%
+    R²: 0.0473
+
+Station3:
+  RNN_SMAP:
+    MSE: 0.8161
+    MAE: 0.6826
+    MAE%: 69.16%
+    R²: 0.1621
+  RNN_AMSR:
+    MSE: 0.9221
+    MAE: 0.6911
+    MAE%: 72.41%
+    R²: 0.0000
+  CNN_SMAP:
+    MSE: 0.6068
+    MAE: 0.5611
+    MAE%: 56.85%
+    R²: 0.3771
+  CNN_AMSR:
+    MSE: 0.8891
+    MAE: 0.6616
+    MAE%: 69.32%
+    R²: 0.0240
+  Custom AR_SMAP:
+    MSE: 0.4436
+    MAE: 0.4741
+    MAE%: 47.41%
+    R²: 0.5565
+  Custom AR_AMSR:
+    MSE: 0.9527
+    MAE: 0.6832
+    MAE%: 68.32%
+    R²: 0.0473
+
+Station4:
+  RNN_SMAP:
+    MSE: 0.8396
+    MAE: 0.6999
+    MAE%: 70.92%
+    R²: 0.1380
+  RNN_AMSR:
+    MSE: 0.9010
+    MAE: 0.6837
+    MAE%: 71.63%
+    R²: 0.0110
+  CNN_SMAP:
+    MSE: 0.6470
+    MAE: 0.5848
+    MAE%: 59.26%
+    R²: 0.3358
+  CNN_AMSR:
+    MSE: 0.8950
+    MAE: 0.6652
+    MAE%: 69.70%
+    R²: 0.0176
+  Custom AR_SMAP:
+    MSE: 0.4436
+    MAE: 0.4741
+    MAE%: 47.41%
+    R²: 0.5565
+  Custom AR_AMSR:
+    MSE: 0.9527
+    MAE: 0.6832
+    MAE%: 68.32%
+    R²: 0.0473
+
+Station5:
+  RNN_SMAP:
+    MSE: 0.7941
+    MAE: 0.6817
+    MAE%: 69.07%
+    R²: 0.1847
+  RNN_AMSR:
+    MSE: 0.9019
+    MAE: 0.6807
+    MAE%: 71.31%
+    R²: 0.0100
+  CNN_SMAP:
+    MSE: 0.6136
+    MAE: 0.5635
+    MAE%: 57.10%
+    R²: 0.3701
+  CNN_AMSR:
+    MSE: 0.8986
+    MAE: 0.6563
+    MAE%: 68.77%
+    R²: 0.0136
+  Custom AR_SMAP:
+    MSE: 0.4436
+    MAE: 0.4741
+    MAE%: 47.41%
+    R²: 0.5565
+  Custom AR_AMSR:
+    MSE: 0.9527
+    MAE: 0.6832
+    MAE%: 68.32%
+    R²: 0.0473
+
+Station6:
+  RNN_SMAP:
+    MSE: 0.8662
+    MAE: 0.7246
+    MAE%: 73.42%
+    R²: 0.1107
+  RNN_AMSR:
+    MSE: 0.9275
+    MAE: 0.6942
+    MAE%: 72.73%
+    R²: 0.0000
+  CNN_SMAP:
+    MSE: 0.6320
+    MAE: 0.5772
+    MAE%: 58.49%
+    R²: 0.3512
+  CNN_AMSR:
+    MSE: 0.8971
+    MAE: 0.6617
+    MAE%: 69.33%
+    R²: 0.0153
+  Custom AR_SMAP:
+    MSE: 0.4436
+    MAE: 0.4741
+    MAE%: 47.41%
+    R²: 0.5565
+  Custom AR_AMSR:
+    MSE: 0.9527
+    MAE: 0.6832
+    MAE%: 68.32%
+    R²: 0.0473
