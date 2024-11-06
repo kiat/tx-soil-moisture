@@ -27,6 +27,10 @@ Modify.py:
 
 Together, these scripts create a comprehensive dataset that combines multiple sources of soil moisture data, providing a robust foundation for subsequent analysis and modeling tasks.
 
+MetMerge.py:
+- Combines AMSR data with SMAP satellite data
+- Keeps out the SWC data
+
 # Cleaning_and_Analysis.ipynb
 
 This Jupyter notebook focuses on data cleaning and analysis for soil moisture and meteorological data. Key steps include:
@@ -50,7 +54,7 @@ This notebook is dedicated to exploring the cleaned and merged data. It includes
 - Analyzing correlations between variables
 - Exploring time series patterns in the data
 
-# feature_importance.py
+# model_comparison.py
 
 This Python script focuses on evaluating feature importance for different models, particularly RNN and CNN. Key components include:
 
