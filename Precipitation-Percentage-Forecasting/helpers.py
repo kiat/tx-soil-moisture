@@ -203,7 +203,7 @@ class WindowGenerator:
     def test(self):
         return self.make_dataset(self.test_df)
 
-    def plot(self, model_name, config="", model=None, plot_cols=['Predicted_Rain_Next_Hour_1h', 'Predicted_Rain_Next_Hour_3h', 'Predicted_Rain_Next_Hour_6h', 'Predicted_Rain_Next_Hour_12h', 'Predicted_Rain_Next_Hour_24h'], max_subplots=3):
+    def plot(self, model_name, config="", model=None, plot_cols=['Log_Predicted_Rain_Next_Hour_1h', 'Log_Predicted_Rain_Next_Hour_3h', 'Log_Predicted_Rain_Next_Hour_6h', 'Log_Predicted_Rain_Next_Hour_12h', 'Log_Predicted_Rain_Next_Hour_24h'], max_subplots=3):
         inputs, labels = next(iter(self.test))
         plt.figure(figsize=(12, 8))
         max_n = min(max_subplots, len(inputs))
