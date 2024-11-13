@@ -29,14 +29,16 @@ def main():
     if not os.path.exists(model_dir):
         os.makedirs(model_dir)
     # Load your dataset
+    
+    # selected_features = ["Ppt", "Tair",  "SWC_5"]
 
 
     # TODO: load in all datasets into a dictionary
 
     # Load the data
 
-    label_features = ['SWC_5', 'SWC_10', 'SWC_20', 'SWC_50']
-    temp_features = ['T_5', 'T_10', 'T_20', 'T_50']
+    label_features = ['SWC_5']
+    # temp_features = ['T_5', 'T_10', 'T_20', 'T_50']
 
     configurations = [
             {"features": args.features,
@@ -62,8 +64,8 @@ def main():
 
     feature_configurations = [
         {"features": 'SWC_5', "input_steps": 48, "output_steps": 12},
-            {"features": 'SWC_10', "input_steps": 48, "output_steps": 12},
-            {"features": 'SWC_20', "input_steps": 48, "output_steps": 12},
+            # {"features": 'SWC_10', "input_steps": 48, "output_steps": 12},
+            # {"features": 'SWC_20', "input_steps": 48, "output_steps": 12},
         ]
 
     # csv_filename = 'feature_importance_results.csv'
@@ -84,7 +86,7 @@ def main():
     create_feature_csv('feature_importance_results.csv')
     for station, df in dfs.items():
         df = preprocess(df)
-
+        # df = df[selected_features]
 
         df = normalize(df)
 
@@ -103,11 +105,11 @@ def main():
             label_index = label_features.index(label)
 
             # Identify the temperature feature to keep based on the label feature
-            temp_to_keep = temp_features[label_index]
-            features_to_drop = [col for col in label_features if col != label]
-            features_to_drop += [col for col in temp_features if col != temp_to_keep]
+            # temp_to_keep = temp_features[label_index]
+            # features_to_drop = [col for col in label_features if col != label]
+            # features_to_drop += [col for col in temp_features if col != temp_to_keep]
             # Drop the features
-            df_copy = df_copy.drop(columns=features_to_drop)
+            # df_copy = df_copy.drop(columns=features_to_drop)
 
 
             train_df = df_copy.iloc[0:int(n*0.7)]

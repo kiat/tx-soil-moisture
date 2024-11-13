@@ -109,7 +109,7 @@ def load_data(station, data_path="../datasets/Simulate_Cleaned_Merged"):
     data = pd.read_csv(station_filepath, index_col=0, parse_dates=True)
     data = data[~data.index.duplicated(keep='first')]
     # first year of data: remove later
-    data = data.iloc[:24 * 365]
+    data = data.iloc[:24 * 100]
     return data
 
 def load_all_data(data_path="../datasets/Simulate_Cleaned_Merged"):
@@ -404,7 +404,7 @@ def write_feature_results_to_csv(label_feature, dropped_feature, model_name, met
     Parameters:
     - label_feature (str): The label feature for the model
     - dropped_feature (str): The feature that was dropped for the model
-    - model_name (str): The name of the model
+    - model_name (str): The name of the moBdel
     - metrics (dict): Dictionary containing the metrics for the model, e.g., test MSE, test MAE, validation MSE, validation MAE
     - csv_filename (str): The name of the CSV file to save results to (default is 'model_results.csv')
     
@@ -597,7 +597,10 @@ def drop_feature_and_evaluate(config, original_performance, train_df, val_df, te
             metric_diff = {
                 'mean_absolute_error': performance['mean_absolute_error'] - original_performance[model_name]['mean_absolute_error'],
                 'mean_squared_error': performance['mean_squared_error'] - original_performance[model_name]['mean_squared_error'],
-                'mean_absolute_percentage_error': performance['mean_absolute_percentage_error'] - original_performance[model_name]['mean_absolute_percentage_error']
+                'mean_absolute_percentage_error': performance['mean_absolute_percentage_error'] - original_performance[model_name]['mean_absolute_percentage_error'],
+                
+                #
+                'original_mae': original_performance[model_name]['mean_absolute_error']
             }
             
             metric_diffs[model_name] = metric_diff
@@ -611,7 +614,8 @@ def drop_feature_and_evaluate(config, original_performance, train_df, val_df, te
             print(f"Model: {model_name} - Original MAPE: {original_performance[model_name]['mean_absolute_percentage_error']:.4f}, New MAPE: {performance['mean_absolute_percentage_error']:.4f}, MAPE Change: {metric_diff['mean_absolute_percentage_error']:.4f}")
 
             # Write the performance differences to a CSV
-            write_feature_results_to_csv(config['features'], feature, model_name, metric_diff)
+            csv_save_path = os.path.join(model_dir, f"{model_name}_drop_{feature}_results.csv")
+            write_feature_results_to_csv(config['features'], feature, model_name, metric_diff, csv_filename=csv_save_path)
 
         # Store the results of this feature drop in the feature_importance dictionary
         feature_importance[feature] = metric_diffs
@@ -646,6 +650,7 @@ def evaluate_single_feature_models(config, original_performance, train_df, val_d
         label_width = config['output_steps']
         num_features = 1  # Single feature setup
         best_mae = float('inf')  # Initialize with a high value for comparison
+        best_model_name = None
         
         for model_name, model in {
             'Baseline': baseline(label_width, num_features),
@@ -683,6 +688,7 @@ def evaluate_single_feature_models(config, original_performance, train_df, val_d
                 # Track the best MAE for the feature across models
                 if mae < best_mae:
                     best_mae = mae
+                    best_model_name = model_name
 
             except Exception as e:
                 print(f"Error with model {model_name} and feature {feature}: {e}")
@@ -706,14 +712,14 @@ def evaluate_single_feature_models(config, original_performance, train_df, val_d
         model_dir=model_dir
     )
 
-    return feature_importance_results
+    return {"single_feature_results": feature_performance, "incremental_feature_results": feature_importance_results}
 
 def evaluate_incremental_feature_models(config, original_performance, train_df, val_df, test_df, ranked_features, target, CONV_WIDTH, model_dir):
     feature_importance = {}
     early_stopping = EarlyStopping(monitor='val_loss', patience=3, restore_best_weights=True)
 
     # Iterate over incremental feature sets, starting with the top 2 features up to all features
-    for i in range(2, len(ranked_features) + 1):
+    for i in range(1, len(ranked_features) + 1):
         selected_features = ranked_features[:i]  # Select top i features
         print(f"\nEvaluating model with top {i} features: {selected_features}")
         
@@ -789,7 +795,9 @@ def evaluate_incremental_feature_models(config, original_performance, train_df, 
                 }
                 
                 metric_diffs[model_name] = metric_diff
-                model_save_path = os.path.join(model_dir, f"{model_name}_top_{i}_features.keras")
+                feature_names = "_".join([f.replace(" ", "_") for f in selected_features])
+            
+                model_save_path = os.path.join(model_dir, f"{model_name}_top_{i}_features_{feature_names}.keras")
                 model.save(model_save_path)
 
                 # Output results
@@ -802,7 +810,7 @@ def evaluate_incremental_feature_models(config, original_performance, train_df, 
             except Exception as e:
                 print(f"Unexpected error during model fitting/evaluation with feature set '{selected_features}': {e}")
 
-        feature_importance[f"top_{i}_features"] = metric_diffs
+        feature_importance[f"top_{i}_features_{selected_features}"] = metric_diffs
 
     return feature_importance
 
@@ -847,7 +855,7 @@ def write_loss_history_to_csv(station, config, model_name, history, filename='lo
 
 def run_evaluation_and_save_results(config, original_performance, train_df, val_df, test_df, features, target, CONV_WIDTH, model_dir, output_csv="evaluation_results.csv"):
     # Run the single feature evaluation
-    single_feature_results = evaluate_single_feature_models(
+    evaluation_results = evaluate_single_feature_models(
         config=config,
         original_performance=original_performance,
         train_df=train_df,
@@ -858,53 +866,60 @@ def run_evaluation_and_save_results(config, original_performance, train_df, val_
         CONV_WIDTH=CONV_WIDTH,
         model_dir=model_dir
     )
+    
+    single_feature_results = evaluation_results["single_feature_results"]
+    incremental_feature_results = evaluation_results["incremental_feature_results"]
 
-    # Run the incremental feature evaluation based on ranked features from single-feature results
-    incremental_feature_results = evaluate_incremental_feature_models(
-        config=config,
-        original_performance=original_performance,
-        train_df=train_df,
-        val_df=val_df,
-        test_df=test_df,
-        ranked_features=sorted(single_feature_results, key=single_feature_results.get),
-        target=target,
-        CONV_WIDTH=CONV_WIDTH,
-        model_dir=model_dir
-    )
+    # Define fieldnames to include all possible keys
+    fieldnames = [
+        'Evaluation_Type', 'Features', 'Model', 
+        'Mean_Absolute_Error', 'Mean_Absolute_Error_Diff',
+        'Mean_Squared_Error_Diff', 'Mean_Absolute_Percentage_Error_Diff', 'original_mae'
+    ]
 
-    # Combine results from both evaluations into a single dictionary for CSV output
+    # Combine results from both evaluations into a single list for CSV output
     combined_results = []
+
+    # Add single-feature results
     for feature, best_mae in single_feature_results.items():
         combined_results.append({
             'Evaluation_Type': 'Single Feature',
             'Features': feature,
-            'Mean_Absolute_Error': best_mae
+            'Model': None,
+            'Mean_Absolute_Error': best_mae,
+            'Mean_Absolute_Error_Diff': None,
+            'Mean_Squared_Error_Diff': None,
+            'Mean_Absolute_Percentage_Error_Diff': None
         })
 
+    # Add incremental-feature results
     for top_features, model_diffs in incremental_feature_results.items():
         for model_name, diffs in model_diffs.items():
             combined_results.append({
                 'Evaluation_Type': f"Incremental {top_features}",
                 'Features': ', '.join(top_features.split('_')[1:]),
                 'Model': model_name,
+                'Mean_Absolute_Error': None,
                 'Mean_Absolute_Error_Diff': diffs['mean_absolute_error'],
-                'Mean_Squared_Error_Diff': diffs['mean_squared_error'],
-                'Mean_Absolute_Percentage_Error_Diff': diffs['mean_absolute_percentage_error']
+                # 'Mean_Squared_Error_Diff': diffs['mean_squared_error'],
+                # 'Mean_Absolute_Percentage_Error_Diff': diffs['mean_absolute_percentage_error']
+                'original_mae': diffs.get('original_mae', None)
             })
 
-    # Write combined results to CSV
+    # Write combined results to CSV with unified fieldnames
     with open(output_csv, mode='w', newline='') as file:
-        writer = csv.DictWriter(file, fieldnames=combined_results[0].keys())
+        writer = csv.DictWriter(file, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(combined_results)
 
     print(f"Results have been written to {output_csv}")
 
-    # Basic analysis on feature performance
+    # Additional result processing (optional)
     single_feature_sorted = sorted(single_feature_results.items(), key=lambda x: x[1])
     best_single_feature, best_mae = single_feature_sorted[0]
-    print(f"Best single feature: {best_single_feature} with MAE: {best_mae:.4f}")
     
+    print(f"Best single feature: {best_single_feature} with MAE: {best_mae:.4f}")
+
     incremental_analysis = {
         top_features: min(model_diffs.values(), key=lambda x: x['mean_absolute_error'])
         for top_features, model_diffs in incremental_feature_results.items()
