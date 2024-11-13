@@ -791,7 +791,8 @@ def evaluate_incremental_feature_models(config, original_performance, train_df, 
                 metric_diff = {
                     'mean_absolute_error': performance['mean_absolute_error'] - original_performance[model_name]['mean_absolute_error'],
                     'mean_squared_error': performance['mean_squared_error'] - original_performance[model_name]['mean_squared_error'],
-                    'mean_absolute_percentage_error': performance['mean_absolute_percentage_error'] - original_performance[model_name]['mean_absolute_percentage_error']
+                    'mean_absolute_percentage_error': performance['mean_absolute_percentage_error'] - original_performance[model_name]['mean_absolute_percentage_error'],
+                    'original_mae': original_performance[model_name]['mean_absolute_error']
                 }
                 
                 metric_diffs[model_name] = metric_diff
@@ -896,13 +897,13 @@ def run_evaluation_and_save_results(config, original_performance, train_df, val_
     for top_features, model_diffs in incremental_feature_results.items():
         for model_name, diffs in model_diffs.items():
             combined_results.append({
-                'Evaluation_Type': f"Incremental {top_features}",
+                'Evaluation_Type': f"Incremental {'_'.join(top_features.split('_')[:3])}",
                 'Features': ', '.join(top_features.split('_')[1:]),
                 'Model': model_name,
                 'Mean_Absolute_Error': None,
                 'Mean_Absolute_Error_Diff': diffs['mean_absolute_error'],
-                # 'Mean_Squared_Error_Diff': diffs['mean_squared_error'],
-                # 'Mean_Absolute_Percentage_Error_Diff': diffs['mean_absolute_percentage_error']
+                'Mean_Squared_Error_Diff': diffs['mean_squared_error'],
+                'Mean_Absolute_Percentage_Error_Diff': diffs['mean_absolute_percentage_error'],
                 'original_mae': diffs.get('original_mae', None)
             })
 

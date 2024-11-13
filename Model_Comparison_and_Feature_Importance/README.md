@@ -29,7 +29,15 @@ We also assess feature importance by measuring the impact of dropping specific f
 
 * Calculating Original Performance: The models are first trained with all available features.
 * Dropping Individual Features: One feature is removed at a time, and the model is retrained. The change in MAE after dropping the feature gives us an indication of its importance.
-For example, we test the importance of meteorological features like temperature at different depths (T_5, T_10, etc.) by removing them and observing how it impacts soil moisture prediction.
+
+* Single-Feature Evaluation: Each feature is evaluated independently to identify its unique contribution to prediction accuracy.
+    Models are trained on a single feature, and the lowest MAE across model types for each feature is recorded. 
+    Features are then ranked based on their best MAE, creating a prioritized list of individually predictive features.
+* Incremental Feature Evaluation: Features are added incrementally to observe how combinations improve predictive performance:
+    Starting with the top-ranked feature, additional features are included one by one based on their single-feature MAE rankings.
+    Models are trained with each incremental feature set, recording the MAE improvement relative to the baseline performance.
+    This incremental analysis reveals feature synergies, identifying subsets that collectively improve accuracy.
+    For example, we test the importance of meteorological features like temperature at different depths (T_5, T_10, etc.) by removing them and observing how it impacts soil moisture prediction.
 
 ## Example Process:
 Target Feature: SWC_5 (Soil moisture content at 5cm depth).
@@ -47,3 +55,4 @@ The results of the model comparisons and feature importance evaluations are save
 
 model_results.csv: Contains the performance metrics (MAE, MSE, MAPE) for each model and configuration.
 feature_importance_results.csv: Logs the change in MAE when specific features are dropped from the model.
+evaluation_results.csv: has all of the data from the evaluations, specifically the single evaluation and incremental evaluation results.
