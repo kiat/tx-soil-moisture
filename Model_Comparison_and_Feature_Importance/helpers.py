@@ -109,13 +109,17 @@ def load_data(station, data_path="../datasets/Simulate_Cleaned_Merged"):
     data = pd.read_csv(station_filepath, index_col=0, parse_dates=True)
     data = data[~data.index.duplicated(keep='first')]
     # first year of data: remove later
-    data = data.iloc[:24 * 100]
+    # data = data.iloc[:24 * 20]
     return data
 
-def load_all_data(data_path="../datasets/Simulate_Cleaned_Merged"):
+def load_all_data(data_path="../datasets/Simulate_Cleaned_Merged", stations_amt=1):
     dfs = {}
-    for station in range(1, 2):
-        dfs[station] = load_data(station, data_path)
+    all_stations_data = []
+    for station in range(1, stations_amt+1):
+        temp = load_data(station, data_path)
+        all_stations_data.append(temp)
+        
+    dfs[1] = pd.concat(all_stations_data)
     return dfs
 
 
@@ -260,7 +264,7 @@ def train_and_evaluate_models(station, config, models, train_df, val_df, test_df
     history_dicts = dict()
     # Train, evaluate, and store losses for each model
     for name, model in models.items():
-        early_stopping = EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True)
+        early_stopping = EarlyStopping(monitor='val_loss', patience=20, restore_best_weights=True)
         if name == 'ARIMA':  # Handle ARIMA separately
             print(f'\nTraining {name} model for configuration: {config}')
             y_train = train_df['SWC_5'].values
@@ -446,7 +450,7 @@ def calculate_original_performance(models, config, train_df, val_df, test_df):
         test_df=test_df,
         label_columns=[config['features']]
     )
-    early_stopping = EarlyStopping(monitor='val_loss', patience=3, restore_best_weights=True)
+    early_stopping = EarlyStopping(monitor='val_loss', patience=20, restore_best_weights=True)
     for model_name, model in models.items():
         print(f"\nEvaluating original performance for model: {model_name}")
 
@@ -534,7 +538,7 @@ def calculate_original_performance(models, config, train_df, val_df, test_df):
 
 def drop_feature_and_evaluate(config, original_performance, train_df, val_df, test_df, features, target, CONV_WIDTH, model_dir):
     feature_importance = {}
-    early_stopping = EarlyStopping(monitor='val_loss', patience=3, restore_best_weights=True)
+    early_stopping = EarlyStopping(monitor='val_loss', patience=20, restore_best_weights=True)
 
     # Iterate over all features and drop one feature at a time
     for feature in features:
@@ -625,7 +629,7 @@ def drop_feature_and_evaluate(config, original_performance, train_df, val_df, te
 
 def evaluate_single_feature_models(config, original_performance, train_df, val_df, test_df, features, target, CONV_WIDTH, model_dir):
     feature_performance = {}
-    early_stopping = EarlyStopping(monitor='val_loss', patience=3, restore_best_weights=True)
+    early_stopping = EarlyStopping(monitor='val_loss', patience=20, restore_best_weights=True)
 
     # Evaluate each feature independently
     for feature in features:
@@ -716,7 +720,7 @@ def evaluate_single_feature_models(config, original_performance, train_df, val_d
 
 def evaluate_incremental_feature_models(config, original_performance, train_df, val_df, test_df, ranked_features, target, CONV_WIDTH, model_dir):
     feature_importance = {}
-    early_stopping = EarlyStopping(monitor='val_loss', patience=3, restore_best_weights=True)
+    early_stopping = EarlyStopping(monitor='val_loss', patience=20, restore_best_weights=True)
 
     # Iterate over incremental feature sets, starting with the top 2 features up to all features
     for i in range(1, len(ranked_features) + 1):

@@ -21,7 +21,7 @@ def main():
     parser.add_argument("--features", type=str, required=True, help="The feature to predict (e.g., 'SWC_5')")
     parser.add_argument("--input_steps", type=int, required=True, help="Number of input steps")
     parser.add_argument("--output_steps", type=int, required=True, help="Number of output steps")
-
+    parser.add_argument("--num_stations", type=int, required=True, help="Number of stations to train on")
 
     args = parser.parse_args()
     model_dir = './saved_models/'
@@ -30,7 +30,7 @@ def main():
         os.makedirs(model_dir)
     # Load your dataset
     
-    selected_features = ["Ppt", "Tair",  "SWC_5"]
+    # selected_features = ["Ppt", "Tair",  "SWC_5"]
 
 
     # TODO: load in all datasets into a dictionary
@@ -78,7 +78,7 @@ def main():
     #             'Test MSE', 'Test MAE', 'Test MAPE'
     #         ])
 
-    dfs = load_all_data()
+    dfs = load_all_data(stations_amt=args.num_stations)
     model_filename = f"{args.features}_{args.input_steps}_{args.output_steps}_model_results.csv"
     loss_filename = f"{args.features}_{args.input_steps}_{args.output_steps}_loss_history.csv"
     create_csv(model_filename)

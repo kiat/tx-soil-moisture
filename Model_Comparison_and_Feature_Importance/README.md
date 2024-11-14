@@ -36,6 +36,7 @@ We also assess feature importance by measuring the impact of dropping specific f
 * Incremental Feature Evaluation: Features are added incrementally to observe how combinations improve predictive performance:
     Starting with the top-ranked feature, additional features are included one by one based on their single-feature MAE rankings.
     Models are trained with each incremental features, recording the MAE improvement relative to the original performance.
+    Results are stored in the evaluation_results.csv
     
 
 ## Example Process:
