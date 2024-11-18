@@ -23,5 +23,18 @@ sudo ./setup_environment.sh
 ./run_model_comparison.sh
 ```
 
-## 3. results stored in saved_models and evaluation_results.csv, feature_importance_results.csv and various model results. 
+## 3. Results
+stored in saved_models and evaluation_results.csv, feature_importance_results.csv and various model results. 
+
+
+## 4. What is the code doing?
+This folder in the repository is aimed to train, evaluate, compare various models. It will evaluate the various models based on configurations of input features, input-output steps, and feature importance. 
+
+The second half of the project is aimed at finding the best features. This is done by 
+1. removing one feature at a time to see how that changed the MSE, MAE, MAPE
+2. having solo features with the label to see how each feature affects the  MSE, MAE, MAPE
+3. adding the features one at a time to find the best combinations of features. 
+
+The `model_comparison.py` script serves as the main file with the main function. It uses helper functions from `helpers.py` for preprocessing data, defining model architectures, and evaluating performance. The results, including metrics like MAE and MSE, are logged to CSV files.
+
 
