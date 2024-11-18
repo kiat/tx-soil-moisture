@@ -12,7 +12,7 @@ sudo apt-get update && sudo apt-get upgrade -y
 
 # Install required system packages
 echo "Installing system dependencies..."
-sudo apt-get install -y python3 python3-pip python3-venv build-essential libopenblas-dev liblapack-dev gfortran
+sudo apt-get install -y python3 python3-pip build-essential libopenblas-dev liblapack-dev gfortran wget
 
 # Check and update grep
 echo "Checking GNU grep version..."
@@ -45,37 +45,20 @@ else
     echo "GNU grep installed successfully."
 fi
 
-# Create a virtual environment
-echo "Setting up virtual environment..."
-if [ ! -d "env" ]; then
-    python3 -m venv env
-fi
-
-# Activate the virtual environment
-source env/bin/activate
-
 # Upgrade pip
-pip install --upgrade pip
+echo "Upgrading pip..."
+sudo pip3 install --upgrade pip
 
-# Install required Python packages
-echo "Installing Python dependencies..."
-pip install pandas numpy matplotlib scikit-learn statsmodels keras-self-attention
+# Install required Python packages globally
+echo "Installing Python dependencies globally..."
+sudo pip3 install pandas numpy matplotlib scikit-learn statsmodels keras-self-attention
 
-# Create required directories
-echo "Setting up directories..."
-mkdir -p Simulate_Cleaned_Merged saved_models
-
-# Create placeholder files
-echo "Creating placeholder files..."
-touch Simulate_Cleaned_Merged/Station1_simulated_cleaned_merged_data.csv
-touch Simulate_Cleaned_Merged/Station2_simulated_cleaned_merged_data.csv
 
 # Verify installation
 echo "Verifying installation..."
 python3 -c "
 import pandas as pd
 import numpy as np
-import tensorflow as tf
 import matplotlib.pyplot as plt
 import sklearn
 import statsmodels.api as sm
@@ -84,5 +67,4 @@ print('All required Python libraries installed successfully!')
 
 # Instructions for the user
 echo "Setup complete!"
-echo "To activate the environment, run: source env/bin/activate"
 echo "Run your script using: ./run_model_comparison.sh"
