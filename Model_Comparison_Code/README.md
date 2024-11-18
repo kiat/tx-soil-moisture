@@ -4,7 +4,7 @@ This folder contains everything needed to perform model comparisons.
 
 ## Setup
 
-## 1. Transfer this folder to another machine using `scp` (if needed):
+## 1. Transfer this folder to another machine using `scp` (if needed) and install packages:
 
 ```bash
 scp -r Model_Comparison_Code <username>@<target_machine>:<destination_path>
