@@ -41,7 +41,7 @@ MAE_diff = MAE_current - original_performance
 - stores MSE, MAE, MAPE for each time 
 
 ## 4. What is the code doing?
-This folder in the repository is aimed to train, evaluate, compare various models. It will evaluate the various models based on configurations of input features, input-output steps, and feature importance. 
+This folder in the repository is aimed to train, evaluate, compare various models. It will evaluate the various models based on configurations of input features, input-output steps, and feature importance. These models are known in the code as the original_performance. 
 
 The second half of the project is aimed at finding the best features. This is done by 
 1. removing one feature at a time to see how that changed the MSE, MAE, MAPE
