@@ -39,6 +39,8 @@ def main():
 
     label_features = ['SWC_5', 'SWC_10', 'SWC_20', 'SWC_50']
     temp_features = ['T_5', 'T_10', 'T_20', 'T_50']
+    
+    # label_features = ['SWC_5']
 
     configurations = [
             {"features": args.features,
@@ -83,7 +85,10 @@ def main():
     loss_filename = f"{args.features}_{args.input_steps}_{args.output_steps}_loss_history.csv"
     create_csv(model_filename)
     create_loss_csv(loss_filename)
-    create_feature_csv('feature_importance_results.csv')
+    
+    base_name, _ = 'feature_importance_results.csv'.rsplit('.', 1)
+    csv_filename  = f"{base_name}_{args.features}_{args.input_steps}_{args.output_steps}.csv"
+    create_feature_csv(csv_filename)
     for station, df in dfs.items():
         df = preprocess(df)
         # df = df[selected_features]
@@ -190,7 +195,7 @@ def main():
             all_features.remove(target_feature)
 
             # Create a dictionary to store the original MAE values before feature dropping
-            original_mae = calculate_original_performance(models, config, train_df, val_df, test_df)
+            original_mae = calculate_original_performance(models, config, train_df, val_df, test_df, features_arg = args.features,input_steps_arg = args.input_steps,output_steps_arg = args.output_steps)
             # feature_importance_results = drop_feature_and_evaluate(config, original_mae, train_df, val_df, test_df, all_features, target_feature, CONV_WIDTH, model_dir)
             # feature_importance_singular = feature_importance_singular(config, original_mae, train_df, val_df, test_df, all_features, target_feature, CONV_WIDTH, model_dir)
             
@@ -204,7 +209,10 @@ def main():
                 target=target_feature,
                 CONV_WIDTH=CONV_WIDTH,
                 model_dir=model_dir,
-                output_csv="evaluation_results.csv"
+                output_csv="evaluation_results.csv", 
+                features_arg = args.features,
+                input_steps_arg = args.input_steps,
+                output_steps_arg = args.output_steps
             )
             # # Print the feature importance results
             # for feature, importance in feature_importance_results.items():

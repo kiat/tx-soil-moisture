@@ -120,6 +120,7 @@ def load_all_data(data_path="Simulate_Cleaned_Merged", stations_amt=1):
         all_stations_data.append(temp)
         
     dfs[1] = pd.concat(all_stations_data)
+    # dfs[1] = dfs[1][:2400]
     return dfs
 
 
@@ -401,7 +402,7 @@ def write_model_results_to_csv(station, model_name, config, metrics, filename='f
             metrics['mean_absolute_percentage_error']
         ])
 
-def write_feature_results_to_csv(label_feature, dropped_feature, model_name, metrics, csv_filename = 'feature_importance_results.csv'):
+def write_feature_results_to_csv(label_feature, dropped_feature, model_name, metrics, features_arg, input_steps_arg, output_steps_arg, csv_filename = 'feature_importance_results.csv'):
     """
     Writes the results of a model to a CSV file.
     
@@ -420,7 +421,12 @@ def write_feature_results_to_csv(label_feature, dropped_feature, model_name, met
         'val_mae': value
     }
     """
+    
+    base_name, _ = csv_filename.rsplit('.', 1)
+    print("HELLO",base_name)
+    csv_filename  = f"{base_name}_{features_arg}_{input_steps_arg}_{output_steps_arg}.csv"
 
+    
     # Ensure the metrics dictionary contains the necessary keys
     required_keys = ['mean_absolute_error', 'mean_squared_error', 'mean_absolute_percentage_error']
     for key in required_keys:
@@ -439,7 +445,7 @@ def write_feature_results_to_csv(label_feature, dropped_feature, model_name, met
             metrics['mean_absolute_percentage_error']
         ])
 
-def calculate_original_performance(models, config, train_df, val_df, test_df):
+def calculate_original_performance(models, config, train_df, val_df, test_df, features_arg, input_steps_arg, output_steps_arg):
     original_performance = {}
     window = create_window(
         input_width=config['input_steps'],
@@ -468,7 +474,7 @@ def calculate_original_performance(models, config, train_df, val_df, test_df):
         # Evaluate on the full test set to get the original MAE
         performance = model.evaluate(window.test, return_dict=True)
         original_performance[model_name] = performance
-        write_feature_results_to_csv(config['features'], 'Baseline', model_name, performance)
+        write_feature_results_to_csv(config['features'], 'Baseline', model_name, performance, features_arg=features_arg, input_steps_arg=input_steps_arg, output_steps_arg=output_steps_arg)
         print(f"Original MAE for {model_name}: {performance['mean_absolute_error']:.4f}")
 
     return original_performance
@@ -858,8 +864,11 @@ def write_loss_history_to_csv(station, config, model_name, history, filename='lo
     print(f'Loss history appended to {filename}')
 
 
-def run_evaluation_and_save_results(config, original_performance, train_df, val_df, test_df, features, target, CONV_WIDTH, model_dir, output_csv="evaluation_results.csv"):
+def run_evaluation_and_save_results(config, original_performance, train_df, val_df, test_df, features, target, CONV_WIDTH, model_dir, features_arg,input_steps_arg, output_steps_arg, output_csv="evaluation_results.csv"):
     # Run the single feature evaluation
+    base_name, _ = output_csv.rsplit('.', 1)
+    output_csv  = f"{base_name}_{features_arg}_{input_steps_arg}_{output_steps_arg}.csv"
+
     evaluation_results = evaluate_single_feature_models(
         config=config,
         original_performance=original_performance,
@@ -933,4 +942,3 @@ def run_evaluation_and_save_results(config, original_performance, train_df, val_
     print("\nIncremental feature analysis:")
     for top_features, best_metrics in incremental_analysis.items():
         print(f"{top_features} - Best MAE Improvement: {best_metrics['mean_absolute_error']:.4f}")
-
