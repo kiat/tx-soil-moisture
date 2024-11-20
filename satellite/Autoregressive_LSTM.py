@@ -12,14 +12,14 @@ import os
 np.random.seed(42)
 tf.random.set_seed(42)
 
-def create_sequences(data, n_steps):
+def create_sequences(data, n_steps, offset=1):
     X, y = [], []
-    for i in range(len(data) - n_steps):
+    for i in range(len(data) - n_steps - offset + 1):
         X.append(data[i:(i + n_steps)])
-        y.append(data[i + n_steps])
+        y.append(data[i + n_steps + offset - 1])
     return np.array(X), np.array(y)
 
-def create_model(n_steps, n_features):
+def create_lstm_model(n_steps, n_features):
     model = Sequential([
         LSTM(50, activation='relu', input_shape=(n_steps, n_features)),
         Dense(1)
@@ -27,7 +27,16 @@ def create_model(n_steps, n_features):
     model.compile(optimizer='adam', loss='mse')
     return model
 
-def evaluate_feature_combination(df, target_col, feature_cols, n_steps=7):
+def create_autoregressive_lstm_model(n_steps, n_features):
+    model = Sequential([
+        LSTM(50, activation='relu', return_sequences=True, input_shape=(n_steps, n_features)),
+        LSTM(50, activation='relu'),
+        Dense(1)
+    ])
+    model.compile(optimizer='adam', loss='mse')
+    return model
+
+def evaluate_feature_combination(df, target_col, feature_cols, n_steps=7, offset=1, model_type='lstm'):
     # Prepare data
     data = df[feature_cols + [target_col]].values
     scaler = MinMaxScaler()
@@ -39,17 +48,21 @@ def evaluate_feature_combination(df, target_col, feature_cols, n_steps=7):
     test_data = scaled_data[train_size:]
     
     # Create sequences
-    X_train, y_train = create_sequences(train_data, n_steps)
-    X_test, y_test = create_sequences(test_data, n_steps)
+    X_train, y_train = create_sequences(train_data, n_steps, offset)
+    X_test, y_test = create_sequences(test_data, n_steps, offset)
     
-    # Train model
-    model = create_model(n_steps, len(feature_cols) + 1)
+    # Create and train model based on type
+    if model_type == 'lstm':
+        model = create_lstm_model(n_steps, len(feature_cols) + 1)
+    else:  # autoregressive
+        model = create_autoregressive_lstm_model(n_steps, len(feature_cols) + 1)
+    
     model.fit(X_train, y_train[:, -1], epochs=50, batch_size=32, verbose=0)
     
     # Make predictions
     y_pred = model.predict(X_test)
     
-    # Inverse transform for actual metrics
+    # Inverse transform predictions and actual values
     y_test_orig = scaler.inverse_transform(np.hstack([np.zeros((len(y_test), len(feature_cols))), y_test[:, -1].reshape(-1, 1)]))[:, -1]
     y_pred_orig = scaler.inverse_transform(np.hstack([np.zeros((len(y_pred), len(feature_cols))), y_pred]))[:, -1]
     
@@ -65,35 +78,57 @@ df = pd.read_csv('satellite/met_merged_satelite_data/Station1_Met_AMSR_SMAP.csv'
 df['Date'] = pd.to_datetime(df['Date'])
 df = df.set_index('Date')
 
-# Define features and target
-target_col = 'Sat_SM_SMAP'
-feature_cols = ['Ppt', 'Srad', 'Tair', 'RH', 'Windspeed', 'Winddirection', 'Sat_SM_AMSR']
+# Define features and targets
+target_cols = ['Sat_SM_AMSR', 'Sat_SM_SMAP']
+feature_cols = {
+    'Sat_SM_AMSR': ['Ppt', 'Srad', 'Tair', 'RH', 'Windspeed', 'Winddirection', 'distance_AMSR'],
+    'Sat_SM_SMAP': ['Ppt', 'Srad', 'Tair', 'RH', 'Windspeed', 'Winddirection', 'distance_SMAP']
+}
 
 # Remove rows with missing values
 df = df.dropna()
 
-# Test all feature combinations
+# Test all combinations
 results = []
-for r in range(1, len(feature_cols) + 1):
-    for combo in combinations(feature_cols, r):
-        mse, mae, mae_percentage = evaluate_feature_combination(df, target_col, list(combo))
-        results.append({
-            'features': combo,
-            'mse': mse,
-            'mae': mae,
-            'mae_percentage': mae_percentage
-        })
+total_combinations = 2 * 2 * 7 * sum(len(list(combinations(feature_cols['Sat_SM_AMSR'], r))) for r in range(1, len(feature_cols['Sat_SM_AMSR']) + 1))
+current = 0
+
+for target_col in target_cols:
+    for model_type in ['lstm', 'autoregressive']:
+        for steps in range(1, 8):  # steps will be used for both n_steps and offset
+            print(f"Testing {target_col} with {model_type} model: n_steps=offset={steps} ({current}/{total_combinations} combinations tested)")
+            for r in range(1, len(feature_cols[target_col]) + 1):
+                for combo in combinations(feature_cols[target_col], r):
+                    mse, mae, mae_percentage = evaluate_feature_combination(
+                        df, 
+                        target_col, 
+                        list(combo), 
+                        n_steps=steps,  # same value for both
+                        offset=steps,    # same value for both
+                        model_type=model_type
+                    )
+                    results.append({
+                        'target': target_col,
+                        'model_type': model_type,
+                        'n_steps': steps,
+                        'offset': steps,
+                        'features': combo,
+                        'mse': mse,
+                        'mae': mae,
+                        'mae_percentage': mae_percentage
+                    })
+                    current += 1
 
 # Sort results by MSE
 results_df = pd.DataFrame(results)
 results_df = results_df.sort_values('mse')
 
 # Print results
-print("\nTop 10 Feature Combinations:")
-print(results_df.head(10).to_string())
-
-# Create results directory if it doesn't exist
-os.makedirs('satellite/results', exist_ok=True)
+print("\nTop 10 Combinations for each target:")
+for target in target_cols:
+    target_results = results_df[results_df['target'] == target]
+    print(f"\nBest results for {target}:")
+    print(target_results[['model_type', 'n_steps', 'offset', 'features', 'mse', 'mae', 'mae_percentage']].head(10).to_string())
 
 # Save results
-results_df.to_csv('satellite/results/feature_combinations.csv', index=False)
+results_df.to_csv('satellite/results/model_comparison_results_both_targets.csv', index=False)
