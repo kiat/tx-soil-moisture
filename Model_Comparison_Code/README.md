@@ -17,11 +17,16 @@ sudo ./setup_environment.sh
 * Ensure GNU grep is updated.
 * Prepare the necessary directories
 
+OR 
+look in the requirements.txt in order to install the correct packages. 
+
 ## 2. Run the script 
 
 ```bash
 ./run_model_comparison.sh
 ```
+
+To further play with arguments that the script is using(including train_split, val_split, input_steps, output_steps, num_stations, etc.), you can modify run_model_comparison.sh 
 
 ## 3. Results
 stored in saved_models and evaluation_results.csv, feature_importance_results.csv and various model results. 
@@ -35,10 +40,12 @@ stored in saved_models and evaluation_results.csv, feature_importance_results.cs
 - the goal of this is to find the best feature when used solo. Then find the best group of features that work well together.  
 - MAE_diff, MSE_diff, MAPE_diff are stored to compare how the model did when it had all the features. Example below:
 MAE_diff = MAE_current - original_performance
+
+original_performance was how the model performed with all features. Therefore, the lower and more negative the MAE_diff is, the better that combination of features works. 
  
 ### feature_importance_results.csv 
 - stores results of the models after getting rid of one faeature at a time
-- stores MSE, MAE, MAPE for each time 
+- stores MSE, MAE, MAPE for each time
 
 ## 4. What is the code doing?
 This folder in the repository is aimed to train, evaluate, compare various models. It will evaluate the various models based on configurations of input features, input-output steps, and feature importance. These models are known in the code as the original_performance. 
