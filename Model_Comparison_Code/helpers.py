@@ -112,7 +112,7 @@ def load_data(station, data_path="Simulate_Cleaned_Merged"):
     # data = data.iloc[:24 * 20]
     return data
 
-def load_all_data(data_path="Simulate_Cleaned_Merged", stations_amt=1):
+def load_all_data ( data_path="Simulate_Cleaned_Merged" ,stations_amt=1):
     dfs = {}
     all_stations_data = []
     for station in range(1, stations_amt+1):
@@ -120,7 +120,7 @@ def load_all_data(data_path="Simulate_Cleaned_Merged", stations_amt=1):
         all_stations_data.append(temp)
         
     dfs[1] = pd.concat(all_stations_data)
-    # dfs[1] = dfs[1][:2400]
+    dfs[1] = dfs[1]
     return dfs
 
 
@@ -248,7 +248,7 @@ def create_window(input_width, label_width, shift, train_df, val_df, test_df, la
     )
 
 # Function to train and evaluate all models for a given configuration
-def train_and_evaluate_models(station, config, models, train_df, val_df, test_df, model_dir, model_file, loss_file):
+def train_and_evaluate_models(station, config, models, train_df, val_df, test_df, model_dir, model_file, loss_file, patience):
     # Adjust the window based on the current configuration  
     window = create_window(
         input_width=config['input_steps'],
@@ -265,7 +265,7 @@ def train_and_evaluate_models(station, config, models, train_df, val_df, test_df
     history_dicts = dict()
     # Train, evaluate, and store losses for each model
     for name, model in models.items():
-        early_stopping = EarlyStopping(monitor='val_loss', patience=20, restore_best_weights=True)
+        early_stopping = EarlyStopping(monitor='val_loss', patience=patience, restore_best_weights=True)
         if name == 'ARIMA':  # Handle ARIMA separately
             print(f'\nTraining {name} model for configuration: {config}')
             y_train = train_df['SWC_5'].values
@@ -445,7 +445,7 @@ def write_feature_results_to_csv(label_feature, dropped_feature, model_name, met
             metrics['mean_absolute_percentage_error']
         ])
 
-def calculate_original_performance(models, config, train_df, val_df, test_df, features_arg, input_steps_arg, output_steps_arg):
+def calculate_original_performance(models, config, train_df, val_df, test_df, features_arg, input_steps_arg, output_steps_arg, patience):
     original_performance = {}
     window = create_window(
         input_width=config['input_steps'],
@@ -456,7 +456,7 @@ def calculate_original_performance(models, config, train_df, val_df, test_df, fe
         test_df=test_df,
         label_columns=[config['features']]
     )
-    early_stopping = EarlyStopping(monitor='val_loss', patience=20, restore_best_weights=True)
+    early_stopping = EarlyStopping(monitor='val_loss', patience=patience, restore_best_weights=True)
     for model_name, model in models.items():
         print(f"\nEvaluating original performance for model: {model_name}")
 
@@ -480,71 +480,9 @@ def calculate_original_performance(models, config, train_df, val_df, test_df, fe
     return original_performance
 
 
-# def drop_feature_and_evaluate(config, original_mae, train_df, val_df, test_df, features, target, CONV_WIDTH, model_dir):
-#     feature_importance = {}
-#     early_stopping = EarlyStopping(monitor='val_loss', patience=3, restore_best_weights=True)
-#     # Iterate over all features and drop one feature at a time
-#     for feature in features:
-#         print(f"\nEvaluating the effect of dropping feature: {feature}")
-        
-#         # Drop the feature from the dataframe
-#         df_dropped = train_df.drop(columns=[feature])
-        
-#         # Update the window for training without the feature
-#         new_window = create_window(
-#             input_width=config['input_steps'],
-#             label_width=config['output_steps'],
-#             shift=config['output_steps'],
-#             train_df=df_dropped,  # Use the dataframe with the feature dropped
-#             val_df=val_df.drop(columns=[feature]),  # Similarly for validation data
-#             test_df=test_df.drop(columns=[feature]),  # Similarly for test data
-#             label_columns=[target]
-#         )
-#         label_width = config['output_steps']
-#         num_features = df_dropped.shape[1]
-#         # Initialize dictionary to store the MAE changes for each model
-#         mae_diffs = {}
-#         models = {
-#                 'Baseline': baseline(label_width, num_features),
-#                 'Multi-step Linear': linear(label_width, num_features),
-#                 'Multi-step Dense': dense(label_width, num_features),
-#                 'CNN': cnn(label_width, num_features, CONV_WIDTH),
-#                 'RNN': simple_rnn(label_width, num_features),
-#                 'LSTM': lstm(label_width, num_features),
-#                 'Autoregressive': autoregressive(label_width, num_features),
-#                 'Bi-LSTM': bi_lstm(label_width, num_features),
-#             }
-#         for model_name, model in models.items():
-#             print(f"\nRetraining model: {model_name} after dropping feature: {feature}")
-#             # Recompile and retrain the model with the updated data (feature dropped)
-#             model.compile(loss=tf.keras.losses.MeanSquaredError(),
-#                 optimizer=tf.keras.optimizers.Adam(),
-#                 metrics=[tf.keras.metrics.MeanSquaredError(), tf.keras.metrics.MeanAbsoluteError(), tf.keras.metrics.MeanAbsolutePercentageError()])
-#             history = model.fit(
-#                 new_window.train,
-#                 validation_data=new_window.val,
-#                 epochs=10,
-#                 callbacks=[early_stopping]
-#             )
-
-#             # Evaluate the model on the test data without the dropped feature
-#             performance = model.evaluate(new_window.test, return_dict=True)
-#             write_feature_results_to_csv(config['features'], feature, model_name, performance)
-#             # Calculate the change in MAE
-#             mae_diff = performance['mean_absolute_error'] - original_mae[model_name]['mean_absolute_error']
-#             mae_diffs[model_name] = mae_diff
-#             model_save_path = os.path.join(model_dir, f"{model_name}_drop_{feature}.keras")
-#             model.save(model_save_path)
-#             print(f"Model: {model_name} - Original MAE: {original_mae[model_name]['mean_absolute_error']:.4f}, New MAE: {performance['mean_absolute_error']:.4f}, MAE Change: {mae_diff:.4f}")
-
-#         # Store the results of this feature drop in the feature_importance dictionary
-#         feature_importance[feature] = mae_diffs
-
-#     return feature_importance
-
-def drop_feature_and_evaluate(config, original_performance, train_df, val_df, test_df, features, target, CONV_WIDTH, model_dir):
+def drop_feature_and_evaluate(config, original_performance, train_df, val_df, test_df, features, target, CONV_WIDTH, model_dir, patience):
     feature_importance = {}
-    early_stopping = EarlyStopping(monitor='val_loss', patience=20, restore_best_weights=True)
+    early_stopping = EarlyStopping(monitor='val_loss', patience=patience, restore_best_weights=True)
 
     # Iterate over all features and drop one feature at a time
     for feature in features:
@@ -633,9 +571,9 @@ def drop_feature_and_evaluate(config, original_performance, train_df, val_df, te
     return feature_importance
 
 
-def evaluate_single_feature_models(config, original_performance, train_df, val_df, test_df, features, target, CONV_WIDTH, model_dir):
+def evaluate_single_feature_models(config, original_performance, train_df, val_df, test_df, features, target, CONV_WIDTH, model_dir, patience):
     feature_performance = {}
-    early_stopping = EarlyStopping(monitor='val_loss', patience=20, restore_best_weights=True)
+    early_stopping = EarlyStopping(monitor='val_loss', patience=patience, restore_best_weights=True)
 
     # Evaluate each feature independently
     for feature in features:
@@ -724,9 +662,9 @@ def evaluate_single_feature_models(config, original_performance, train_df, val_d
 
     return {"single_feature_results": feature_performance, "incremental_feature_results": feature_importance_results}
 
-def evaluate_incremental_feature_models(config, original_performance, train_df, val_df, test_df, ranked_features, target, CONV_WIDTH, model_dir):
+def evaluate_incremental_feature_models(config, original_performance, train_df, val_df, test_df, ranked_features, target, CONV_WIDTH, model_dir, patience):
     feature_importance = {}
-    early_stopping = EarlyStopping(monitor='val_loss', patience=20, restore_best_weights=True)
+    early_stopping = EarlyStopping(monitor='val_loss', patience=patience, restore_best_weights=True)
 
     # Iterate over incremental feature sets, starting with the top 2 features up to all features
     for i in range(1, len(ranked_features) + 1):
@@ -864,7 +802,7 @@ def write_loss_history_to_csv(station, config, model_name, history, filename='lo
     print(f'Loss history appended to {filename}')
 
 
-def run_evaluation_and_save_results(config, original_performance, train_df, val_df, test_df, features, target, CONV_WIDTH, model_dir, features_arg,input_steps_arg, output_steps_arg, output_csv="evaluation_results.csv"):
+def run_evaluation_and_save_results(config, original_performance, train_df, val_df, test_df, features, target, CONV_WIDTH, model_dir, features_arg,input_steps_arg, output_steps_arg,patience ,output_csv="evaluation_results.csv"):
     # Run the single feature evaluation
     base_name, _ = output_csv.rsplit('.', 1)
     output_csv  = f"{base_name}_{features_arg}_{input_steps_arg}_{output_steps_arg}.csv"
@@ -878,7 +816,8 @@ def run_evaluation_and_save_results(config, original_performance, train_df, val_
         features=features,
         target=target,
         CONV_WIDTH=CONV_WIDTH,
-        model_dir=model_dir
+        model_dir=model_dir,
+        patience = patience
     )
     
     single_feature_results = evaluation_results["single_feature_results"]

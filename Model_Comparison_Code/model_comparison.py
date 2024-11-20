@@ -23,6 +23,12 @@ def main():
     parser.add_argument("--output_steps", type=int, required=True, help="Number of output steps")
     parser.add_argument("--num_stations", type=int, required=True, help="Number of stations to train on")
 
+
+    parser.add_argument("--train_split", type=float, default=0.7, help="Fraction of data for training (default: 0.7)")
+    parser.add_argument("--val_split", type=float, default=0.2, help="Fraction of data for validation (default: 0.2)")
+    parser.add_argument("--patience", type=int, default=20, help="Patience for early stopping (default: 3)")
+    parser.add_argument("--rows", type=float, help="amount of rows to train the model on")
+
     args = parser.parse_args()
     model_dir = './saved_models/'
 
@@ -117,9 +123,10 @@ def main():
             df_copy = df_copy.drop(columns=features_to_drop)
 
 
-            train_df = df_copy.iloc[0:int(n*0.7)]
-            val_df = df_copy.iloc[int(n*0.7):int(n*0.9)]
-            test_df = df_copy.iloc[int(n*0.9):]
+            train_df = df.iloc[:int(n * args.train_split)]
+            val_df = df.iloc[int(n * args.train_split):int(n * (args.train_split + args.val_split))]
+            test_df = df.iloc[int(n * (args.train_split + args.val_split)):]
+
             print(train_df.isnull().sum())
             print(val_df.isnull().sum())
             print(test_df.isnull().sum())
@@ -139,7 +146,7 @@ def main():
 
             # make way to drop other features besides one in config
             # Train and evaluate models for the current configuration
-            performance, val_performance, history_dicts = train_and_evaluate_models(station, config, models, train_df, val_df, test_df, model_dir, model_filename, loss_filename  )
+            performance, val_performance, history_dicts = train_and_evaluate_models(station, config, models, train_df, val_df, test_df, model_dir, model_filename, loss_filename, patience=args.patience  )
             model_losses = (performance, val_performance)
             # Store the losses for this configuration
             all_losses[f"{config['features']} - {config['input_steps']} input / {config['output_steps']} output"] = model_losses
@@ -170,9 +177,10 @@ def main():
 
             # Drop the features
             #df_copy = df_copy.drop(columns=features_to_drop)
-            train_df = df_copy.iloc[0:int(n*0.7)]
-            val_df = df_copy.iloc[int(n*0.7):int(n*0.9)]
-            test_df = df_copy.iloc[int(n*0.9):]
+            train_df = df.iloc[:int(n * args.train_split)]
+            val_df = df.iloc[int(n * args.train_split):int(n * (args.train_split + args.val_split))]
+            test_df = df.iloc[int(n * (args.train_split + args.val_split)):]
+
             num_features = df_copy.shape[1]
             models = {
                         'Baseline': baseline(label_width, num_features),
@@ -195,7 +203,7 @@ def main():
             all_features.remove(target_feature)
 
             # Create a dictionary to store the original MAE values before feature dropping
-            original_mae = calculate_original_performance(models, config, train_df, val_df, test_df, features_arg = args.features,input_steps_arg = args.input_steps,output_steps_arg = args.output_steps)
+            original_mae = calculate_original_performance(models, config, train_df, val_df, test_df, features_arg = args.features,input_steps_arg = args.input_steps,output_steps_arg = args.output_steps, patience = args.patience)
             # feature_importance_results = drop_feature_and_evaluate(config, original_mae, train_df, val_df, test_df, all_features, target_feature, CONV_WIDTH, model_dir)
             # feature_importance_singular = feature_importance_singular(config, original_mae, train_df, val_df, test_df, all_features, target_feature, CONV_WIDTH, model_dir)
             
@@ -212,7 +220,8 @@ def main():
                 output_csv="evaluation_results.csv", 
                 features_arg = args.features,
                 input_steps_arg = args.input_steps,
-                output_steps_arg = args.output_steps
+                output_steps_arg = args.output_steps,
+                patience = args.patience
             )
             # # Print the feature importance results
             # for feature, importance in feature_importance_results.items():
