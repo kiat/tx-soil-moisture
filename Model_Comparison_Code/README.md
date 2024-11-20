@@ -31,8 +31,8 @@ To further play with arguments that the script is using(including train_split, v
 ## 3. Results
 stored in saved_models and evaluation_results.csv, feature_importance_results.csv and various model results. 
 
-### evaluation_results.csv - main data that is stored
-
+### evaluation_results_(shape).csv - main data that is stored
+- the name of the csv changes based on the configuration that is being used.
 - stores the results of having a single feature be evaluated with the label. The best model is always chosen but not stored. Then the script will run with the top x features until it reaches the maximum amount of features. 
     - only stores MAE since MAE is used to find the best features
 - incremental evaluation - based off of the ranking of the best features by MAE, we add these features one at a time to the model to evaluate how it performs. 
@@ -43,7 +43,8 @@ MAE_diff = MAE_current - original_performance
 
 original_performance was how the model performed with all features. Therefore, the lower and more negative the MAE_diff is, the better that combination of features works. 
  
-### feature_importance_results.csv 
+### feature_importance_results_(shape).csv 
+- the name of the csv changes based on the configuration that is being used. 
 - stores results of the models after getting rid of one faeature at a time
 - stores MSE, MAE, MAPE for each time
 
