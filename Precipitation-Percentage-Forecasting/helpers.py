@@ -22,7 +22,8 @@ def linear(label_width, num_features):
             # Shape => [batch, 1, out_steps*features]
             tf.keras.layers.Dense(label_width*num_features,
                                 kernel_initializer=tf.initializers.zeros()),
-            layers.Reshape([label_width, num_features])
+            tf.keras.layers.Dense(label_width, activation='linear')
+            # layers.Reshape([label_width, num_features])
         ])
 
 def dense(label_width, num_features):
@@ -55,9 +56,20 @@ def cnn(label_width, num_features, CONV_WIDTH):
         ])
 
 def lstm(label_width, num_features):
+    # model = tf.keras.Sequential([
+    #     tf.keras.layers.LSTM(64, input_shape=(None, num_features)),
+    #     tf.keras.layers.Dense(label_width, activation='sigmoid')  # 5 output nodes for each interval
+    # ])
+    # return model
     model = tf.keras.Sequential([
-        tf.keras.layers.LSTM(64, input_shape=(None, num_features)),
-        tf.keras.layers.Dense(label_width, activation='sigmoid')  # 5 output nodes for each interval
+        tf.keras.layers.LSTM(64, activation='relu', return_sequences=True, input_shape=(None, num_features)),
+        #tf.keras.layers.Dropout(0.2),  # 20% dropout
+        tf.keras.layers.LSTM(32, activation='relu', return_sequences=False),
+        tf.keras.layers.Reshape((1, 32)),
+        tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(32, return_sequences=False)), 
+       # tf.keras.layers.Dropout(0.3),  # 30% dropout
+        tf.keras.layers.Dense(label_width, activation='linear'),  # Single output for regression
+        #tf.keras.layers.Reshape([label_width, num_features])
     ])
     return model
     # return tf.keras.Sequential([
@@ -914,22 +926,79 @@ def run_evaluation_and_save_results(config, original_performance, train_df, val_
     for top_features, best_metrics in incremental_analysis.items():
         print(f"{top_features} - Best MAE Improvement: {best_metrics['mean_absolute_error']:.4f}")
 
-def compile_and_fit(model, window, patience=5):
-    early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss',
-                                                        patience=patience,
-                                                        mode='min')
+# def compile_and_fit(model, window, patience=5):
+#     early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss',
+#                                                         patience=patience,
+#                                                         mode='min')
 
-    model.compile(loss=custom_loss,
-                    optimizer=tf.keras.optimizers.Adam(),
-                    metrics=[tf.keras.metrics.MeanAbsoluteError()])
+#     model.compile(loss=custom_loss,
+#                     optimizer=tf.keras.optimizers.Adam(),
+#                     metrics=[tf.keras.metrics.MeanAbsoluteError()])
 
-    history = model.fit(window.train, epochs=20,
-                        validation_data=window.val,
-                        callbacks=[early_stopping])
+#     history = model.fit(window.train, epochs=20,
+#                         validation_data=window.val,
+#                         callbacks=[early_stopping])
+#     return history
+def compile_and_fit(model, window, patience=5, learning_rate=0.001):
+    early_stopping = tf.keras.callbacks.EarlyStopping(
+        monitor='val_loss',
+        patience=patience,
+        mode='min',
+        restore_best_weights=True  # Restore the best weights after training
+    )
+    
+    model.compile(
+        loss=custom_loss,
+        optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate),
+        metrics=[tf.keras.metrics.MeanAbsoluteError()]
+    )
+    
+    history = model.fit(
+        window.train, 
+        epochs=50,  # Increased epochs to allow early stopping to intervene
+        validation_data=window.val,
+        callbacks=[early_stopping]
+    )
     return history
 
 def custom_loss(y_true, y_pred):
-    # Define a threshold for high rainfall
-    threshold = 5.0  # example threshold for mm of rain
-    weights = tf.where(y_true > threshold, 2.0, 1.0)  # Double the weight for high rainfall
-    return tf.reduce_mean(weights * tf.square(y_true - y_pred)) 
+    threshold = 2.0  # Adjust based on typical rainfall range
+    baseline = 1.5   # Ensure small rainfall values are not ignored
+    
+    # Compute absolute error
+    error = tf.abs(y_true - y_pred)
+    
+    # Exponential penalty for underpredictions
+    underprediction_penalty = tf.where(
+        y_pred < y_true,
+        tf.exp(y_true / threshold),  # Exponential penalty based on actual value
+        1.0  # No additional penalty for overpredictions
+    )
+    
+    # Adjusted intensity scaling
+    intensity_scaling = baseline + (y_true / threshold)**2
+
+    # Combine weights
+    weights = underprediction_penalty * intensity_scaling
+    
+    # Compute weighted loss
+    weighted_loss = weights * error
+    return tf.reduce_mean(weighted_loss)
+    # threshold = 2.0  # Adjust based on typical rainfall range
+    # baseline = 1.5   # Ensure small rainfall values are not ignored
+    
+    # # Compute absolute error
+    # error = tf.abs(y_true - y_pred)
+    
+    # # Create weights to penalize underpredictions more heavily
+    # underprediction_penalty = tf.where(y_pred < y_true, 2.0, 1.0)
+    
+    # # Adjusted intensity scaling
+    # intensity_scaling = baseline + (y_true / (threshold))**2
+
+    # # Combine weights
+    # weights = underprediction_penalty * intensity_scaling
+    
+    # # Compute weighted loss
+    # weighted_loss = weights * error
+    # return tf.reduce_mean(weighted_loss)
