@@ -1,7 +1,8 @@
-# Attention Mechanism by Alexander Hoang
+# Attention Mechanism 
+## Alexander Hoang
 
 """
-This directory implements part of the work that Alex Hoang did. It begins with an implementation of the feature importance analysis. It also contains some jupyter notebooks on Attention Mechanism inspired by another implementation here - https://dlsyscourse.org/lectures/.
+This work begins with an implementation of the feature importance analysis. It also contains some jupyter notebooks on Attention Mechanism inspired by another implementation here - https://dlsyscourse.org/lectures/.
 
 Implemented a simple self-attention model as well as a transformer model and saw how it performed in 
 365 days of data of station1 dataset. It performs pretty well.
