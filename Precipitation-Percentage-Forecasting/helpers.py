@@ -32,7 +32,7 @@ def dense(label_width, num_features):
             layers.Dense(units=512, activation='relu'),
             tf.keras.layers.Dense(label_width*num_features,
                             kernel_initializer=tf.initializers.zeros()),
-            layers.Reshape([label_width, num_features])
+            tf.keras.layers.Dense(label_width, activation='sigmoid')
         ])
 
 def simple_rnn(label_width, num_features):
@@ -40,7 +40,8 @@ def simple_rnn(label_width, num_features):
             layers.SimpleRNN(64, return_sequences=False),
             tf.keras.layers.Dense(label_width * num_features,
                             kernel_initializer=tf.initializers.zeros()),
-            tf.keras.layers.Reshape([label_width, num_features])
+            tf.keras.layers.Dense(label_width, activation='linear')
+            #tf.keras.layers.Dense(label_width, activation='sigmoid')
         ])
 
 def cnn(label_width, num_features, CONV_WIDTH):
@@ -61,6 +62,11 @@ def lstm(label_width, num_features):
     #     tf.keras.layers.Dense(label_width, activation='sigmoid')  # 5 output nodes for each interval
     # ])
     # return model
+    # model = tf.keras.Sequential([
+    #     tf.keras.layers.LSTM(32, input_shape=(None, num_features)),
+    #     tf.keras.layers.Dense(label_width, activation='linear')  # Match the linear model's activation
+    # ])
+    # return model
     model = tf.keras.Sequential([
         tf.keras.layers.LSTM(64, activation='relu', return_sequences=True, input_shape=(None, num_features)),
         #tf.keras.layers.Dropout(0.2),  # 20% dropout
@@ -68,7 +74,8 @@ def lstm(label_width, num_features):
         tf.keras.layers.Reshape((1, 32)),
         tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(32, return_sequences=False)), 
        # tf.keras.layers.Dropout(0.3),  # 30% dropout
-        tf.keras.layers.Dense(label_width, activation='linear'),  # Single output for regression
+        tf.keras.layers.Dense(label_width, activation='sigmoid'), 
+       # tf.keras.layers.Lambda(lambda x: x * 100) # Single output for regression
         #tf.keras.layers.Reshape([label_width, num_features])
     ])
     return model
@@ -962,7 +969,7 @@ def compile_and_fit(model, window, patience=5, learning_rate=0.001):
     return history
 
 def custom_loss(y_true, y_pred):
-    threshold = 2.0  # Adjust based on typical rainfall range
+    threshold = 1.0  # Adjust based on typical rainfall range
     baseline = 1.5   # Ensure small rainfall values are not ignored
     
     # Compute absolute error
