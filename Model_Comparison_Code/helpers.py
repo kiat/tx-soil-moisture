@@ -657,7 +657,8 @@ def evaluate_single_feature_models(config, original_performance, train_df, val_d
         ranked_features=ranked_features,
         target=target,
         CONV_WIDTH=CONV_WIDTH,
-        model_dir=model_dir
+        model_dir=model_dir,
+        patience=20
     )
 
     return {"single_feature_results": feature_performance, "incremental_feature_results": feature_importance_results}
