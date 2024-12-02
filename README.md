@@ -22,6 +22,10 @@ TODOs:
 
 ## Fall 2024
 
+* Ayaan Nazir <nazir@utexas.edu> (Using Satelite dataset)
+* Michael Tao <michael.tao@utexas.edu> (Weather Forcast dataset generation and usage)
+* Alexander N Hoang <alex.hoang@utexas.edu> (Models with attention mechanisim)
+  
 Meeting time 4:30 to 5:30 pm. 
 
 
