@@ -473,69 +473,6 @@ def calculate_original_performance(models, config, train_df, val_df, test_df):
 
     return original_performance
 
-
-# def drop_feature_and_evaluate(config, original_mae, train_df, val_df, test_df, features, target, CONV_WIDTH, model_dir):
-#     feature_importance = {}
-#     early_stopping = EarlyStopping(monitor='val_loss', patience=3, restore_best_weights=True)
-#     # Iterate over all features and drop one feature at a time
-#     for feature in features:
-#         print(f"\nEvaluating the effect of dropping feature: {feature}")
-        
-#         # Drop the feature from the dataframe
-#         df_dropped = train_df.drop(columns=[feature])
-        
-#         # Update the window for training without the feature
-#         new_window = create_window(
-#             input_width=config['input_steps'],
-#             label_width=config['output_steps'],
-#             shift=config['output_steps'],
-#             train_df=df_dropped,  # Use the dataframe with the feature dropped
-#             val_df=val_df.drop(columns=[feature]),  # Similarly for validation data
-#             test_df=test_df.drop(columns=[feature]),  # Similarly for test data
-#             label_columns=[target]
-#         )
-#         label_width = config['output_steps']
-#         num_features = df_dropped.shape[1]
-#         # Initialize dictionary to store the MAE changes for each model
-#         mae_diffs = {}
-#         models = {
-#                 'Baseline': baseline(label_width, num_features),
-#                 'Multi-step Linear': linear(label_width, num_features),
-#                 'Multi-step Dense': dense(label_width, num_features),
-#                 'CNN': cnn(label_width, num_features, CONV_WIDTH),
-#                 'RNN': simple_rnn(label_width, num_features),
-#                 'LSTM': lstm(label_width, num_features),
-#                 'Autoregressive': autoregressive(label_width, num_features),
-#                 'Bi-LSTM': bi_lstm(label_width, num_features),
-#             }
-#         for model_name, model in models.items():
-#             print(f"\nRetraining model: {model_name} after dropping feature: {feature}")
-#             # Recompile and retrain the model with the updated data (feature dropped)
-#             model.compile(loss=tf.keras.losses.MeanSquaredError(),
-#                 optimizer=tf.keras.optimizers.Adam(),
-#                 metrics=[tf.keras.metrics.MeanSquaredError(), tf.keras.metrics.MeanAbsoluteError(), tf.keras.metrics.MeanAbsolutePercentageError()])
-#             history = model.fit(
-#                 new_window.train,
-#                 validation_data=new_window.val,
-#                 epochs=10,
-#                 callbacks=[early_stopping]
-#             )
-
-#             # Evaluate the model on the test data without the dropped feature
-#             performance = model.evaluate(new_window.test, return_dict=True)
-#             write_feature_results_to_csv(config['features'], feature, model_name, performance)
-#             # Calculate the change in MAE
-#             mae_diff = performance['mean_absolute_error'] - original_mae[model_name]['mean_absolute_error']
-#             mae_diffs[model_name] = mae_diff
-#             model_save_path = os.path.join(model_dir, f"{model_name}_drop_{feature}.keras")
-#             model.save(model_save_path)
-#             print(f"Model: {model_name} - Original MAE: {original_mae[model_name]['mean_absolute_error']:.4f}, New MAE: {performance['mean_absolute_error']:.4f}, MAE Change: {mae_diff:.4f}")
-
-#         # Store the results of this feature drop in the feature_importance dictionary
-#         feature_importance[feature] = mae_diffs
-
-#     return feature_importance
-
 def drop_feature_and_evaluate(config, original_performance, train_df, val_df, test_df, features, target, CONV_WIDTH, model_dir):
     feature_importance = {}
     early_stopping = EarlyStopping(monitor='val_loss', patience=20, restore_best_weights=True)
