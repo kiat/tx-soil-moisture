@@ -1,0 +1,10 @@
+__pycache__
+*.pyc
+*.pdf
+*.PNG *.png *.JPG *.jpg *.JPEG *.jpeg *.GIF *.gif *.TIFF *.tiff *.BMP *.bmp
+*.HEIC *.heic
+frontend
+node_modules
+wf
+saved
+output
