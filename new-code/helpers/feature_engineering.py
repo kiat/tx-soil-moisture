@@ -27,13 +27,24 @@ def add_time_features(df):
 
     return df
 
+from sklearn.preprocessing import MinMaxScaler
+
 
 from sklearn.preprocessing import MinMaxScaler
 
-def normalize_features(df, target_col):
+def normalize_features(train_df, test_df, target_col):
     """
-    Scales data between 0 and 1 for LSTM training.
+    Scales training and test data separately to prevent data leakage.
+    Ensures proper dtype conversion to avoid FutureWarnings.
     """
     scaler = MinMaxScaler()
-    df[target_col] = scaler.fit_transform(df[[target_col]])
-    return df, scaler  # Return the fitted scaler to inverse transform later
+
+    # Fit scaler on training data
+    train_df = train_df.copy()
+    test_df = test_df.copy()
+
+    # Flatten transformed values before assigning
+    train_df.loc[:, target_col] = scaler.fit_transform(train_df[[target_col]]).flatten().astype(float)
+    test_df.loc[:, target_col] = scaler.transform(test_df[[target_col]]).flatten().astype(float)
+
+    return train_df, test_df, scaler  # Return the fitted scaler for inverse transformation

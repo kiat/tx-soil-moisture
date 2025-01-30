@@ -33,3 +33,16 @@ def plot_arima_predictions(test, predictions, target_col):
     plt.legend()
     plt.title(f"ARIMA Predictions for {target_col}")
     plt.show()
+
+def plot_lstm_predictions(y_actual, y_pred, target_col):
+    """
+    Plots LSTM model predictions vs. actual values.
+    """
+    plt.figure(figsize=(12, 6))
+    plt.plot(y_actual, label="Actual")
+    plt.plot(y_pred, label="Predicted", linestyle="dashed")
+    plt.legend()
+    plt.title(f"LSTM Predictions for {target_col}")
+    plt.xlabel("Time Steps")
+    plt.ylabel(target_col)
+    plt.show()
