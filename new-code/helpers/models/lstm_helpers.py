@@ -5,9 +5,6 @@ from tensorflow.keras.layers import LSTM, Dense, Dropout, Bidirectional, BatchNo
 from tensorflow.keras.callbacks import ReduceLROnPlateau, EarlyStopping
 from constants import WINDOW_SIZE, LSTM_EPOCHS, LSTM_BATCH_SIZE, NUM_PREDICTIONS
 
-####################################
-# 1. Prepare Data for LSTM
-####################################
 def prepare_lstm_data(train_df, test_df, target_col):
     """
     Converts time-series data into sequences for LSTM training.
@@ -32,9 +29,6 @@ def prepare_lstm_data(train_df, test_df, target_col):
 
     return *create_sequences(train_data), *create_sequences(test_data)
 
-####################################
-# 2. Train LSTM Model
-####################################
 def train_lstm(X_train, y_train, X_test, y_test):
     """
     Trains an LSTM model using Bidirectional LSTM layers.
@@ -62,9 +56,6 @@ def train_lstm(X_train, y_train, X_test, y_test):
     print("LSTM model trained successfully.")
     return model
 
-####################################
-# 3. Make Predictions
-####################################
 def make_lstm_predictions(model, df, target_col,num_predictions=NUM_PREDICTIONS):
     """
     Uses the trained LSTM model to generate rolling forecasts.
