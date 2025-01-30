@@ -4,7 +4,7 @@ def evaluate_model(y_true, y_pred, model_name="Model"):
     """
     Evaluates the model using RMSE and MAE.
     """
-    rmse = mean_squared_error(y_true, y_pred, squared=False)
+    rmse = mean_squared_error(y_true, y_pred)
     mae = mean_absolute_error(y_true, y_pred)
 
     print(f"{model_name} Evaluation:")
