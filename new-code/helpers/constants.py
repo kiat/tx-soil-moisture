@@ -12,6 +12,6 @@ CYCLIC_COLUMNS = ["day_sin", "day_cos", "month_sin", "month_cos"]
 ARIMA_ORDER = (5, 1, 2)
 
 # LSTM Parameters
-WINDOW_SIZE = 48
+WINDOW_SIZE = 168
 LSTM_EPOCHS = 20
 LSTM_BATCH_SIZE = 64

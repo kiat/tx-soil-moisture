@@ -48,3 +48,29 @@ def normalize_features(train_df, test_df, target_col):
     test_df.loc[:, target_col] = scaler.transform(test_df[[target_col]]).flatten().astype(float)
 
     return train_df, test_df, scaler  # Return the fitted scaler for inverse transformation
+
+
+def add_seasonal_features(df):
+    """
+    Adds cyclical features to capture seasonality.
+    """
+    df["day_of_year"] = df.index.dayofyear
+    df["day_sin"] = np.sin(2 * np.pi * df["day_of_year"] / 365)
+    df["day_cos"] = np.cos(2 * np.pi * df["day_of_year"] / 365)
+
+    return df
+
+
+
+def add_fourier_terms(df, num_terms=3):
+    """
+    Adds Fourier transform components to capture seasonality.
+    """
+    N = len(df)
+    t = np.arange(N)
+
+    for i in range(1, num_terms + 1):
+        df[f"fourier_sin_{i}"] = np.sin(2 * np.pi * i * t / N)
+        df[f"fourier_cos_{i}"] = np.cos(2 * np.pi * i * t / N)
+
+    return df

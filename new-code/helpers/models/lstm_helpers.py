@@ -31,7 +31,8 @@ def prepare_lstm_data(train_df, test_df, target_col):
 
 
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import LSTM, Dense
+from tensorflow.keras.layers import LSTM, Dense, Dropout
+from tensorflow.keras.callbacks import ReduceLROnPlateau
 
 def train_lstm(train_df, test_df, target_col):
     """
@@ -39,15 +40,29 @@ def train_lstm(train_df, test_df, target_col):
     """
     X_train, y_train, X_test, y_test = prepare_lstm_data(train_df, test_df, target_col)
 
+    from tensorflow.keras.layers import Bidirectional
+
     model = Sequential([
-        LSTM(64, return_sequences=True, input_shape=(X_train.shape[1], 1)),
-        LSTM(32, return_sequences=False),
+        Bidirectional(LSTM(256, return_sequences=True), input_shape=(X_train.shape[1], 1)),
+        Dropout(0.2),
+        Bidirectional(LSTM(128, return_sequences=True)),
+        Dropout(0.2),
+        Bidirectional(LSTM(64, return_sequences=False)),
+        Dense(32, activation="relu"),
         Dense(1)
     ])
+
     
     model.compile(loss="mse", optimizer="adam")
-    model.fit(X_train, y_train, epochs=20, batch_size=64, validation_data=(X_test, y_test))
+    reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=5, min_lr=1e-5)
 
+    model.fit(
+        X_train, y_train,
+        epochs=20,
+        batch_size=64,
+        validation_data=(X_test, y_test),
+        callbacks=[reduce_lr]  # Add scheduler
+    )
     print(f"LSTM model trained successfully on {target_col}.")
     return model
 
