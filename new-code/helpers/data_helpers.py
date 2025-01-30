@@ -34,4 +34,5 @@ def load_station_data():
         station_data[station_name] = df
 
     print(f"Loaded data from {len(station_data)} stations.")
+    
     return station_data

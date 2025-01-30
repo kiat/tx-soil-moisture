@@ -8,6 +8,11 @@ def add_time_features(df):
     """
     df = df.copy()
     # Extract time-based components from DatetimeIndex
+
+    # Convert index to datetime if it's not already
+    if not isinstance(df.index, pd.DatetimeIndex):
+        df.index = pd.to_datetime(df.index)
+        
     df["hour"] = df.index.hour
     df["day"] = df.index.day
     df["month"] = df.index.month
