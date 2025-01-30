@@ -3,3 +3,4 @@ numpy
 seaborn
 tensorflow
 statsmodels
+scikit-learn

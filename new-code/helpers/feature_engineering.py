@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import sklearn
 from constants import TIME_COLUMNS, CYCLIC_COLUMNS
 
 def add_time_features(df):
@@ -25,3 +26,14 @@ def add_time_features(df):
     df["month_cos"] = np.cos(2 * np.pi * df["month"] / 12)
 
     return df
+
+
+from sklearn.preprocessing import MinMaxScaler
+
+def normalize_features(df, target_col):
+    """
+    Scales data between 0 and 1 for LSTM training.
+    """
+    scaler = MinMaxScaler()
+    df[target_col] = scaler.fit_transform(df[[target_col]])
+    return df, scaler  # Return the fitted scaler to inverse transform later
