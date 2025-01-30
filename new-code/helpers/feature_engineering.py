@@ -57,10 +57,18 @@ def normalize_features(train_df, test_df):
     Prevents data leakage by fitting only on train data.
     """
     scaler = MinMaxScaler()
-    train_scaled = pd.DataFrame(scaler.fit_transform(train_df), columns=train_df.columns, index=train_df.index)
-    test_scaled = pd.DataFrame(scaler.transform(test_df), columns=test_df.columns, index=test_df.index)
-    
-    return train_scaled, test_scaled, scaler  # Return fitted scaler for inverse transform
+    # Fit on the entire set of columns (features + target)
+    train_scaled = pd.DataFrame(
+        scaler.fit_transform(train_df),
+        columns=train_df.columns,
+        index=train_df.index
+    )
+    test_scaled = pd.DataFrame(
+        scaler.transform(test_df),
+        columns=test_df.columns,
+        index=test_df.index
+    )
+    return train_scaled, test_scaled, scaler
 
 
 def drop_columns(df, target_col):
@@ -68,7 +76,7 @@ def drop_columns(df, target_col):
     Drops irrelevant features like extra `SWC_X` moisture columns (except the target),
     as well as static location-based features (Latitude, Longitude).
     """
-    cols_to_drop = [col for col in df.columns if ("SWC" in col and col != target_col)]  # Remove other `SWC_X`
+    #cols_to_drop = [col for col in df.columns if ("SWC" in col and col != target_col)]  # Remove other `SWC_X`
     cols_to_drop += ["Latitude", "Longitude"]  # Remove static location-based features
-
+    cols_to_drop += ["year"]
     return df.drop(columns=cols_to_drop, errors="ignore")  # `errors="ignore"` prevents crashes if column is missing
