@@ -1,84 +1,115 @@
 import numpy as np
 import tensorflow as tf
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import LSTM, Dense
+from tensorflow.keras.layers import LSTM, Dense, \
+    Dropout, Bidirectional, BatchNormalization, EarlyStopping, Input
+from tensorflow.keras.callbacks import ReduceLROnPlateau
 from constants import WINDOW_SIZE, LSTM_EPOCHS, LSTM_BATCH_SIZE
 
-from sklearn.model_selection import train_test_split
+
+####################################
+# 1. Prepare Data for LSTM
+####################################
+import numpy as np
+from constants import WINDOW_SIZE
+
+import numpy as np
+from constants import WINDOW_SIZE
 
 def prepare_lstm_data(train_df, test_df, target_col):
     """
     Converts time-series data into sequences for LSTM training.
-    Splits into X_train, X_test, y_train, y_test.
+    Assumes train_df and test_df have already been preprocessed.
     """
-    X_train, y_train, X_test, y_test = [], [], [], []
-    
-    train_data = train_df[target_col].values
-    test_data = test_df[target_col].values
+    # Ensure `target_col` exists
+    if target_col not in train_df.columns:
+        raise ValueError(f"Target column '{target_col}' not found in train_df!")
 
-    for i in range(len(train_data) - WINDOW_SIZE):
-        X_train.append(train_data[i : i + WINDOW_SIZE])
-        y_train.append(train_data[i + WINDOW_SIZE])
+    # Convert to NumPy for faster indexing
+    train_data = train_df.values
+    test_data = test_df.values
 
-    for i in range(len(test_data) - WINDOW_SIZE):
-        X_test.append(test_data[i : i + WINDOW_SIZE])
-        y_test.append(test_data[i + WINDOW_SIZE])
+    # Identify target column index
+    target_index = train_df.columns.get_loc(target_col)
 
-    return (
-        np.array(X_train).reshape(-1, WINDOW_SIZE, 1), np.array(y_train),
-        np.array(X_test).reshape(-1, WINDOW_SIZE, 1), np.array(y_test)
-    )
+    # Check dataset size before creating sequences
+    if len(train_data) <= WINDOW_SIZE or len(test_data) <= WINDOW_SIZE:
+        raise ValueError(f"Data is too small for WINDOW_SIZE={WINDOW_SIZE}. Increase data or decrease WINDOW_SIZE.")
 
+    # Vectorized creation of LSTM sequences
+    def create_sequences(data):
+        X, y = [], []
+        for i in range(len(data) - WINDOW_SIZE):
+            X.append(data[i : i + WINDOW_SIZE])
+            y.append(data[i + WINDOW_SIZE, target_index])  # Ensure correct target selection
+        return np.array(X), np.array(y)
 
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import LSTM, Dense, Dropout
-from tensorflow.keras.callbacks import ReduceLROnPlateau
+    # Prepare train and test sequences
+    X_train, y_train = create_sequences(train_data)
+    X_test, y_test = create_sequences(test_data)
 
-def train_lstm(train_df, test_df, target_col):
+    return X_train, y_train, X_test, y_test
+
+####################################
+# 2. Train LSTM Model
+####################################
+def train_lstm(X_train, y_train, X_test, y_test):
     """
-    Trains an LSTM model on the given time-series data.
+    Trains an LSTM model using Bidirectional LSTM layers.
     """
-    X_train, y_train, X_test, y_test = prepare_lstm_data(train_df, test_df, target_col)
-
-    from tensorflow.keras.layers import Bidirectional
+    input_shape = (X_train.shape[1], X_train.shape[2])  # (timesteps, features)
 
     model = Sequential([
-        Bidirectional(LSTM(256, return_sequences=True), input_shape=(X_train.shape[1], 1)),
+        Input(shape=input_shape),
+        Bidirectional(LSTM(256, return_sequences=True, input_shape=input_shape)),
+        BatchNormalization(),
         Dropout(0.2),
+
         Bidirectional(LSTM(128, return_sequences=True)),
+        BatchNormalization(),
         Dropout(0.2),
+
         Bidirectional(LSTM(64, return_sequences=False)),
         Dense(32, activation="relu"),
-        Dense(1)
+        # Use linear activation if your target is scaled 0..1 or you just want raw regression output
+        Dense(1, activation="linear")  
     ])
 
-    
     model.compile(loss="mse", optimizer="adam")
     reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=5, min_lr=1e-5)
+    early_stop = EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True)
 
     model.fit(
         X_train, y_train,
-        epochs=20,
-        batch_size=64,
+        epochs=LSTM_EPOCHS,
+        batch_size=LSTM_BATCH_SIZE,
         validation_data=(X_test, y_test),
-        callbacks=[reduce_lr]  # Add scheduler
+        callbacks=[reduce_lr, early_stop]
     )
-    print(f"LSTM model trained successfully on {target_col}.")
+
+    print("LSTM model trained successfully.")
     return model
 
-
-
+####################################
+# 3. Make Predictions
+####################################
 def make_lstm_predictions(model, df, target_col):
     """
-    Uses the trained LSTM model to generate forecasts.
+    Uses the trained LSTM model to generate rolling forecasts.
+    Predicts future time steps iteratively.
     """
-    X_test = df[target_col].values[-WINDOW_SIZE:].reshape(1, WINDOW_SIZE, 1)  # Use last WINDOW_SIZE values
+    feature_cols = [col for col in df.columns if col != target_col]
+    all_cols = [target_col] + feature_cols
+
+    input_seq = df[all_cols].values[-WINDOW_SIZE:].reshape(1, WINDOW_SIZE, len(all_cols))
     predictions = []
-    
-    for _ in range(24):  # Forecast next 24 hours
-        pred = model.predict(X_test)[0][0]
+
+    for _ in range(24):  # Forecast next 24 time steps
+        pred = model.predict(input_seq)[0][0]
         predictions.append(pred)
-        X_test = np.roll(X_test, -1)  # Shift input window
-        X_test[0, -1, 0] = pred  # Add new prediction
+
+        # Shift window forward
+        input_seq = np.roll(input_seq, -1, axis=1)
+        input_seq[0, -1, 0] = pred  # Append prediction as new input
 
     return np.array(predictions)

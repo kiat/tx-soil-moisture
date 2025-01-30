@@ -46,3 +46,5 @@ def plot_lstm_predictions(y_actual, y_pred, target_col):
     plt.xlabel("Time Steps")
     plt.ylabel(target_col)
     plt.show()
+
+
