@@ -116,4 +116,9 @@ Longitude	-98.7242
 Logger ID	CR1000-3
 
 
+More information here 
+
+https://www.beg.utexas.edu/research/programs/txson 
+
+
 
