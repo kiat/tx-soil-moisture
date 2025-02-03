@@ -1,0 +1,26 @@
+paths:
+  data_folder: "../data/processed/Revised_Final_Data"
+model:
+  target_column: "SWC_10"
+  window_size: 24
+  epochs: 10
+  batch_size: 64
+  num_predictions: 168
+
+
+columns:
+  time_columns: ["hour", "day", "month", "year"]
+  cyclic_columns: ["day_sin", "day_cos", "month_sin", "month_cos"]
+
+arima:
+  order: [5, 1, 2]
+
+lstm:
+  
+  
+
+dry_run:
+  active: true
+  train_rows: 5000
+  test_rows: 1000
+  num_predictions: 168

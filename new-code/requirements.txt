@@ -1,6 +1,0 @@
-pandas
-numpy
-seaborn
-tensorflow
-statsmodels
-scikit-learn

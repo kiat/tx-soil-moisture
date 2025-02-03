@@ -1,4 +1,11 @@
+# Setup
 
+How to use:
+1. Run the following:
+```bash
+pip install -e .
+```
+1. Run notebooks as needed
 
 # TODO
 1. Data preprocessing

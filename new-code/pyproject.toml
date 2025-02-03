@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "soil-moisture-prediction"
+version = "0.1.0"
+description = "Soil Moisture Prediction"
+
+dependencies = [
+    "numpy",
+    "pandas",
+    "scikit-learn",
+    "seaborn",
+    "statsmodels",
+    "tensorflow",
+    "matplotlib",
+    "seaborn",
+    "pytest",
+    "pyyaml"
+]
+
+[tool.setuptools]
+packages = ["src"]
