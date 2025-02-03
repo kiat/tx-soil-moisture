@@ -6,10 +6,6 @@ from tensorflow.keras.callbacks import ReduceLROnPlateau, EarlyStopping
 from constants import WINDOW_SIZE, LSTM_EPOCHS, LSTM_BATCH_SIZE, NUM_PREDICTIONS
 
 
-
-####################################
-# 2. Train LSTM Model
-####################################
 def train_lstm(X_train, y_train, X_test, y_test, epochs = 10, batch_size = 32):
     """
     Trains an LSTM model using Bidirectional LSTM layers.
@@ -32,9 +28,7 @@ def train_lstm(X_train, y_train, X_test, y_test, epochs = 10, batch_size = 32):
     print("LSTM model trained successfully.")
     return model
 
-####################################
-# 3. Make Predictions
-####################################
+
 def make_lstm_predictions(model, df, target_col,num_predictions=NUM_PREDICTIONS):
     """
     Uses the trained LSTM model to generate rolling forecasts.

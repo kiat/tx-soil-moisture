@@ -13,6 +13,7 @@ def generate_windows(train_df, test_df, target_col, WINDOW_SIZE=24):
 
     def create_sequences(data):
         X, y = [], []
+        # 
         for i in range(len(data) - WINDOW_SIZE):
             X.append(data[i : i + WINDOW_SIZE])
             y.append(data[i + WINDOW_SIZE, target_index])
