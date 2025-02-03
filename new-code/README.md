@@ -2,10 +2,10 @@
 
 How to use:
 1. Run the following:
-```bash
-pip install -e .
-```
-1. Run notebooks as needed
+    ```bash
+    pip install -e .
+    ```
+1. Under 'notebooks' feel free to run, copy, or use the "exploration.ipynb" file
 
 # TODO
 1. Data preprocessing
