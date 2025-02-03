@@ -25,19 +25,27 @@ How to use:
 
 - `data/` - contains the data files used in the analysis
 - `notebooks/` - Jupyter notebooks for data exploration
+    - `exploration.ipynb` - The main driver notebook as of now
 - `scripts/` - Auxiliary helper scripts
     - `tree_cmd.py` - Lets you run "make tree" in terminal and prints out file structure
     - `tree_ignore.txt` - Contains the files to ignore when running `tree_cmd.py`
+- `results/` - Empty as of now
 
 ## Files with Relevant Code
 
-- `helpers/` - Library of methods used in notebooks
-    - `constants.py` - Global constants, imported as needed
-    - `data_helpers.py` - Methods for loading and saving data
-    - `feature_engineering.py` - Add, remove, modify features
-    - `arima_helpers.py` - ARIMA/SARIMA model training and forecasting
-    - `lstm_helpers.py` - LSTM model training and forecasting
-    - `plotting.py` - Methods for plotting data
+- `src/` - Library of methods used in notebooks
+    - `config/`
+        - `config_loader.py` - Loads config file
+        - `config.yaml` - Contains configurable constants
+    - `data/`     
+        - `data_helpers.py` - Methods for loading and saving data
+        - `feature_engineering.py` - Add, remove, modify features
+        - `windowing.py` - Creates windows as needed
+    - `models`
+        - `arima_helpers.py` - ARIMA/SARIMA model training and forecasting
+        - `lstm_helpers.py` - LSTM model training and forecasting
+    - `visualization`
+        - `plotting.py` - Methods for plotting data
 
 ## Model Explanation
 
@@ -51,20 +59,3 @@ How to use:
 - **SARIMA** extends ARIMA with **seasonality (`m=365` for yearly cycles)**.
 - **LSTM** in `lstm_helpers.py` is a **neural network model** that learns patterns **automatically** and works well for **large datasets**.
 
-## How to Run Models
-
-Modify `forecasting.ipynb`:
-```python
-# Models to run
-RUN_ARIMA = False
-RUN_LSTM = True
-
-if RUN_ARIMA:
-    from arima_helpers import train_arima
-    arima_model, arima_predictions = train_arima(df, TARGET_COLUMN, use_seasonality=True)
-    print("ARIMA model trained successfully!")
-
-if RUN_LSTM:
-    from lstm_helpers import train_lstm
-    lstm_model, lstm_predictions = train_lstm(df, TARGET_COLUMN)
-    print("LSTM model trained successfully!")
