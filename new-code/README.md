@@ -13,9 +13,8 @@ pip install -e .
     - Seasonal patterns
     - Feature Correlation
 1. Model Trials
-    - Establish a baseline with ASARIMAX
+    - Establish a baseline with A/SARIMA
     - Compare with Random Forest/ XGBoost
-    - Try LSTM / TCN for more temporal dependencies
 1. Validation
     - Rolling/walk-forward validation
     - Compare performance metrics (MAE, RMSE, R^2) across all models.
