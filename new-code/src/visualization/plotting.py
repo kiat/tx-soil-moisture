@@ -1,67 +1,25 @@
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-def plot_missing_data(df, station_name):
-    """
-    Plots a heatmap of missing values in the dataset.
-    """
-    plt.figure(figsize=(12, 6))
-    sns.heatmap(df.isnull(), cmap="viridis", cbar=False)
-    plt.title(f"Missing Data Heatmap - {station_name}")
+
+def plot_loss(history):
+    plt.figure(figsize=(10,5))
+    plt.plot(history.history['loss'], label='Training Loss')
+    plt.plot(history.history['val_loss'], label='Validation Loss')
+    plt.xlabel('Epoch')
+    plt.ylabel('Loss')
+    plt.legend()
+    plt.title('Training & Validation Loss')
     plt.show()
 
-def plot_soil_moisture_trends(df, station_name):
-    """
-    Plots soil moisture trends over time for a given station.
-    """
-    plt.figure(figsize=(14, 6))
-    for col in ["SWC_5", "SWC_10", "SWC_20", "SWC_50"]:
-        plt.plot(df.index, df[col], label=col)
-    plt.legend()
-    plt.title(f"Soil Moisture Trends - {station_name}")
-    plt.xlabel("Date")
-    plt.ylabel("Soil Moisture")
-    plt.show()
-
-def plot_arima_predictions(test, predictions, target_col):
-    """
-    Plots ARIMA model predictions vs. actual values.
-    """
-    plt.figure(figsize=(12, 6))
-    plt.plot(test.index, test, label="Actual")
-    plt.plot(test.index, predictions, label="Predicted", linestyle="dashed")
-    plt.legend()
-    plt.title(f"ARIMA Predictions for {target_col}")
-    plt.show()
-
-def plot_lstm_predictions(y_actual, y_pred, target_col):
-    """
-    Plots LSTM model predictions vs. actual values.
-    """
-    plt.figure(figsize=(12, 6))
-    plt.plot(y_actual, label="Actual")
-    plt.plot(y_pred, label="Predicted", linestyle="dashed")
-    plt.legend()
-    plt.title(f"LSTM Predictions for {target_col}")
-    plt.xlabel("Time Steps")
+def plot_predictions(y_true, y_pred, target_col):
+    plt.figure(figsize=(10,5))
+    plt.plot(y_pred, label='Predictions')
+    plt.plot(y_true, label='Actuals')
+    plt.xlabel('Time Step')
     plt.ylabel(target_col)
-    plt.show()
-
-
-def plot_predictions(y_true, y_pred, title="LSTM Predictions vs Actual"):
-    """
-    Plots the actual vs predicted values.
-
-    Args:
-        y_true (np.array): Actual values.
-        y_pred (np.array): Predicted values.
-        title (str): Title of the plot.
-    """
-    plt.figure(figsize=(10, 5))
-    plt.plot(y_true, label="Actual", color="blue", linestyle="-")
-    plt.plot(y_pred, label="Predicted", color="red", linestyle="--")
-    plt.xlabel("Time")
-    plt.ylabel("Soil Moisture")
-    plt.title(title)
     plt.legend()
+    plt.title('Test Predictions vs Actuals')
     plt.show()
+
+

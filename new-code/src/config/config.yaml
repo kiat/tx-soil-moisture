@@ -1,12 +1,11 @@
 paths:
   data_folder: "../data/processed/Revised_Final_Data"
-model:
-  target_column: "SWC_10"
-  window_size: 24
-  epochs: 10
-  batch_size: 64
-  num_predictions: 168
 
+model:
+  target_column: "SWC_20"   # SWC_10 -> SWC_20
+  window_size: 72           # 3 days * 24 hours
+  offset: 24                # Predict 24 hours ahead
+  num_predictions: 168
 
 columns:
   time_columns: ["hour", "day", "month", "year"]
@@ -16,11 +15,11 @@ arima:
   order: [5, 1, 2]
 
 lstm:
-  
-  
+  epochs: 10
+  batch_size: 32            # Consider 32 to more closely match defaults
 
 dry_run:
-  active: true
+  active: false             # Disable dry_run to use full data
   train_rows: 5000
   test_rows: 1000
   num_predictions: 168
