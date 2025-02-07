@@ -1,0 +1,3 @@
+[submodule "SoilPrediction"]
+	path = SoilPrediction
+	url = https://github.com/nwatx/SoilPrediction
