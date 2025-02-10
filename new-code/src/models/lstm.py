@@ -3,7 +3,7 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import InputLayer, LSTM, Dense, Dropout, Bidirectional, Conv1D, MaxPooling1D, GlobalAveragePooling1D
 from tensorflow.keras.optimizers import Adam
 
-def build_simple_lstm_model(window_size):
+def build_original_simple_lstm_model(window_size):
     """Builds a simple LSTM model."""
     model = Sequential([
         InputLayer(input_shape=(window_size, 1)),
@@ -17,7 +17,7 @@ def build_simple_lstm_model(window_size):
     return model
 
 # TODO: Need to see effect of increasing dense network in accordance to the number of features
-def build_simple_lstm_model(window_size, feature_size):
+def build_simple_lstm_model(window_size, feature_size=1):
     """Builds a simple LSTM model with multiple features, making the dense layer match the number of ."""
     model = Sequential([
         InputLayer(input_shape=(window_size, feature_size)),
