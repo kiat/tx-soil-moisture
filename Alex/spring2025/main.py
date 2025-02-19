@@ -12,6 +12,11 @@ from tensorflow.keras.metrics import RootMeanSquaredError
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_percentage_error
 
+def smape(y_true, y_pred):
+    numerator = 2 * tf.abs(y_pred - y_true)
+    denominator = tf.abs(y_true) + tf.abs(y_pred) + tf.keras.backend.epsilon()  # Avoid division by zero
+    return 100 * tf.reduce_mean(numerator / denominator)
+
 def normalize_data(df, features):
     """Scales selected features using MinMaxScaler."""
     scaler = MinMaxScaler()
@@ -70,7 +75,6 @@ def split_and_stack_data(dfs, test_station_name="Station6", remove_met=False):
         for key in dfs.keys():
             dfs[key] = dfs[key][["SWC_5", "SWC_10", "SWC_20", "SWC_50"]]
 
-    # Split test & validation data from test station
     test_df = dfs[test_station_name].loc['2020-01-01 00:00:00':]  # Test set from 2020+
     val_df = dfs[test_station_name].loc[:'2020-12-31 23:00:00']  # Validation set ≤2020
     
@@ -83,43 +87,85 @@ def main(args):
     # Load preprocessed data from Parquet files
     stations = ['Station1', 'Station2', 'Station3', 'Station4', 'Station5', 'Station6']
     engineered_dfs = {station: pd.read_parquet(f"{station}_engineered.parquet") for station in stations}
-    
+
     # Split into training, validation, and test sets
     engineered_dfs, val_df, test_df = split_and_stack_data(engineered_dfs, test_station_name="Station6", remove_met=False)
-    
+
     # Training on selected features
     features = ['SWC_20']
-    
+
+    # Define models to train
+    models = {
+        "LSTM": compile_model((args.window_size, len(features)), learning_rate=0.0001),
+        # "GRU": compile_gru_model((args.window_size, len(features)), learning_rate=0.0001)  # Assuming you have a GRU model function
+    }
+
+    history_dicts = {}
+    performance = {}
+    val_performance = {}
+
     # Loop through each training station instead of stacking them
-    results = []
     for train_station in [s for s in stations if s != "Station6"]:
-        print(f"Training on {train_station}...")
-        
+        print(f"\nTraining models on {train_station}...")
+
         # Normalize data for each station
         scaled_train, scaler = normalize_data(engineered_dfs[train_station], features)
         scaled_val, _ = normalize_data(val_df, features)
         scaled_test, _ = normalize_data(test_df, features)
-        
+
         # Convert to LSTM-ready format
         X_train, y_train = data_to_X_y(scaled_train, args.window_size, args.offset)
         X_val, y_val = data_to_X_y(scaled_val, args.window_size, args.offset)
         X_test, y_test = data_to_X_y(scaled_test, args.window_size, args.offset)
-        
-        # Train the model
-        model_path = f"model_{train_station}.keras"
-        model, history = fit_model(X_train, y_train, X_val, y_val, model_path, args.epochs, args.patience)
-        
-        # Evaluate on test data
-        predictions, r2, mse, mape = evaluate_model(model, X_test, y_test)
-        
-        # Store results
-        results.append([train_station, args.offset, r2, mse, mape])
-        print(f'Finished training on {train_station} - R2 Score: {r2:.4f}, MSE: {mse:.4f}, MAPE: {mape:.4f}')
-        
-        # Save trained model
-        model.save(model_path)
-        print(f"Trained model saved at: {model_path}")
-    
+
+        # Train and evaluate each model
+        for name, model in models.items():
+            print(f"\nTraining {name} model on {train_station}...")
+
+            # Define EarlyStopping
+            early_stopping = EarlyStopping(monitor='val_loss', patience=args.patience, restore_best_weights=True)
+
+            # Compile the model
+            model.compile(
+                loss=tf.keras.losses.MeanSquaredError(),
+                optimizer=tf.keras.optimizers.Adam(),
+                metrics=[
+                    tf.keras.metrics.MeanSquaredError(),
+                    tf.keras.metrics.MeanAbsoluteError(),
+                    tf.keras.metrics.MeanAbsolutePercentageError(),
+                    smape
+                ]
+            )
+
+            # Train the model
+            history = model.fit(
+                X_train, y_train,
+                validation_data=(X_val, y_val),
+                epochs=args.epochs,
+                callbacks=[early_stopping]
+            )
+
+            # Save history
+            config_name = f"{features} - {args.window_size} input / {args.offset} output"
+            history_dicts[f"{name}_{train_station}"] = history.history
+
+            # Evaluate model
+            performance[name] = model.evaluate(X_test, y_test, return_dict=True)
+            val_performance[name] = model.evaluate(X_val, y_val, return_dict=True)
+
+            # Save model
+            model_path = os.path.join("models", f"{name}_{train_station}.keras")
+            model.save(model_path)
+            print(f"{name} model saved at {model_path}")
+
+            # Save results
+            results_filename = os.path.join("results", f"{train_station}_results.csv")
+            # write_model_results_to_csv(train_station, name, performance[name], filename=results_filename)
+            # write_loss_history_to_csv(train_station, name, history.history, loss_file=results_filename)
+
+            print(f"{name} Model Test Loss: {performance[name]}")
+
+    print("Training complete! All results saved.")
     # Save all results to CSV
     results_df = pd.DataFrame(results, columns=['Station', 'Offset', 'R2', 'MSE', 'MAPE'])
     results_filename = 'results_all_stations.csv'
