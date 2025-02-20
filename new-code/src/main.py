@@ -57,11 +57,11 @@ print(f"Results will be saved in: {results_folder}")
 
 # Loop over WINDOW_SIZES first (outermost loop)
 trial_num = 1
-for WINDOW_SIZE in WINDOW_SIZES:
-    print(f"\n🔹 Using WINDOW_SIZE = {WINDOW_SIZE}")
-
-    for swc in SWC_LIST:
+for swc in SWC_LIST:
+    for WINDOW_SIZE in WINDOW_SIZES:
+        print(f"\n🔹 Using WINDOW_SIZE = {WINDOW_SIZE}")
         for station in STATION_LIST:
+
             # Load and preprocess data
             df_forecast = station_data[station]
             scaler = MinMaxScalerWrapper().fit(df_forecast)
