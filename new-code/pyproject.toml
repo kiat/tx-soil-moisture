@@ -15,10 +15,9 @@ dependencies = [
     "statsmodels",
     "tensorflow",
     "matplotlib",
-    "seaborn",
     "pytest",
     "pyyaml"
 ]
 
-[tool.setuptools]
-packages = ["src"]
+[tool.setuptools.packages.find]
+where = ["src"]
