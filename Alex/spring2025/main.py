@@ -1,5 +1,6 @@
 import argparse
 import os
+import csv
 import pandas as pd
 import numpy as np
 import tensorflow as tf
@@ -62,15 +63,23 @@ def fit_model(X_train, y_train, X_val, y_val, model_path, epochs, patience):
     return model, history
 
 def evaluate_model(model, X_test, y_test):
-    """Evaluates the trained model and returns performance metrics."""
     predictions = model.predict(X_test).flatten()
     r2 = r2_score(y_test, predictions)
     mse = mean_squared_error(y_test, predictions)
+    mae = np.mean(np.abs(y_test - predictions))
     mape = mean_absolute_percentage_error(y_test, predictions)
-    return predictions, r2, mse, mape
+    smape_score = np.mean(2 * np.abs(predictions - y_test) / (np.abs(y_test) + np.abs(predictions) + 1e-8)) * 100
+
+    return {
+        "r2_score": r2,
+        "mean_squared_error": mse,
+        "mean_absolute_error": mae,
+        "mean_absolute_percentage_error": mape,
+        "smape": smape_score
+    }
+
 
 def split_and_stack_data(dfs, test_station_name="Station6", remove_met=False):
-    """Splits training, validation, and test data per station."""
     if remove_met:
         for key in dfs.keys():
             dfs[key] = dfs[key][["SWC_5", "SWC_10", "SWC_20", "SWC_50"]]
@@ -83,6 +92,47 @@ def split_and_stack_data(dfs, test_station_name="Station6", remove_met=False):
     
     return dfs, val_df, test_df
 
+def write_loss_history_to_csv(station, model_name, history, loss_file="loss_history.csv"):
+    """
+    Saves the training loss and validation loss over epochs for analysis.
+    """
+    file_exists = os.path.isfile(loss_file)
+    headers = ["Station", "Model", "Epoch", "Loss", "Validation Loss"]
+
+    with open(loss_file, mode="a", newline="") as file:
+        writer = csv.writer(file)
+        if not file_exists:
+            writer.writerow(headers)  # Add headers if new file
+
+        for epoch, (loss, val_loss) in enumerate(zip(history["loss"], history["val_loss"])):
+            writer.writerow([station, model_name, epoch + 1, loss, val_loss])
+    
+    print(f"Saved loss history for {model_name} on {station} to {loss_file}")
+
+def write_model_results_to_csv(station, model_name, performance, offset, filename="results_all_stations.csv"):
+    file_exists = os.path.isfile(filename)
+
+    # Define headers
+    headers = ["Station", "Model", "Offset", "R2", "MSE", "MAE", "MAPE", "SMAPE"]
+
+    # Extract metrics safely
+    mse = performance.get("mean_squared_error", None)
+    mae = performance.get("mean_absolute_error", None)
+    mape = performance.get("mean_absolute_percentage_error", None)
+    smape_score = performance.get("smape", None)
+    r2 = performance.get("r2_score", None)
+
+    # Append data
+    with open(filename, mode="a", newline="") as file:
+        writer = csv.writer(file)
+        if not file_exists:
+            writer.writerow(headers)  # Write headers only if new file
+
+        writer.writerow([station, model_name, offset, r2, mse, mae, mape, smape_score])
+    
+    print(f"Saved model results for {model_name} on {station} to {filename}")
+
+
 def main(args):
     # Load preprocessed data from Parquet files
     stations = ['Station1', 'Station2', 'Station3', 'Station4', 'Station5', 'Station6']
@@ -92,7 +142,7 @@ def main(args):
     engineered_dfs, val_df, test_df = split_and_stack_data(engineered_dfs, test_station_name="Station6", remove_met=False)
 
     # Training on selected features
-    features = ['SWC_20']
+    features = ['SWC_20', 'T_20']
 
     # Define models to train
     models = {
@@ -122,36 +172,20 @@ def main(args):
         for name, model in models.items():
             print(f"\nTraining {name} model on {train_station}...")
 
-            # Define EarlyStopping
-            early_stopping = EarlyStopping(monitor='val_loss', patience=args.patience, restore_best_weights=True)
-
-            # Compile the model
-            model.compile(
-                loss=tf.keras.losses.MeanSquaredError(),
-                optimizer=tf.keras.optimizers.Adam(),
-                metrics=[
-                    tf.keras.metrics.MeanSquaredError(),
-                    tf.keras.metrics.MeanAbsoluteError(),
-                    tf.keras.metrics.MeanAbsolutePercentageError(),
-                    smape
-                ]
-            )
-
             # Train the model
             history = model.fit(
                 X_train, y_train,
                 validation_data=(X_val, y_val),
                 epochs=args.epochs,
-                callbacks=[early_stopping]
+                callbacks=[EarlyStopping(monitor='val_loss', patience=args.patience, restore_best_weights=True)]
             )
 
             # Save history
-            config_name = f"{features} - {args.window_size} input / {args.offset} output"
             history_dicts[f"{name}_{train_station}"] = history.history
 
             # Evaluate model
-            performance[name] = model.evaluate(X_test, y_test, return_dict=True)
-            val_performance[name] = model.evaluate(X_val, y_val, return_dict=True)
+            performance[name] = evaluate_model(model, X_test, y_test)
+            val_performance[name] = evaluate_model(model, X_val, y_val)
 
             # Save model
             model_path = os.path.join("models", f"{name}_{train_station}.keras")
@@ -159,18 +193,24 @@ def main(args):
             print(f"{name} model saved at {model_path}")
 
             # Save results
-            results_filename = os.path.join("results", f"{train_station}_results.csv")
-            # write_model_results_to_csv(train_station, name, performance[name], filename=results_filename)
-            # write_loss_history_to_csv(train_station, name, history.history, loss_file=results_filename)
+            write_model_results_to_csv(train_station, name, performance[name], args.offset, filename="results_all_stations.csv")
+            write_loss_history_to_csv(train_station, name, history.history, loss_file="loss_history.csv")
 
-            print(f"{name} Model Test Loss: {performance[name]}")
+            print(f"{name} Model Test Loss: {performance[name]['mean_squared_error']}")
+
 
     print("Training complete! All results saved.")
     # Save all results to CSV
-    results_df = pd.DataFrame(results, columns=['Station', 'Offset', 'R2', 'MSE', 'MAPE'])
-    results_filename = 'results_all_stations.csv'
+    results_filename = "results_all_stations.csv"
+
+    if os.path.isfile(results_filename):
+        results_df = pd.read_csv(results_filename)
+    else:
+        results_df = pd.DataFrame(columns=['Station', 'Model', 'Offset', 'R2', 'MSE', 'MAE', 'MAPE', 'SMAPE'])
+
+    # Save updated results
     results_df.to_csv(results_filename, index=False)
-    print(f"Saved all results to CSV: {results_filename}")
+    print(f"Updated results saved to CSV: {results_filename}")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train an LSTM model for time series prediction.")
