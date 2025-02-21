@@ -2,6 +2,12 @@
 
 This repository trains and evaluates deep learning models for soil moisture prediction using time series data. The pipeline supports **custom configurations via command-line arguments**.
 
+## TODO
+* Needs to merge with code from the students of last year
+* Better handling/integration of testing different models
+* Might need to check some of the logic for the procedure of testing different stations
+* Feel free to add/modify it however you want
+
 ## Installation
 
 Ensure you have **Python 3.8+** installed. Dependencies are managed via `pyproject.toml`. To install them, run:
@@ -17,6 +23,7 @@ python -m venv venv
 source venv/bin/activate  # On Windows use `venv\Scripts\activate`
 pip install .
 ```
+Note: If I missed anything, please feel free to update this README and/or the toml file.
 
 ## Running the Experiment
 
