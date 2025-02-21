@@ -1,6 +1,5 @@
 paths:
-  data_folder: "../data/processed/Revised_Final_Data"
-  results_folder: "../results"
+  data_folder: "data/processed/Revised_Final_Data"
 
 experiment:
   window_sizes: [24, 48, 72]  # Window sizes to test

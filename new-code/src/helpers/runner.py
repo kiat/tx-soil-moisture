@@ -4,6 +4,7 @@ import pandas as pd
 from pathlib import Path
 from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error, mean_absolute_percentage_error
 from helpers.plotting import plot_loss, plot_predictions
+import yaml
 
 def run_model(model_name, builder, results_folder, trial_name,
               X_train, y_train, X_val, y_val, X_test, y_test,
@@ -64,6 +65,32 @@ def run_model(model_name, builder, results_folder, trial_name,
     plot_predictions(y_actual, predictions_rescaled, target_col, save_path=str(predictions_plot_path))
 
     print(f"Finished {model_name}: R2: {r2:.4f}, MSE: {mse:.4f}, MAE: {mae:.4f}, MAPE: {mape:.4f}")
+
+    # Save experiment parameters to YAML
+    parameters = {
+        "Model": model_name,
+        "Target Variable": target_col,
+        "Epochs": epochs,
+        "Batch Size": batch_size,
+        "Dataset Split": {
+            "Train Samples": len(X_train),
+            "Validation Samples": len(X_val),
+            "Test Samples": len(X_test)
+        },
+        "Results": {
+            "R2": r2,
+            "MSE": mse,
+            "MAE": mae,
+            "MAPE": mape
+        }
+    }
+
+    parameters_file = trial_folder / "experiment_parameters.yaml"
+    with open(parameters_file, "w") as file:
+        yaml.dump(parameters, file, default_flow_style=False)
+
+    print(f"Experiment parameters saved in {parameters_file}")
+
 
     # Save results to CSV (APPEND MODE)
     results_file = trial_folder / "model_comparison_results.csv"

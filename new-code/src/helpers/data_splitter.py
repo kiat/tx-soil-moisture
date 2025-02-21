@@ -39,3 +39,87 @@ def split_by_year(df, target_col, train_years, val_years, test_years, window_siz
     print(f"Shapes - X_train: {X_train.shape}, X_val: {X_val.shape}, X_test: {X_test.shape}")
 
     return X_train, y_train, X_val, y_val, X_test, y_test
+
+
+def leave_one_station_one_year_out(df_dict, target_col, test_station, test_year, window_size=72, offset=24):
+    """
+    Trains on all stations and years except for one specific station-year (used for testing).
+
+    Args:
+        df_dict (dict): Dictionary where keys are station names and values are DataFrames.
+        target_col (str): The target variable (e.g., 'SWC_5').
+        test_station (str): The station to exclude from training (used for testing).
+        test_year (int): The year to exclude from training (used for testing).
+        window_size (int): Number of time steps in each training example.
+        offset (int): Forecasting offset.
+
+    Returns:
+        X_train, y_train, X_test, y_test
+    """
+    train_dfs = []
+    test_df = None
+
+    for station, df in df_dict.items():
+        df["Year"] = df.index.year  # Ensure year is extracted from datetime index
+
+        if station == test_station:
+            test_df = df[df["Year"] == test_year].drop(columns=["Year"])
+        else:
+            train_dfs.append(df[df["Year"] != test_year].drop(columns=["Year"]))
+
+    if test_df is None or len(train_dfs) == 0:
+        raise ValueError("Test station or test year not found in the dataset.")
+
+    # Combine all training data into one DataFrame
+    train_df = pd.concat(train_dfs)
+
+    # Convert to supervised learning format
+    X_train, y_train = data_to_X_y(train_df[target_col], window_size, offset)
+    X_test, y_test = data_to_X_y(test_df[target_col], window_size, offset)
+
+    print(f"Leave-One-Station-One-Year-Out Split: Train (excluding {test_station}-{test_year})")
+    print(f"  X_train: {X_train.shape}, X_test: {X_test.shape}")
+
+    return X_train, y_train, X_test, y_test
+
+
+def leave_one_station_one_year_out(df_dict, target_col, test_station, test_year, window_size=72, offset=24):
+    """
+    Trains on all stations and years except for one specific station-year (used for testing).
+
+    Args:
+        df_dict (dict): Dictionary where keys are station names and values are DataFrames.
+        target_col (str): The target variable (e.g., 'SWC_5').
+        test_station (str): The station to exclude from training (used for testing).
+        test_year (int): The year to exclude from training (used for testing).
+        window_size (int): Number of time steps in each training example.
+        offset (int): Forecasting offset.
+
+    Returns:
+        X_train, y_train, X_test, y_test
+    """
+    train_dfs = []
+    test_df = None
+
+    for station, df in df_dict.items():
+        df["Year"] = df.index.year  # Ensure year is extracted from datetime index
+
+        if station == test_station:
+            test_df = df[df["Year"] == test_year].drop(columns=["Year"])
+        else:
+            train_dfs.append(df[df["Year"] != test_year].drop(columns=["Year"]))
+
+    if test_df is None or len(train_dfs) == 0:
+        raise ValueError("Test station or test year not found in the dataset.")
+
+    # Combine all training data into one DataFrame
+    train_df = pd.concat(train_dfs)
+
+    # Convert to supervised learning format
+    X_train, y_train = data_to_X_y(train_df[target_col], window_size, offset)
+    X_test, y_test = data_to_X_y(test_df[target_col], window_size, offset)
+
+    print(f"Leave-One-Station-One-Year-Out Split: Train (excluding {test_station}-{test_year})")
+    print(f"  X_train: {X_train.shape}, X_test: {X_test.shape}")
+
+    return X_train, y_train, X_test, y_test

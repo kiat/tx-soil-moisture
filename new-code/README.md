@@ -1,61 +1,89 @@
-# Setup
+# Soil Moisture Prediction
 
-How to use:
-1. Run the following:
-    ```bash
-    pip install -e .
-    ```
-1. Under 'notebooks' feel free to run, copy, or use the "exploration.ipynb" file
+This repository trains and evaluates deep learning models for soil moisture prediction using time series data. The pipeline supports **custom configurations via command-line arguments**.
 
-# TODO
-1. Data preprocessing
-1. Analysis/Feature Engineering
-    - Seasonal patterns
-    - Feature Correlation
-1. Model Trials
-    - Establish a baseline with A/SARIMA
-    - Compare with Random Forest/ XGBoost
-1. Validation
-    - Rolling/walk-forward validation
-    - Compare performance metrics (MAE, RMSE, R^2) across all models.
+## Installation
 
-# Documentation
+Ensure you have **Python 3.8+** installed. Dependencies are managed via `pyproject.toml`. To install them, run:
 
-## General Files
+```bash
+pip install .
+```
 
-- `data/` - contains the data files used in the analysis
-- `notebooks/` - Jupyter notebooks for data exploration
-    - `exploration.ipynb` - The main driver notebook as of now
-- `scripts/` - Auxiliary helper scripts
-    - `tree_cmd.py` - Lets you run "make tree" in terminal and prints out file structure
-    - `tree_ignore.txt` - Contains the files to ignore when running `tree_cmd.py`
-- `results/` - Empty as of now
+or, if using a virtual environment:
 
-## Files with Relevant Code
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows use `venv\Scripts\activate`
+pip install .
+```
 
-- `src/` - Library of methods used in notebooks
-    - `config/`
-        - `config_loader.py` - Loads config file
-        - `config.yaml` - Contains configurable constants
-    - `data/`     
-        - `data_helpers.py` - Methods for loading and saving data
-        - `feature_engineering.py` - Add, remove, modify features
-        - `windowing.py` - Creates windows as needed
-    - `models`
-        - `arima_helpers.py` - ARIMA/SARIMA model training and forecasting
-        - `lstm_helpers.py` - LSTM model training and forecasting
-    - `visualization`
-        - `plotting.py` - Methods for plotting data
+## Running the Experiment
 
-## Model Explanation
+Run the experiment using:
 
-| **Model**  | **Type**  | **Best For**  | **Limitations** |
-|------------|----------|--------------|----------------|
-| **ARIMA**  | Statistical | Short-term, stationary time series | Struggles with seasonality, requires manual differencing |
-| **SARIMA** | Statistical (Seasonal ARIMA) | Time series with strong seasonal patterns | Slow for large datasets, requires seasonal tuning |
-| **LSTM**   | Deep Learning | Large, complex time series with long-term dependencies | Needs more data, longer training time |
+```bash
+python3 src/main.py
+```
 
-- **ARIMA** is implemented in `arima_helpers.py` and is best for **short-term predictions** on stationary data.
-- **SARIMA** extends ARIMA with **seasonality (`m=365` for yearly cycles)**.
-- **LSTM** in `lstm_helpers.py` is a **neural network model** that learns patterns **automatically** and works well for **large datasets**.
+This will use default settings from `config.yaml`.
+
+### Overriding Parameters via Command-Line Arguments
+
+Command-line arguments can override default parameters without modifying the config file.
+
+#### Example: Specify Window Sizes, Epochs, and Batch Size
+
+```bash
+python3 src/main.py --window_sizes 24 48 --epochs 5 --batch_size 64
+```
+
+#### Example: Specify Specific Stations and SWC Variables
+
+```bash
+python3 src/main.py --station_list Station1 Station2 --swc_list SWC_5 SWC_10
+```
+
+#### Example: Specify Forecasting Offset
+
+```bash
+python3 src/main.py --offset 12
+```
+
+## Command-Line Arguments
+
+| Argument         | Description                                         | Example Usage                           |
+|-----------------|-----------------------------------------------------|-----------------------------------------|
+| `--window_sizes` | List of window sizes to test                       | `--window_sizes 24 48 72`               |
+| `--offset`       | Forecasting offset (hours)                         | `--offset 24`                           |
+| `--swc_list`     | List of SWC columns to predict                     | `--swc_list SWC_5 SWC_20`               |
+| `--station_list` | List of stations to use                            | `--station_list Station1 Station2`      |
+| `--epochs`       | Number of training epochs                          | `--epochs 10`                           |
+| `--batch_size`   | Batch size for model training                      | `--batch_size 64`                       |
+
+## Output Structure
+
+Each run saves results in a timestamped folder inside `results/`:
+
+```
+results/
+└── run_20250220_135645/
+    ├── Simple_LSTM_checkpoint.keras
+    ├── Simple_LSTM_loss_plot.png
+    ├── Simple_LSTM_predictions.png
+    ├── model_comparison_results.csv
+    ├── experiment_parameters.yaml  <-- Contains all experiment settings
+```
+
+## Example: Full Run with Custom Parameters
+
+```bash
+python3 src/main.py --window_sizes 24 48 72 --offset 12 --epochs 5 --batch_size 64 --station_list Station1 --swc_list SWC_5 SWC_10
+```
+
+This will:
+- Train models using **window sizes 24, 48, 72**.
+- Predict with an **offset of 12 hours**.
+- Train for **5 epochs** with a **batch size of 64**.
+- Use **Station1** for prediction on **SWC_5** and **SWC_10**.
 
