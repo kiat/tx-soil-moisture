@@ -98,29 +98,46 @@ def split_and_stack_data(dfs, test_station_name="Station6", remove_met=False):
     
     return dfs, val_df, test_df
 
-def write_loss_history_to_csv(station, model_name, window_size, history, feature_str):
-    """Saves loss history to a CSV file with model name, window size, and feature set."""
-    loss_file = f"loss_history_{model_name}_ws{window_size}_{feature_str}.csv"
+def write_loss_history_to_csv(station, model_name, window_size, offset, history, feature_str):
+    """Saves loss history to a unique CSV file including offset and feature set."""
+    
+    # Define unique filename per run
+    loss_file = f"loss_history_{model_name}_ws{window_size}_offset{offset}_{feature_str}.csv"
+    
+    # Check if the file already exists
     file_exists = os.path.isfile(loss_file)
-    headers = ["Station", "Model", "Features", "Epoch", "Loss", "Validation Loss"]
+    
+    # Define CSV headers
+    headers = ["Station", "Model", "Features", "Offset", "Epoch", "Loss", "Validation Loss"]
 
-    with open(loss_file, mode="a", newline="") as file:
+    # Open in write mode if file exists (reset each run)
+    mode = "w" if file_exists else "a"
+
+    with open(loss_file, mode, newline="") as file:
         writer = csv.writer(file)
+        
+        # Write headers only if file is new
         if not file_exists:
             writer.writerow(headers)  
 
+        # Write training history
         for epoch, (loss, val_loss) in enumerate(zip(history["loss"], history["val_loss"])):
-            writer.writerow([station, model_name, feature_str, epoch + 1, loss, val_loss])
+            writer.writerow([station, model_name, feature_str, offset, epoch + 1, loss, val_loss])
 
-    print(f"Saved loss history for {model_name} (ws={window_size}, features={feature_str}) on {station} to {loss_file}")
-
-def write_model_results_to_csv(station, model_name, window_size, performance, feature_str):
-    """Saves model evaluation results to a CSV file with model name, window size, and feature set."""
-    results_file = f"results_{model_name}_ws{window_size}_{feature_str}.csv"
+    print(f"Saved loss history for {model_name} (ws={window_size}, offset={offset}, features={feature_str}) on {station} to {loss_file}")
+    
+    
+def write_model_results_to_csv(station, model_name, window_size, offset, performance, feature_str):
+    """Saves model evaluation results to a uniquely named CSV file including offset and feature set."""
+    
+    # Define unique filename per run
+    results_file = f"results_{model_name}_ws{window_size}_offset{offset}_{feature_str}.csv"
+    
+    # Check if file already exists
     file_exists = os.path.isfile(results_file)
 
     # Define headers
-    headers = ["Station", "Model", "Features", "R2", "MSE", "MAE", "MAPE", "SMAPE"]
+    headers = ["Station", "Model", "Features", "Offset", "R2", "MSE", "MAE", "MAPE", "SMAPE"]
 
     # Extract metrics safely
     mse = performance.get("mean_squared_error", None)
@@ -129,15 +146,18 @@ def write_model_results_to_csv(station, model_name, window_size, performance, fe
     smape_score = performance.get("smape", None)
     r2 = performance.get("r2_score", None)
 
-    # Append data
+    # Write to CSV
     with open(results_file, mode="a", newline="") as file:
         writer = csv.writer(file)
+
+        # Write headers if it's a new file
         if not file_exists:
-            writer.writerow(headers)  # Write headers only if new file
+            writer.writerow(headers)
 
-        writer.writerow([station, model_name, feature_str, r2, mse, mae, mape, smape_score])
+        # Append results
+        writer.writerow([station, model_name, feature_str, offset, r2, mse, mae, mape, smape_score])
 
-    print(f"Saved model results for {model_name} (ws={window_size}, features={feature_str}) on {station} to {results_file}")
+    print(f"Saved model results for {model_name} (ws={window_size}, offset={offset}, features={feature_str}) on {station} to {results_file}")
 
 
 def main(args):
@@ -200,8 +220,8 @@ def main(args):
                 print(f"{name} model saved at {model_path}")
 
                 # Save results with feature names in the filename
-                write_model_results_to_csv(train_station, name, args.window_size, performance[name], feature_str)
-                write_loss_history_to_csv(train_station, name, args.window_size, history.history, feature_str)
+                write_model_results_to_csv(train_station, name, args.window_size, args.offset, performance[name], feature_str)
+                write_loss_history_to_csv(train_station, name, args.window_size, args.offset, history.history, feature_str)
 
                 print(f"{name} Model Test Loss with {len(selected_features)} features: {performance[name]['mean_squared_error']}")
 
