@@ -98,29 +98,29 @@ def split_and_stack_data(dfs, test_station_name="Station6", remove_met=False):
     
     return dfs, val_df, test_df
 
-def write_loss_history_to_csv(station, model_name, window_size, history):
-    """Saves loss history to a CSV file with model name and window size."""
-    loss_file = f"loss_history_{model_name}_ws{window_size}.csv"
+def write_loss_history_to_csv(station, model_name, window_size, history, feature_str):
+    """Saves loss history to a CSV file with model name, window size, and feature set."""
+    loss_file = f"loss_history_{model_name}_ws{window_size}_{feature_str}.csv"
     file_exists = os.path.isfile(loss_file)
-    headers = ["Station", "Model", "Epoch", "Loss", "Validation Loss"]
+    headers = ["Station", "Model", "Features", "Epoch", "Loss", "Validation Loss"]
 
     with open(loss_file, mode="a", newline="") as file:
         writer = csv.writer(file)
         if not file_exists:
-            writer.writerow(headers)  # Add headers if new file
+            writer.writerow(headers)  
 
         for epoch, (loss, val_loss) in enumerate(zip(history["loss"], history["val_loss"])):
-            writer.writerow([station, model_name, epoch + 1, loss, val_loss])
+            writer.writerow([station, model_name, feature_str, epoch + 1, loss, val_loss])
 
-    print(f"Saved loss history for {model_name} (ws={window_size}) on {station} to {loss_file}")
+    print(f"Saved loss history for {model_name} (ws={window_size}, features={feature_str}) on {station} to {loss_file}")
 
-def write_model_results_to_csv(station, model_name, window_size, performance):
-    """Saves model evaluation results to a CSV file with model name and window size."""
-    results_file = f"results_{model_name}_ws{window_size}.csv"
+def write_model_results_to_csv(station, model_name, window_size, performance, feature_str):
+    """Saves model evaluation results to a CSV file with model name, window size, and feature set."""
+    results_file = f"results_{model_name}_ws{window_size}_{feature_str}.csv"
     file_exists = os.path.isfile(results_file)
 
     # Define headers
-    headers = ["Station", "Model", "R2", "MSE", "MAE", "MAPE", "SMAPE"]
+    headers = ["Station", "Model", "Features", "R2", "MSE", "MAE", "MAPE", "SMAPE"]
 
     # Extract metrics safely
     mse = performance.get("mean_squared_error", None)
@@ -135,9 +135,9 @@ def write_model_results_to_csv(station, model_name, window_size, performance):
         if not file_exists:
             writer.writerow(headers)  # Write headers only if new file
 
-        writer.writerow([station, model_name, r2, mse, mae, mape, smape_score])
+        writer.writerow([station, model_name, feature_str, r2, mse, mae, mape, smape_score])
 
-    print(f"Saved model results for {model_name} (ws={window_size}) on {station} to {results_file}")
+    print(f"Saved model results for {model_name} (ws={window_size}, features={feature_str}) on {station} to {results_file}")
 
 
 def main(args):
@@ -146,58 +146,64 @@ def main(args):
 
     engineered_dfs, val_df, test_df = split_and_stack_data(engineered_dfs, test_station_name="Station6", remove_met=False)
 
-    features = ['SWC_20', 'T_20'] # add more features to train on if you would like
+    # all_features = ['SWC_20', 'T_20', 'Ppt', 'Tair', 'Wx', 'Wy']
+    all_features = args.features.split(',') if args.features else ['SWC_20', 'T_20', 'Ppt', 'Tair', 'Wx', 'Wy']
+    
     
     models = {
-        "LSTM": compile_lstm((args.window_size, len(features)), learning_rate=0.0001),
-        "BiLSTM": compile_bilstm((args.window_size, len(features)), learning_rate=0.0001),
-        "RNN": compile_rnn((args.window_size, len(features)), learning_rate=0.0001),
-        "CNN": compile_cnn((args.window_size, len(features)), learning_rate=0.0001)
+        "LSTM": compile_lstm((args.window_size, 1), learning_rate=0.0001),
+        "BiLSTM": compile_bilstm((args.window_size, 1), learning_rate=0.0001),
+        "RNN": compile_rnn((args.window_size, 1), learning_rate=0.0001),
+        "CNN": compile_cnn((args.window_size, 1), learning_rate=0.0001)
     }
 
     history_dicts = {}
     performance = {}
     val_performance = {}
 
-    for train_station in [s for s in stations if s != "Station6"]:
-        print(f"\nTraining models on {train_station}...")
+    for i in range(1, len(all_features) + 1):
+        selected_features = all_features[:i]  # Incrementally add features
+        print(f"\nTraining models with features: {selected_features}")
 
-        scaled_train, scaler = normalize_data(engineered_dfs[train_station], features)
-        scaled_val, _ = normalize_data(val_df, features)
-        scaled_test, _ = normalize_data(test_df, features)
+        for train_station in [s for s in stations if s != "Station6"]:
+            print(f"\nTraining models on {train_station}...")
 
-        X_train, y_train = data_to_X_y(scaled_train, args.window_size, args.offset)
-        X_val, y_val = data_to_X_y(scaled_val, args.window_size, args.offset)
-        X_test, y_test = data_to_X_y(scaled_test, args.window_size, args.offset)
+            scaled_train, scaler = normalize_data(engineered_dfs[train_station], selected_features)
+            scaled_val, _ = normalize_data(val_df, selected_features)
+            scaled_test, _ = normalize_data(test_df, selected_features)
 
-        for name, model in models.items():
-            print(f"\nTraining {name} model on {train_station}...")
+            X_train, y_train = data_to_X_y(scaled_train, args.window_size, args.offset)
+            X_val, y_val = data_to_X_y(scaled_val, args.window_size, args.offset)
+            X_test, y_test = data_to_X_y(scaled_test, args.window_size, args.offset)
 
-            history = model.fit(
-                X_train, y_train,
-                validation_data=(X_val, y_val),
-                epochs=args.epochs,
-                callbacks=[EarlyStopping(monitor='val_loss', patience=args.patience, restore_best_weights=True)]
-            )
+            for name, model in models.items():
+                print(f"\nTraining {name} model on {train_station} with {len(selected_features)} features...")
 
-            # Save history
-            history_dicts[f"{name}_{train_station}"] = history.history
+                history = model.fit(
+                    X_train, y_train,
+                    validation_data=(X_val, y_val),
+                    epochs=args.epochs,
+                    callbacks=[EarlyStopping(monitor='val_loss', patience=args.patience, restore_best_weights=True)]
+                )
 
-            # Evaluate model
-            performance[name] = evaluate_model(model, X_test, y_test)
-            val_performance[name] = evaluate_model(model, X_val, y_val)
+                # Save history
+                history_dicts[f"{name}_{train_station}_{'_'.join(selected_features)}"] = history.history
 
-            # Save model
-            model_path = os.path.join("models", f"{name}_{train_station}.keras")
-            model.save(model_path)
-            print(f"{name} model saved at {model_path}")
+                # Evaluate model
+                performance[name] = evaluate_model(model, X_test, y_test)
+                val_performance[name] = evaluate_model(model, X_val, y_val)
 
-            # Save results with made functions
-            write_model_results_to_csv(train_station, name, args.window_size, performance[name])
-            write_loss_history_to_csv(train_station, name, args.window_size, history.history)
+                # Save model
+                feature_str = '_'.join(selected_features)
+                model_path = os.path.join("models", f"{name}_{train_station}_{feature_str}.keras")
+                model.save(model_path)
+                print(f"{name} model saved at {model_path}")
 
-            print(f"{name} Model Test Loss: {performance[name]['mean_squared_error']}")
+                # Save results with feature names in the filename
+                write_model_results_to_csv(train_station, name, args.window_size, performance[name], feature_str)
+                write_loss_history_to_csv(train_station, name, args.window_size, history.history, feature_str)
 
+                print(f"{name} Model Test Loss with {len(selected_features)} features: {performance[name]['mean_squared_error']}")
 
     print("Training complete! All results saved.")
 
@@ -207,6 +213,8 @@ if __name__ == "__main__":
     parser.add_argument('--offset', type=int, default=24, help='Offset for prediction')
     parser.add_argument('--epochs', type=int, default=10, help='Number of training epochs')
     parser.add_argument('--patience', type=int, default=3, help='Early stopping patience')
+    parser.add_argument("--features", type=str, default="SWC_20,T_20,Ppt,Tair,Wx,Wy",
+                    help="Comma-separated list of features to use in training")
 
     args = parser.parse_args()
     main(args)
