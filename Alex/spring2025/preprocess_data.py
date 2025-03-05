@@ -70,6 +70,6 @@ def engineer_and_save_data():
         df.to_parquet(engineered_parquet_path, engine="fastparquet")
         print(f"Saved engineered data to Parquet: {engineered_parquet_path}")
 
-if __name__ == "__main__":
-    read_and_save_parquet()  # Load raw data & save as Parquet
-    engineer_and_save_data()  # Engineer & save processed data
+# if __name__ == "__main__":
+    # read_and_save_parquet()  # Load raw data & save as Parquet
+    # engineer_and_save_data()  # Engineer & save processed data

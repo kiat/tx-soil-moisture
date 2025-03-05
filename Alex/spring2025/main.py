@@ -160,7 +160,11 @@ def write_model_results_to_csv(station, model_name, window_size, offset, perform
     print(f"Saved model results for {model_name} (ws={window_size}, offset={offset}, features={feature_str}) on {station} to {results_file}")
 
 
+from preprocess_data import read_and_save_parquet, engineer_and_save_data
+
 def main(args):
+    read_and_save_parquet()
+    engineer_and_save_data()
     stations = ['Station1', 'Station2', 'Station3', 'Station4', 'Station5', 'Station6']
     engineered_dfs = {station: pd.read_parquet(f"{station}_engineered.parquet") for station in stations}
 
@@ -181,24 +185,27 @@ def main(args):
     performance = {}
     val_performance = {}
 
-    for i in range(1, len(all_features) + 1):
-        selected_features = all_features[:i]  # Incrementally add features
-        print(f"\nTraining models with features: {selected_features}")
+    for model_name, model in models.items():
+        print(f"\n🔹 Training {model_name} on all stations...")
 
-        for train_station in [s for s in stations if s != "Station6"]:
-            print(f"\nTraining models on {train_station}...")
+        for i in range(1, len(all_features) + 1):
+            selected_features = all_features[:i]  # Incrementally add features
+            print(f"\n🔹 Using Features: {selected_features}")
 
-            scaled_train, scaler = normalize_data(engineered_dfs[train_station], selected_features)
-            scaled_val, _ = normalize_data(val_df, selected_features)
-            scaled_test, _ = normalize_data(test_df, selected_features)
+            for train_station in [s for s in stations if s != "Station6"]:
+                print(f"\n🔹 Training {model_name} on {train_station} with {len(selected_features)} features...")
 
-            X_train, y_train = data_to_X_y(scaled_train, args.window_size, args.offset)
-            X_val, y_val = data_to_X_y(scaled_val, args.window_size, args.offset)
-            X_test, y_test = data_to_X_y(scaled_test, args.window_size, args.offset)
+                # Normalize data for train, validation, and test sets
+                scaled_train, scaler = normalize_data(engineered_dfs[train_station], selected_features)
+                scaled_val, _ = normalize_data(val_df, selected_features)
+                scaled_test, _ = normalize_data(test_df, selected_features)
 
-            for name, model in models.items():
-                print(f"\nTraining {name} model on {train_station} with {len(selected_features)} features...")
+                # Convert to supervised learning format
+                X_train, y_train = data_to_X_y(scaled_train, args.window_size, args.offset)
+                X_val, y_val = data_to_X_y(scaled_val, args.window_size, args.offset)
+                X_test, y_test = data_to_X_y(scaled_test, args.window_size, args.offset)
 
+                # Train the model
                 history = model.fit(
                     X_train, y_train,
                     validation_data=(X_val, y_val),
@@ -206,26 +213,27 @@ def main(args):
                     callbacks=[EarlyStopping(monitor='val_loss', patience=args.patience, restore_best_weights=True)]
                 )
 
-                # Save history
-                history_dicts[f"{name}_{train_station}_{'_'.join(selected_features)}"] = history.history
+                # Save training history
+                history_dicts[f"{model_name}_{train_station}_{'_'.join(selected_features)}"] = history.history
 
                 # Evaluate model
-                performance[name] = evaluate_model(model, X_test, y_test)
-                val_performance[name] = evaluate_model(model, X_val, y_val)
+                performance[train_station] = evaluate_model(model, X_test, y_test)
+                val_performance[train_station] = evaluate_model(model, X_val, y_val)
 
                 # Save model
                 feature_str = '_'.join(selected_features)
-                model_path = os.path.join("models", f"{name}_{train_station}_{feature_str}.keras")
+                model_path = os.path.join("models", f"{model_name}_{train_station}_{feature_str}.keras")
                 model.save(model_path)
-                print(f"{name} model saved at {model_path}")
+                print(f"{model_name} model saved at {model_path}")
 
-                # Save results with feature names in the filename
-                write_model_results_to_csv(train_station, name, args.window_size, args.offset, performance[name], feature_str)
-                write_loss_history_to_csv(train_station, name, args.window_size, args.offset, history.history, feature_str)
+                # Save results
+                write_model_results_to_csv(train_station, model_name, args.window_size, args.offset, performance[train_station], feature_str)
+                write_loss_history_to_csv(train_station, model_name, args.window_size, args.offset, history.history, feature_str)
 
-                print(f"{name} Model Test Loss with {len(selected_features)} features: {performance[name]['mean_squared_error']}")
+                print(f"{model_name} Model Test Loss with {len(selected_features)} features: {performance[train_station]['mean_squared_error']}")
 
     print("Training complete! All results saved.")
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train various models for time series prediction.")
