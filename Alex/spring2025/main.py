@@ -18,6 +18,20 @@ def smape(y_true, y_pred):
     denominator = tf.abs(y_true) + tf.abs(y_pred) + tf.keras.backend.epsilon()
     return 100 * tf.reduce_mean(numerator / denominator)
 
+def compute_rse(y_true, y_pred):
+    numerator = np.sum((y_true - y_pred) ** 2)
+    denominator = np.sum((y_true - np.mean(y_true)) ** 2)
+    return np.sqrt(numerator / denominator) if denominator != 0 else np.nan
+
+def compute_corr(y_true, y_pred):
+    y_true_mean = np.mean(y_true)
+    y_pred_mean = np.mean(y_pred)
+    numerator = np.sum((y_true - y_true_mean) * (y_pred - y_pred_mean))
+    denominator = np.sqrt(np.sum((y_true - y_true_mean) ** 2) * np.sum((y_pred - y_pred_mean) ** 2))
+    return numerator / denominator if denominator != 0 else np.nan
+
+
+
 def normalize_data(df, features):
     scaler = MinMaxScaler()
     data = df[features]
@@ -83,9 +97,11 @@ def evaluate_model(model, X_test, y_test):
         "mean_squared_error": mean_squared_error(y_test, predictions),
         "mean_absolute_error": np.mean(np.abs(y_test - predictions)),
         "mean_absolute_percentage_error": mean_absolute_percentage_error(y_test, predictions),
-        "smape": np.mean(2 * np.abs(predictions - y_test) / (np.abs(y_test) + np.abs(predictions) + 1e-8)) * 100
+        "smape": np.mean(2 * np.abs(predictions - y_test) / (np.abs(y_test) + np.abs(predictions) + 1e-8)) * 100,
+        "rse": compute_rse(y_test, predictions),
+        "corr": compute_corr(y_test, predictions)
     }
-
+    
 def split_and_stack_data(dfs, test_station_name="Station6", remove_met=False):
     if remove_met:
         for key in dfs.keys():
@@ -128,37 +144,25 @@ def write_loss_history_to_csv(station, model_name, window_size, offset, history,
     
     
 def write_model_results_to_csv(station, model_name, window_size, offset, performance, feature_str):
-    """Saves model evaluation results to a uniquely named CSV file including offset and feature set."""
-    
-    # Define unique filename per run
     results_file = f"results_{model_name}_ws{window_size}_offset{offset}_{feature_str}.csv"
-    
-    # Check if file already exists
     file_exists = os.path.isfile(results_file)
-
-    # Define headers
-    headers = ["Station", "Model", "Features", "Offset", "R2", "MSE", "MAE", "MAPE", "SMAPE"]
-
-    # Extract metrics safely
-    mse = performance.get("mean_squared_error", None)
-    mae = performance.get("mean_absolute_error", None)
-    mape = performance.get("mean_absolute_percentage_error", None)
-    smape_score = performance.get("smape", None)
-    r2 = performance.get("r2_score", None)
-
-    # Write to CSV
+    headers = ["Station", "Model", "Features", "Offset", "R2", "MSE", "MAE", "MAPE", "SMAPE", "RSE", "CORR"]
+    
     with open(results_file, mode="a", newline="") as file:
         writer = csv.writer(file)
-
-        # Write headers if it's a new file
         if not file_exists:
             writer.writerow(headers)
-
-        # Append results
-        writer.writerow([station, model_name, feature_str, offset, r2, mse, mae, mape, smape_score])
-
-    print(f"Saved model results for {model_name} (ws={window_size}, offset={offset}, features={feature_str}) on {station} to {results_file}")
-
+        writer.writerow([
+            station, model_name, feature_str, offset,
+            performance.get("r2_score"),
+            performance.get("mean_squared_error"),
+            performance.get("mean_absolute_error"),
+            performance.get("mean_absolute_percentage_error"),
+            performance.get("smape"),
+            performance.get("rse"),
+            performance.get("corr")
+        ])
+    print(f"Saved model results for {model_name} on {station} with {len(feature_str.split('_'))} features to {results_file}")
 
 from preprocess_data import read_and_save_parquet, engineer_and_save_data
 
@@ -170,16 +174,15 @@ def main(args):
 
     engineered_dfs, val_df, test_df = split_and_stack_data(engineered_dfs, test_station_name="Station6", remove_met=False)
 
-    # all_features = ['SWC_20', 'T_20', 'Ppt', 'Tair', 'Wx', 'Wy']
     all_features = args.features.split(',') if args.features else ['SWC_20', 'T_20', 'Ppt', 'Tair', 'Wx', 'Wy']
     
-    
     models = {
-        "LSTM": compile_lstm((args.window_size, 1), learning_rate=0.0001),
-        "BiLSTM": compile_bilstm((args.window_size, 1), learning_rate=0.0001),
-        "RNN": compile_rnn((args.window_size, 1), learning_rate=0.0001),
-        "CNN": compile_cnn((args.window_size, 1), learning_rate=0.0001)
+        "LSTM": compile_lstm((args.window_size, len(all_features)), learning_rate=0.0001),
+        "BiLSTM": compile_bilstm((args.window_size, len(all_features)), learning_rate=0.0001),
+        "RNN": compile_rnn((args.window_size, len(all_features)), learning_rate=0.0001),
+        "CNN": compile_cnn((args.window_size, len(all_features)), learning_rate=0.0001)
     }
+
 
     history_dicts = {}
     performance = {}
@@ -188,51 +191,49 @@ def main(args):
     for model_name, model in models.items():
         print(f"\n🔹 Training {model_name} on all stations...")
 
-        for i in range(1, len(all_features) + 1):
-            selected_features = all_features[:i]  # Incrementally add features
-            print(f"\n🔹 Using Features: {selected_features}")
+        print(f"\n🔹 Using Features: {all_features}")
 
-            for train_station in [s for s in stations if s != "Station6"]:
-                print(f"\n🔹 Training {model_name} on {train_station} with {len(selected_features)} features...")
+        for train_station in [s for s in stations if s != "Station6"]:
+            print(f"\n🔹 Training {model_name} on {train_station} with {len(all_features)} features...")
 
-                # Normalize data for train, validation, and test sets
-                scaled_train, scaler = normalize_data(engineered_dfs[train_station], selected_features)
-                scaled_val, _ = normalize_data(val_df, selected_features)
-                scaled_test, _ = normalize_data(test_df, selected_features)
+            # Normalize data for train, validation, and test sets
+            scaled_train, scaler = normalize_data(engineered_dfs[train_station], all_features)
+            scaled_val, _ = normalize_data(val_df, all_features)
+            scaled_test, _ = normalize_data(test_df, all_features)
 
-                # Convert to supervised learning format
-                X_train, y_train = data_to_X_y(scaled_train, args.window_size, args.offset)
-                X_val, y_val = data_to_X_y(scaled_val, args.window_size, args.offset)
-                X_test, y_test = data_to_X_y(scaled_test, args.window_size, args.offset)
+            # Convert to supervised learning format
+            X_train, y_train = data_to_X_y(scaled_train, args.window_size, args.offset)
+            X_val, y_val = data_to_X_y(scaled_val, args.window_size, args.offset)
+            X_test, y_test = data_to_X_y(scaled_test, args.window_size, args.offset)
 
-                # Train the model
-                history = model.fit(
-                    X_train, y_train,
-                    validation_data=(X_val, y_val),
-                    epochs=args.epochs,
-                    callbacks=[EarlyStopping(monitor='val_loss', patience=args.patience, restore_best_weights=True)]
-                )
+            # Train the model
+            history = model.fit(
+                X_train, y_train,
+                validation_data=(X_val, y_val),
+                epochs=args.epochs,
+                callbacks=[EarlyStopping(monitor='val_loss', patience=args.patience, restore_best_weights=True)]
+            )
 
-                # Save training history
-                history_dicts[f"{model_name}_{train_station}_{'_'.join(selected_features)}"] = history.history
+            # Save training history
+            history_dicts[f"{model_name}_{train_station}"] = history.history
 
-                # Evaluate model
-                performance[train_station] = evaluate_model(model, X_test, y_test)
-                val_performance[train_station] = evaluate_model(model, X_val, y_val)
+            # Evaluate model
+            performance[train_station] = evaluate_model(model, X_test, y_test)
+            val_performance[train_station] = evaluate_model(model, X_val, y_val)
 
-                # Save model
-                feature_str = '_'.join(selected_features)
-                model_path = os.path.join("models", f"{model_name}_{train_station}_{feature_str}.keras")
-                model.save(model_path)
-                print(f"{model_name} model saved at {model_path}")
+            # Save model
+            model_path = os.path.join("models", f"{model_name}_{train_station}.keras")
+            model.save(model_path)
+            print(f"{model_name} model saved at {model_path}")
 
-                # Save results
-                write_model_results_to_csv(train_station, model_name, args.window_size, args.offset, performance[train_station], feature_str)
-                write_loss_history_to_csv(train_station, model_name, args.window_size, args.offset, history.history, feature_str)
+            # Save results
+            write_model_results_to_csv(train_station, model_name, args.window_size, args.offset, performance[train_station], '_'.join(all_features))
+            write_loss_history_to_csv(train_station, model_name, args.window_size, args.offset, history.history, '_'.join(all_features))
 
-                print(f"{model_name} Model Test Loss with {len(selected_features)} features: {performance[train_station]['mean_squared_error']}")
+            print(f"{model_name} Model Test Loss: {performance[train_station]['mean_squared_error']}")
 
     print("Training complete! All results saved.")
+
 
 
 if __name__ == "__main__":
