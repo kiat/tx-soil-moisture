@@ -4,10 +4,21 @@ This repository contains scripts to preprocess time series data, train multiple 
 
 ## Prerequisites
 
-Before running the project, ensure you have the following dependencies installed:
+Before running the project, ensure you have the following dependencies installed. You can save the following in a `requirements.txt` file and install using `pip install -r requirements.txt`:
+
+```txt
+pandas
+numpy
+tensorflow
+scikit-learn
+fastparquet
+argparse
+```
+
+Alternatively, install manually using:
 
 ```bash
-pf
+pip install pandas numpy tensorflow scikit-learn fastparquet argparse
 ```
 
 ## File Descriptions
@@ -27,7 +38,6 @@ python3 preprocess_data.py
 ```
 
 This script will:
-
 - Read CSV files (`StationX_Revised_Final_Data.csv`).
 - Apply feature engineering.
 - Save processed data as Parquet files.
@@ -41,7 +51,6 @@ python3 main.py --window_size 168 --offset 24 --epochs 10 --patience 3 --feature
 ```
 
 Parameters:
-
 - `--window_size`: Number of time steps used for training (default: 168).
 - `--offset`: How far ahead to predict (default: 24).
 - `--epochs`: Number of training epochs (default: 10).
@@ -62,19 +71,39 @@ This script tests offsets of 24, 72, and 168 while keeping other parameters cons
 
 After training, results are saved in CSV files:
 
-- `results_<model>_ws<window_size>_offset<offset>_<features>.csv`: Stores model evaluation metrics.
-- `loss_history_<model>_ws<window_size>_offset<offset>_<features>.csv`: Stores loss history for each epoch.
+- `results_<model>_ws<window_size>_offset<offset>_<features>.csv`: Stores model evaluation metrics, including:
+  - `r2_score`: Measures how well the predictions match actual values.
+  - `mean_squared_error (MSE)`: Indicates average squared error.
+  - `mean_absolute_error (MAE)`: Shows absolute difference between predicted and actual values.
+  - `mean_absolute_percentage_error (MAPE)`: Expresses error as a percentage.
+  - `symmetric mean absolute percentage error (SMAPE)`: Provides a symmetric error measure.
+  - `relative squared error (RSE)`: Evaluates model performance in comparison to a naive baseline.
+  - `correlation coefficient (CORR)`: Measures correlation between predictions and actual values.
+
+- `loss_history_<model>_ws<window_size>_offset<offset>_<features>.csv`: Stores loss history per epoch, including:
+  - `loss`: Training loss.
+  - `validation loss`: Loss on the validation set.
+  - Epoch-wise progression of loss values.
 
 ## Model Outputs
 
-Trained models are saved in the `models/` directory as `.keras` files.
+Trained models are saved in the `models/` directory as `.keras` files. The model filenames follow this pattern:
+
+```plaintext
+<model_name>_<station_name>.keras
+```
+
+For example:
+
+```plaintext
+LSTM_Station1.keras
+BiLSTM_Station3.keras
+CNN_Station5.keras
+```
+
+These files contain the trained deep learning models, which can be loaded for inference.
 
 ## Notes
 
 - Ensure data files (`StationX_Revised_Final_Data.csv`) are available before preprocessing.
 - Modify `run_experiments.sh` to customize offsets, features, or model parameters.
-
-## License
-
-This project is for educational and research purposes.
-
