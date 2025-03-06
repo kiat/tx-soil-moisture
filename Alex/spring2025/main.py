@@ -167,8 +167,8 @@ def write_model_results_to_csv(station, model_name, window_size, offset, perform
 from preprocess_data import read_and_save_parquet, engineer_and_save_data
 
 def main(args):
-    read_and_save_parquet()
-    engineer_and_save_data()
+    # read_and_save_parquet()
+    # engineer_and_save_data()
     stations = ['Station1', 'Station2', 'Station3', 'Station4', 'Station5', 'Station6']
     engineered_dfs = {station: pd.read_parquet(f"{station}_engineered.parquet") for station in stations}
 
