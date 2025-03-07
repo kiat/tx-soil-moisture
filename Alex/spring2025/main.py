@@ -166,16 +166,46 @@ def write_model_results_to_csv(station, model_name, window_size, offset, perform
 
 from preprocess_data import read_and_save_parquet, engineer_and_save_data
 
+    
 def main(args):
     # read_and_save_parquet()
     # engineer_and_save_data()
     stations = ['Station1', 'Station2', 'Station3', 'Station4', 'Station5', 'Station6']
+    target_station = stations[-1]  # Dynamically select the target station
+
+    # Load all station data
     engineered_dfs = {station: pd.read_parquet(f"{station}_engineered.parquet") for station in stations}
 
-    engineered_dfs, val_df, test_df = split_and_stack_data(engineered_dfs, test_station_name="Station6", remove_met=False)
+    # Split data:
+    # - `val_df` → Past years of target station (validation)
+    # - `test_df` → Current year of target station (testing)
+    # - `train_dfs` → All other stations (training)
+    engineered_dfs, val_df, test_df = split_and_stack_data(engineered_dfs, test_station_name=target_station, remove_met=False)
 
     all_features = args.features.split(',') if args.features else ['SWC_20', 'T_20', 'Ppt', 'Tair', 'Wx', 'Wy']
-    
+
+    # Prepare validation & test sets
+    scaled_val, _ = normalize_data(val_df, all_features)
+    X_val, y_val = data_to_X_y(scaled_val, args.window_size, args.offset)
+
+    scaled_test, _ = normalize_data(test_df, all_features)
+    X_test, y_test = data_to_X_y(scaled_test, args.window_size, args.offset)
+
+    # Prepare training data: merge all stations except target station
+    train_data = []  
+    for train_station in [s for s in stations if s != target_station]:
+        print(f"✅ Adding {train_station} to training pool...")
+        scaled_train, _ = normalize_data(engineered_dfs[train_station], all_features)
+        X_train, y_train = data_to_X_y(scaled_train, args.window_size, args.offset)
+        train_data.append((X_train, y_train))
+
+    # Merge all training data into a single dataset
+    X_train = np.concatenate([data[0] for data in train_data], axis=0)
+    y_train = np.concatenate([data[1] for data in train_data], axis=0)
+
+    print(f"\n🔹 Training on {len(stations)-1} stations and testing on {target_station}...\n")
+
+    # Define models to train
     models = {
         "LSTM": compile_lstm((args.window_size, len(all_features)), learning_rate=0.0001),
         "BiLSTM": compile_bilstm((args.window_size, len(all_features)), learning_rate=0.0001),
@@ -183,56 +213,35 @@ def main(args):
         "CNN": compile_cnn((args.window_size, len(all_features)), learning_rate=0.0001)
     }
 
-
-    history_dicts = {}
-    performance = {}
-    val_performance = {}
-
+    # Train each model with transfer learning
     for model_name, model in models.items():
-        print(f"\n🔹 Training {model_name} on all stations...")
+        print(f"\n🔹 Training {model_name} across stations...\n")
 
-        print(f"\n🔹 Using Features: {all_features}")
+        # Train on all stations EXCEPT the target station
+        history = model.fit(
+            X_train, y_train,
+            validation_data=(X_val, y_val),  # Validate on past years of target station
+            epochs=args.epochs,
+            verbose=1,
+            callbacks=[EarlyStopping(monitor='val_loss', patience=args.patience, restore_best_weights=True)]
+        )
 
-        for train_station in [s for s in stations if s != "Station6"]:
-            print(f"\n🔹 Training {model_name} on {train_station} with {len(all_features)} features...")
+        print("\n🔹 Final Evaluation on Test Set...\n")
+        performance = evaluate_model(model, X_test, y_test)  
 
-            # Normalize data for train, validation, and test sets
-            scaled_train, scaler = normalize_data(engineered_dfs[train_station], all_features)
-            scaled_val, _ = normalize_data(val_df, all_features)
-            scaled_test, _ = normalize_data(test_df, all_features)
+        # Save the trained model
+        model_path = os.path.join("models", f"{model_name}.keras")
+        model.save(model_path)
+        print(f"✅ {model_name} saved at {model_path}")
 
-            # Convert to supervised learning format
-            X_train, y_train = data_to_X_y(scaled_train, args.window_size, args.offset)
-            X_val, y_val = data_to_X_y(scaled_val, args.window_size, args.offset)
-            X_test, y_test = data_to_X_y(scaled_test, args.window_size, args.offset)
+        # Save results
+        write_model_results_to_csv(target_station, model_name, args.window_size, args.offset, performance, '_'.join(all_features))
+        write_loss_history_to_csv(target_station, model_name, args.window_size, args.offset, history.history, '_'.join(all_features))
 
-            # Train the model
-            history = model.fit(
-                X_train, y_train,
-                validation_data=(X_val, y_val),
-                epochs=args.epochs,
-                callbacks=[EarlyStopping(monitor='val_loss', patience=args.patience, restore_best_weights=True)]
-            )
+        print(f"✅ {model_name} Final Test Loss: {performance['mean_squared_error']}\n")
 
-            # Save training history
-            history_dicts[f"{model_name}_{train_station}"] = history.history
+    print("✅ All Runs Complete! All results saved.")
 
-            # Evaluate model
-            performance[train_station] = evaluate_model(model, X_test, y_test)
-            val_performance[train_station] = evaluate_model(model, X_val, y_val)
-
-            # Save model
-            model_path = os.path.join("models", f"{model_name}_{train_station}.keras")
-            model.save(model_path)
-            print(f"{model_name} model saved at {model_path}")
-
-            # Save results
-            write_model_results_to_csv(train_station, model_name, args.window_size, args.offset, performance[train_station], '_'.join(all_features))
-            write_loss_history_to_csv(train_station, model_name, args.window_size, args.offset, history.history, '_'.join(all_features))
-
-            print(f"{model_name} Model Test Loss: {performance[train_station]['mean_squared_error']}")
-
-    print("Training complete! All results saved.")
 
 
 
