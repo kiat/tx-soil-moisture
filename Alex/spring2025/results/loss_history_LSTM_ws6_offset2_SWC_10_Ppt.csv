@@ -1,0 +1,2 @@
+Station,Model,Features,Offset,Epoch,Loss,Validation Loss
+Station6,LSTM,SWC_10_Ppt,2,1,0.0029607792384922504,0.0015971127431839705

@@ -43,6 +43,10 @@ def data_to_X_y(data, window_size, offset):
     for i in range(len(data) - window_size - offset):
         X.append(data[i:i+window_size, :])  
         y.append(data[i + window_size + offset, 0])  
+    X = np.array(X)
+    y = np.array(y)
+    
+    # print(f"Generated X shape: {X.shape}, y shape: {y.shape}")  # Debugging
     return np.array(X), np.array(y)
 
 def compile_lstm(input_shape, learning_rate=0.0001):
@@ -92,6 +96,16 @@ def compile_cnn(input_shape, learning_rate=0.0001):
 
 def evaluate_model(model, X_test, y_test):
     predictions = model.predict(X_test).flatten()
+
+    y_test = y_test.flatten()
+
+    # Debugging: Print shapes to ensure consistency
+    print(f"Predictions shape: {predictions.shape}, y_test shape: {y_test.shape}")
+
+    # Ensure no shape mismatches
+    if predictions.shape != y_test.shape:
+        raise ValueError(f"Shape mismatch: predictions {predictions.shape}, y_test {y_test.shape}")
+
     return {
         "r2_score": r2_score(y_test, predictions),
         "mean_squared_error": mean_squared_error(y_test, predictions),
@@ -114,22 +128,24 @@ def split_and_stack_data(dfs, test_station_name="Station6", remove_met=False):
     
     return dfs, val_df, test_df
 
+import os
+
 def write_loss_history_to_csv(station, model_name, window_size, offset, history, feature_str):
     """Saves loss history to a unique CSV file including offset and feature set."""
     
-    # Define unique filename per run
-    loss_file = f"loss_history_{model_name}_ws{window_size}_offset{offset}_{feature_str}.csv"
-    
-    # Check if the file already exists
+    # Ensure the results directory exists
+    results_dir = "results"
+    os.makedirs(results_dir, exist_ok=True)
+
+    # Define loss history file path inside the results folder
+    loss_file = os.path.join(results_dir, f"loss_history_{model_name}_ws{window_size}_offset{offset}_{feature_str}.csv")
     file_exists = os.path.isfile(loss_file)
-    
+
     # Define CSV headers
     headers = ["Station", "Model", "Features", "Offset", "Epoch", "Loss", "Validation Loss"]
 
-    # Open in write mode if file exists (reset each run)
-    mode = "w" if file_exists else "a"
-
-    with open(loss_file, mode, newline="") as file:
+    # Write loss history
+    with open(loss_file, mode="a", newline="") as file:
         writer = csv.writer(file)
         
         # Write headers only if file is new
@@ -140,18 +156,28 @@ def write_loss_history_to_csv(station, model_name, window_size, offset, history,
         for epoch, (loss, val_loss) in enumerate(zip(history["loss"], history["val_loss"])):
             writer.writerow([station, model_name, feature_str, offset, epoch + 1, loss, val_loss])
 
-    print(f"Saved loss history for {model_name} (ws={window_size}, offset={offset}, features={feature_str}) on {station} to {loss_file}")
+    print(f"Saved loss history for {model_name} on {station} in {loss_file}")
+
     
-    
+import os
+
 def write_model_results_to_csv(station, model_name, window_size, offset, performance, feature_str):
-    results_file = f"results_{model_name}_ws{window_size}_offset{offset}_{feature_str}.csv"
+    # Ensure the results directory exists
+    results_dir = "results"
+    os.makedirs(results_dir, exist_ok=True)
+
+    # Define results file path inside the folder
+    results_file = os.path.join(results_dir, f"results_{model_name}_ws{window_size}_offset{offset}_{feature_str}.csv")
     file_exists = os.path.isfile(results_file)
+
+    # Define CSV headers
     headers = ["Station", "Model", "Features", "Offset", "R2", "MSE", "MAE", "MAPE", "SMAPE", "RSE", "CORR"]
-    
+
+    # Write results
     with open(results_file, mode="a", newline="") as file:
         writer = csv.writer(file)
         if not file_exists:
-            writer.writerow(headers)
+            writer.writerow(headers)  # Write header only if the file is new
         writer.writerow([
             station, model_name, feature_str, offset,
             performance.get("r2_score"),
@@ -162,12 +188,16 @@ def write_model_results_to_csv(station, model_name, window_size, offset, perform
             performance.get("rse"),
             performance.get("corr")
         ])
-    print(f"Saved model results for {model_name} on {station} with {len(feature_str.split('_'))} features to {results_file}")
+    
+    print(f"Saved model results for {model_name} on {station} in {results_file}")
+
 
 from preprocess_data import read_and_save_parquet, engineer_and_save_data
 
     
 def main(args):
+    model_dir = "models"
+    os.makedirs(model_dir, exist_ok=True)
     # read_and_save_parquet()
     # engineer_and_save_data()
     stations = ['Station1', 'Station2', 'Station3', 'Station4', 'Station5', 'Station6']
@@ -183,6 +213,7 @@ def main(args):
     engineered_dfs, val_df, test_df = split_and_stack_data(engineered_dfs, test_station_name=target_station, remove_met=False)
 
     all_features = args.features.split(',') if args.features else ['SWC_20', 'T_20', 'Ppt', 'Tair', 'Wx', 'Wy']
+    
 
     # Prepare validation & test sets
     scaled_val, _ = normalize_data(val_df, all_features)
@@ -203,6 +234,17 @@ def main(args):
     X_train = np.concatenate([data[0] for data in train_data], axis=0)
     y_train = np.concatenate([data[1] for data in train_data], axis=0)
 
+    # Ensure y is the right shape
+    y_train = y_train.reshape(-1, 1)
+    y_val = y_val.reshape(-1, 1)
+    y_test = y_test.reshape(-1, 1)
+
+    # Print for debugging
+    print(f"X_train shape: {X_train.shape}, y_train shape: {y_train.shape}")
+    print(f"X_val shape: {X_val.shape}, y_val shape: {y_val.shape}")
+    print(f"X_test shape: {X_test.shape}, y_test shape: {y_test.shape}")
+    print(f"Features being used: {all_features}")
+
     print(f"\n🔹 Training on {len(stations)-1} stations and testing on {target_station}...\n")
 
     # Define models to train
@@ -212,9 +254,11 @@ def main(args):
         "RNN": compile_rnn((args.window_size, len(all_features)), learning_rate=0.0001),
         "CNN": compile_cnn((args.window_size, len(all_features)), learning_rate=0.0001)
     }
+    model_list = args.model_names.split(",") if args.model_names else ["LSTM"]
+    model_names = {name: models[name] for name in model_list}
 
     # Train each model with transfer learning
-    for model_name, model in models.items():
+    for model_name, model in model_names.items():
         print(f"\n🔹 Training {model_name} across stations...\n")
 
         # Train on all stations EXCEPT the target station
@@ -230,7 +274,7 @@ def main(args):
         performance = evaluate_model(model, X_test, y_test)  
 
         # Save the trained model
-        model_path = os.path.join("models", f"{model_name}.keras")
+        model_path = os.path.join(model_dir, f"{model_name}.keras")
         model.save(model_path)
         print(f"✅ {model_name} saved at {model_path}")
 
@@ -253,6 +297,8 @@ if __name__ == "__main__":
     parser.add_argument('--patience', type=int, default=3, help='Early stopping patience')
     parser.add_argument("--features", type=str, default="SWC_20,T_20,Ppt,Tair,Wx,Wy",
                     help="Comma-separated list of features to use in training")
+    parser.add_argument("--model_names", type=str, default="LSTM",
+                    help="Comma-separated list of model names to train")
 
     args = parser.parse_args()
     main(args)
