@@ -17,14 +17,11 @@ from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_percenta
 
 def compile_lstm(input_shape):
     model = Sequential([
-        LSTM(16, input_shape=input_shape, return_sequences=True),
-        # LSTM(128, activation='relu', input_shape=input_shape, return_sequences=True),
-        # LSTM(64, activation='relu', return_sequences=True),
-        # Bidirectional(LSTM(32, return_sequences=False)), 
-        # Dense(64, activation='relu'),
-        Dense(16, activation='relu'),
+        LSTM(32, input_shape=input_shape),
+        Dense(32, activation='relu'),
         Dense(1, activation='linear')
     ])
+
     return model
 
 def compile_bilstm(input_shape):

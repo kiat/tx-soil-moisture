@@ -16,7 +16,7 @@ from tensorflow.keras.metrics import RootMeanSquaredError, MeanAbsolutePercentag
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import mean_squared_error, mean_absolute_error, mean_absolute_percentage_error
 
-from scipy import stats
+from scipy.stats import pearsonr
 
 from preprocess_data import read_and_save_parquet, engineer_and_save_data
 from models import * 
@@ -57,15 +57,20 @@ def normalize_data(df, features):
 
 ###########################################
 
+# def data_to_X_y(data, window_size, offset):
+#     X, y = [], []
+#     for i in range(len(data) - window_size - offset):
+#         X.append(data[i:i+window_size, :])  
+#         y.append(data[i + window_size + offset, 0])  
+
+#     return  np.array(X),  np.array(y)
+
 
 def data_to_X_y(data, window_size, offset):
-    X, y = [], []
-    for i in range(len(data) - window_size - offset):
-        X.append(data[i:i+window_size, :])  
-        y.append(data[i + window_size + offset, 0])  
-    return np.array(X), np.array(y)
-
-
+    rows = len(data) - window_size - offset
+    X = np.lib.stride_tricks.sliding_window_view(data, (window_size, data.shape[1]))[:rows, 0]
+    y = data[window_size + offset : window_size + offset + rows, 0]
+    return X, y
 
 ###############################################################################
 ###############################################################################
@@ -76,22 +81,24 @@ def evaluate_model(model, X_test, y_test):
     """
     Evaluation of Models. Metrics are: MSE, MAE, MAPE, SMAPE, RSE, CORR
     """
-
     predictions = model.predict(X_test).flatten()
+    y_test = y_test.flatten()
+    
+    # Ensure no shape mismatches
+    if predictions.shape != y_test.shape:
+        raise ValueError(f"Shape mismatch: predictions {predictions.shape}, y_test {y_test.shape}")
 
-    if(y_test.size != predictions.size):
-        print("Predictions size does not match the test data size.")
-        print(y_test.size ,  predictions.size)
-        return 
-
-    return {
+    final_results =  {
         "mean_squared_error": mean_squared_error(y_test, predictions),
-        "mean_absolute_error":mean_absolute_error(y_test - predictions),
+        "mean_absolute_error":mean_absolute_error(y_test , predictions),
         "mean_absolute_percentage_error": mean_absolute_percentage_error(y_test, predictions),
         "smape": smape(y_test, predictions),
         "rse": compute_rse(y_test, predictions),
-        "corr": stats.pearsonr(y_test, predictions)
+        "corr": pearsonr(y_test, predictions).statistic
     }
+
+    print(final_results)
+    return final_results
 
 
 ###############################################################################
@@ -118,8 +125,12 @@ def split_and_stack_data(dfs, test_station_name="Station6", remove_met=False):
 def write_loss_history_to_csv(station, model_name, window_size, offset, history, feature_str):
     """Saves loss history to a unique CSV file including offset and feature set."""
     
-    # Define unique filename per run
-    loss_file = f"loss_history_{model_name}_ws{window_size}_offset{offset}_{feature_str}.csv"
+     # Ensure the results directory exists
+    results_dir = "results"
+    os.makedirs(results_dir, exist_ok=True)
+ 
+    # Define loss history file path inside the results folder
+    loss_file = os.path.join(results_dir, f"loss_history_{model_name}_ws{window_size}_offset{offset}_{feature_str}.csv")
     
     # Check if the file already exists
     file_exists = os.path.isfile(loss_file)
@@ -130,7 +141,7 @@ def write_loss_history_to_csv(station, model_name, window_size, offset, history,
     # Open in write mode if file exists (reset each run)
     mode = "w" if file_exists else "a"
 
-    with open(loss_file, mode, newline="") as file:
+    with open(loss_file, mode=mode, newline="") as file:
         writer = csv.writer(file)
         
         # Write headers only if file is new
@@ -148,11 +159,20 @@ def write_loss_history_to_csv(station, model_name, window_size, offset, history,
 
     
 def write_model_results_to_csv(station, model_name, window_size, offset, performance, feature_str):
-    results_file = f"results_{model_name}_ws{window_size}_offset{offset}_{feature_str}.csv"
+
+    # Ensure the results directory exists
+    results_dir = "results"
+    os.makedirs(results_dir, exist_ok=True)
+
+    results_file = os.path.join(results_dir, f"results_{model_name}_ws{window_size}_offset{offset}_{feature_str}.csv")
+
     file_exists = os.path.isfile(results_file)
     headers = ["Station", "Model", "Features", "Offset", "R2", "MSE", "MAE", "MAPE", "SMAPE", "RSE", "CORR"]
     
-    with open(results_file, mode="a", newline="") as file:
+    # Open in write mode if file exists (reset each run)
+    mode = "w" if file_exists else "a"
+    
+    with open(results_file, mode=mode, newline="") as file:
         writer = csv.writer(file)
         if not file_exists:
             writer.writerow(headers)
@@ -177,13 +197,17 @@ def write_model_results_to_csv(station, model_name, window_size, offset, perform
 
     
 def main(args):
+
+    model_dir = "models"
+    os.makedirs(model_dir, exist_ok=True)
+    
     # read_and_save_parquet()
     # engineer_and_save_data()
     stations = ['Station1', 'Station2', 'Station3', 'Station4', 'Station5', 'Station6']
     target_station = stations[-1]  # Dynamically select the target station
 
     # Load all station data
-    engineered_dfs = {station: pd.read_parquet(f"{station}_engineered.parquet") for station in stations}
+    engineered_dfs = {station: pd.read_parquet(f"datasets_parquet/{station}_engineered.parquet") for station in stations}
 
     # Split data:
     # - `val_df` → Past years of target station (validation)
@@ -214,6 +238,17 @@ def main(args):
 
     print(f"\nTraining on {len(stations)-1} stations and testing on {target_station}...\n")
 
+    # Ensure y is the right shape
+    y_train = y_train.reshape(-1, 1)
+    y_val = y_val.reshape(-1, 1)
+    y_test = y_test.reshape(-1, 1)
+
+    # Print for debugging
+    print(f"X_train shape: {X_train.shape}, y_train shape: {y_train.shape}")
+    print(f"X_val shape: {X_val.shape}, y_val shape: {y_val.shape}")
+    print(f"X_test shape: {X_test.shape}, y_test shape: {y_test.shape}")
+    print(f"Features being used: {all_features}")
+
     # Define models to train
     models = {
         "LSTM": compile_lstm((args.window_size, len(all_features))),
@@ -230,7 +265,7 @@ def main(args):
     for model_name, model in models_we_process.items():
         print(f"\n Training {model_name} across stations...\n")
 
-        model.compile(loss=MeanSquaredError(), optimizer=Adam(learning_rate=0.0001), metrics=[RootMeanSquaredError()])
+        model.compile(loss=MeanSquaredError(), optimizer=Adam(learning_rate=0.001), metrics=[RootMeanSquaredError(), MeanAbsolutePercentageError()])
         
         # Train on all stations EXCEPT the target station
         history = model.fit(
@@ -245,7 +280,10 @@ def main(args):
         performance = evaluate_model(model, X_test, y_test)  
 
         # Save the trained model
-        model_path = os.path.join("models", f"{model_name}.keras")
+        # model_path = os.path.join("models", f"{model_name}.keras")
+
+        main_name = f"model_{model_name}_ws{args.window_size}_offset{args.offset}_{args.features}"
+        model_path = os.path.join(model_dir, f"{main_name}.keras")
         model.save(model_path)
         print(f"{model_name} saved at {model_path}")
 
@@ -266,8 +304,7 @@ if __name__ == "__main__":
     parser.add_argument('--offset', type=int, default=24, help='Offset for prediction')
     parser.add_argument('--epochs', type=int, default=10, help='Number of training epochs')
     parser.add_argument('--patience', type=int, default=3, help='Early stopping patience')
-    parser.add_argument("--features", type=str, default="SWC_20,T_20,Ppt,Tair,Wx,Wy",
-                    help="Comma-separated list of features to use in training")
+    parser.add_argument("--features", type=str, default="SWC_20,T_20,Ppt,Tair,Wx,Wy", help="Comma-separated list of features to use in training")
     parser.add_argument("--model_names", type=str, default="LSTM,CNN",  help="Comma-separated list of Models short form like LSTM,CNN")
     args = parser.parse_args()
     main(args)
