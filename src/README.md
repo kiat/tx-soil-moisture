@@ -117,3 +117,13 @@ These files contain the trained deep learning models, which can be loaded for in
 ```
 python3 main.py --window_size 6 --offset 2 --epochs 1 --patience 1 --features "SWC_10,Ppt" --model_names "LSTM"
 ```
+
+
+# Clean up 
+
+```
+make clean 
+```
+
+
+
