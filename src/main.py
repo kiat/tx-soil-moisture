@@ -51,9 +51,20 @@ def compute_rse(y_true, y_pred):
 ##########################################
 def normalize_data(df, features):
     scaler = MinMaxScaler()
-    data = df[features]
-    scaled_data = scaler.fit_transform(data)
-    return scaled_data, scaler
+
+    no_scale_features = [feat for feat in features if 'sin' in feat or 'cos' in feat]
+    scale_features = [feat for feat in features if feat not in no_scale_features]
+
+    df = df.reset_index(drop=True)
+
+    scaled_data = scaler.fit_transform(df[scale_features])
+    scaled_df = pd.DataFrame(scaled_data, columns=scale_features)
+
+    scaled_df = pd.concat([scaled_df, df[no_scale_features]], axis=1)
+
+    scaled_df = scaled_df[features]
+
+    return scaled_df.to_numpy(), scaler
 
 ###########################################
 
@@ -208,13 +219,17 @@ def main(args):
 
     # Load all station data
     engineered_dfs = {station: pd.read_parquet(f"datasets_parquet/{station}_engineered.parquet") for station in stations}
-
+    
     # Split data:
     # - `val_df` → Past years of target station (validation)
     # - `test_df` → Current year of target station (testing)
     # - `train_dfs` → All other stations (training)
     engineered_dfs, val_df, test_df = split_and_stack_data(engineered_dfs, test_station_name=target_station, remove_met=False)
-
+    print("FEATURES IN THE DATA\n")
+    for station, df in engineered_dfs.items():
+        print(f"--- {station} ---")
+        print(df.describe())  # Summary statistics
+        print("\n")
     all_features = args.features.split(',') if args.features else ['SWC_20', 'T_20', 'Ppt', 'Tair', 'Wx', 'Wy']
 
     # Prepare validation & test sets

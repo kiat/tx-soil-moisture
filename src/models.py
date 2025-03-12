@@ -39,7 +39,7 @@ def compile_bilstm(input_shape):
 
 def compile_rnn(input_shape):
     model = Sequential([
-        InputLayer(shape=input_shape),
+        Input(shape=input_shape),
         SimpleRNN(32),
         Dense(8, activation='relu'),
         Dense(1, activation='linear')
@@ -48,7 +48,7 @@ def compile_rnn(input_shape):
 
 def compile_cnn(input_shape):
     model = Sequential([
-        InputLayer(shape=input_shape),
+        Input(shape=input_shape),
         Conv1D(filters=32, kernel_size=3, activation='tanh'),
         Flatten(),
         Dense(8, activation='relu'),
