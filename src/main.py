@@ -178,7 +178,7 @@ def write_model_results_to_csv(station, model_name, window_size, offset, perform
     results_file = os.path.join(results_dir, f"results_{model_name}_ws{window_size}_offset{offset}_{feature_str}.csv")
 
     file_exists = os.path.isfile(results_file)
-    headers = ["Station", "Model", "Features", "Offset", "R2", "MSE", "MAE", "MAPE", "SMAPE", "RSE", "CORR"]
+    headers = ["Station", "Model", "Features", "Offset", "MSE", "MAE", "MAPE", "SMAPE", "RSE", "CORR"]
     
     # Open in write mode if file exists (reset each run)
     mode = "w" if file_exists else "a"
