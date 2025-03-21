@@ -18,8 +18,10 @@ from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_percenta
 def compile_lstm(input_shape):
     model = Sequential([
         Input(shape=input_shape),
-        LSTM(32),
-        Dense(32, activation='relu'),
+        LSTM(32 , activation='tanh', return_sequences=True),
+        LSTM(16, activation='tanh', return_sequences=True),
+        LSTM(8, activation='tanh', return_sequences=False),
+        Dense(8, activation='tanh'),
         Dense(1, activation='linear')
     ])
 
@@ -31,7 +33,7 @@ def compile_bilstm(input_shape):
         Bidirectional(LSTM(32, activation='tanh', return_sequences=True)),
         Bidirectional(LSTM(16, return_sequences=True)),
         Bidirectional(LSTM(8, return_sequences=False)),
-        Dense(8, activation='relu'),
+        Dense(8, activation='tanh'),
         Dense(1, activation='linear')
     ])
     return model
@@ -51,7 +53,7 @@ def compile_cnn(input_shape):
         Input(shape=input_shape),
         Conv1D(filters=32, kernel_size=3, activation='tanh'),
         Flatten(),
-        Dense(8, activation='relu'),
+        Dense(8, activation='tanh'),
         Dense(1, activation='linear')
     ])
     
