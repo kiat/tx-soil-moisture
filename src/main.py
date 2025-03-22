@@ -169,13 +169,13 @@ def write_loss_history_to_csv(station, model_name, window_size, offset, history,
 ###############################################################################
 
     
-def write_model_results_to_csv(station, model_name, window_size, offset, performance, feature_str):
+def write_model_results_to_csv(station, window_size, offset, performance, feature_str):
 
     # Ensure the results directory exists
     results_dir = "results"
     os.makedirs(results_dir, exist_ok=True)
 
-    results_file = os.path.join(results_dir, f"results_{model_name}_ws{window_size}_offset{offset}_{feature_str}.csv")
+    results_file = os.path.join(results_dir, f"results_ws{window_size}_offset{offset}_{feature_str}.csv")
 
     file_exists = os.path.isfile(results_file)
     headers = ["Station", "Model", "Features", "Offset", "MSE", "MAE", "MAPE", "SMAPE", "RSE", "CORR"]
@@ -303,7 +303,7 @@ def main(args):
         print(f"{model_name} saved at {model_path}")
 
         # Save results
-        write_model_results_to_csv(target_station, model_name, args.window_size, args.offset, performance, '_'.join(all_features))
+        write_model_results_to_csv(target_station, args.window_size, args.offset, performance, '_'.join(all_features))
         write_loss_history_to_csv(target_station, model_name, args.window_size, args.offset, history.history, '_'.join(all_features))
 
         print(f"{model_name} Final Test Loss: {performance['mean_squared_error']}\n")
