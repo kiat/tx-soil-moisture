@@ -18,7 +18,7 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error, mean_absolu
 
 from scipy.stats import pearsonr
 
-from preprocess_data import read_and_save_parquet, engineer_and_save_data
+from preprocess_data import read_and_process_csvs, engineer_features
 from models import * 
 
 import numpy as np
@@ -212,13 +212,13 @@ def main(args):
     model_dir = "models"
     os.makedirs(model_dir, exist_ok=True)
     
-    # read_and_save_parquet()
     # engineer_and_save_data()
     stations = ['Station1', 'Station2', 'Station3', 'Station4', 'Station5', 'Station6']
     target_station = stations[-1]  # Dynamically select the target station
 
-    # Load all station data
-    engineered_dfs = {station: pd.read_parquet(f"datasets_parquet/{station}_engineered.parquet") for station in stations}
+    # Load and process raw CSVs in-memory
+    raw_dfs = read_and_process_csvs()
+    engineered_dfs = engineer_features(raw_dfs)
     
     # Split data:
     # - `val_df` → Past years of target station (validation)
