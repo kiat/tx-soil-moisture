@@ -141,7 +141,7 @@ def write_loss_history_to_csv(station, model_name, window_size, offset, history,
     os.makedirs(results_dir, exist_ok=True)
  
     # Define loss history file path inside the results folder
-    loss_file = os.path.join(results_dir, f"loss_history_{model_name}_ws{window_size}_offset{offset}_{feature_str}.csv")
+    loss_file = os.path.join(results_dir, f"loss_history_ws{window_size}_offset{offset}_{feature_str}.csv")
     
     # Check if the file already exists
     file_exists = os.path.isfile(loss_file)
@@ -150,7 +150,7 @@ def write_loss_history_to_csv(station, model_name, window_size, offset, history,
     headers = ["Station", "Model", "Features", "Offset", "Epoch", "Loss", "Validation Loss"]
 
     # Open in write mode if file exists (reset each run)
-    mode = "w" if file_exists else "a"
+    mode = "a" if file_exists else "w"
 
     with open(loss_file, mode=mode, newline="") as file:
         writer = csv.writer(file)
@@ -169,7 +169,7 @@ def write_loss_history_to_csv(station, model_name, window_size, offset, history,
 ###############################################################################
 
     
-def write_model_results_to_csv(station, window_size, offset, performance, feature_str):
+def write_model_results_to_csv(station, model_name, window_size, offset, performance, feature_str):
 
     # Ensure the results directory exists
     results_dir = "results"
@@ -181,7 +181,7 @@ def write_model_results_to_csv(station, window_size, offset, performance, featur
     headers = ["Station", "Model", "Features", "Offset", "MSE", "MAE", "MAPE", "SMAPE", "RSE", "CORR"]
     
     # Open in write mode if file exists (reset each run)
-    mode = "w" if file_exists else "a"
+    mode = "a" if file_exists else "w"
     
     with open(results_file, mode=mode, newline="") as file:
         writer = csv.writer(file)
@@ -269,7 +269,10 @@ def main(args):
         "LSTM": compile_lstm((args.window_size, len(all_features))),
         "BiLSTM": compile_bilstm((args.window_size, len(all_features))),
         "RNN": compile_rnn((args.window_size, len(all_features))),
-        "CNN": compile_cnn((args.window_size, len(all_features)))
+        "CNN": compile_cnn((args.window_size, len(all_features))),
+        "AttentionLSTM": compile_attention_lstm((args.window_size, len(all_features))),
+        # "Autoencoder": compile_lstm_autoencoder((args.window_size, len(all_features))),
+        # "AttentionAutoencoder": compile_attention_autoencoder((args.window_size, len(all_features))),
     }
 
     # Keep only the models that are passed by arguments.
@@ -303,7 +306,7 @@ def main(args):
         print(f"{model_name} saved at {model_path}")
 
         # Save results
-        write_model_results_to_csv(target_station, args.window_size, args.offset, performance, '_'.join(all_features))
+        write_model_results_to_csv(target_station, model_name, args.window_size, args.offset, performance, '_'.join(all_features))
         write_loss_history_to_csv(target_station, model_name, args.window_size, args.offset, history.history, '_'.join(all_features))
 
         print(f"{model_name} Final Test Loss: {performance['mean_squared_error']}\n")
