@@ -25,20 +25,13 @@ import numpy as np
 
 
 ##########################################
-def smape(y_true, y_pred):
-    """
-    Calculates Symmetric Mean Absolute Percentage Error (SMAPE).
-
-    Parameters:
-    y_true (array-like): Array of actual values.
-    y_pred (array-like): Array of predicted values.
-
-    Returns:
-    float: SMAPE value.
-    """
+def smape(y_true, y_pred, epsilon=1e-8):
     y_true = np.array(y_true)
     y_pred = np.array(y_pred)
-    return np.mean(2 * np.abs(y_pred - y_true) / (np.abs(y_true) + np.abs(y_pred))) * 100
+    denominator = np.abs(y_true) + np.abs(y_pred)
+    smape = 2 * np.abs(y_pred - y_true) / np.maximum(denominator, epsilon)
+    return np.mean(smape) * 100
+
 
 ##########################################
 def compute_rse(y_true, y_pred):
@@ -275,9 +268,6 @@ def main(args):
         "AttentionLSTM": compile_attention_lstm((args.window_size, len(all_features))),
         "Autoregressive": compile_autoregressive((args.window_size, len(all_features))),
         "Baseline": Baseline(),
-        
-        # "Autoencoder": compile_lstm_autoencoder((args.window_size, len(all_features))),
-        # "AttentionAutoencoder": compile_attention_autoencoder((args.window_size, len(all_features))),
     }
 
     # Keep only the models that are passed by arguments.
