@@ -220,6 +220,8 @@ def main(args):
     raw_dfs = read_and_process_csvs()
     engineered_dfs = engineer_features(raw_dfs)
     
+    
+    
     # Split data:
     # - `val_df` → Past years of target station (validation)
     # - `test_df` → Current year of target station (testing)
@@ -271,6 +273,9 @@ def main(args):
         "RNN": compile_rnn((args.window_size, len(all_features))),
         "CNN": compile_cnn((args.window_size, len(all_features))),
         "AttentionLSTM": compile_attention_lstm((args.window_size, len(all_features))),
+        "Autoregressive": compile_autoregressive((args.window_size, len(all_features))),
+        "Baseline": Baseline(),
+        
         # "Autoencoder": compile_lstm_autoencoder((args.window_size, len(all_features))),
         # "AttentionAutoencoder": compile_attention_autoencoder((args.window_size, len(all_features))),
     }
@@ -282,7 +287,19 @@ def main(args):
     # Train each model with transfer learning
     for model_name, model in models_we_process.items():
         print(f"\n Training {model_name} across stations...\n")
+        
+        if model_name == "Baseline":
+            model.fit(X_train, y_train)
+            performance = evaluate_model(model, X_test, y_test)
 
+            model_path = os.path.join(model_dir, f"model_{model_name}_NOTE.txt")
+            with open(model_path, "w") as f:
+                f.write("Baseline model - no weights saved.\n")
+
+            write_model_results_to_csv(target_station, model_name, args.window_size, args.offset, performance, '_'.join(all_features))
+            print(f"{model_name} Final Test Loss: {performance['mean_squared_error']}\n")
+            continue  # skip to next model
+        
         model.compile(loss=MeanSquaredError(), optimizer=Adam(learning_rate=0.001), metrics=[RootMeanSquaredError(), MeanAbsolutePercentageError()])
         
         # Train on all stations EXCEPT the target station
@@ -323,6 +340,6 @@ if __name__ == "__main__":
     parser.add_argument('--epochs', type=int, default=10, help='Number of training epochs')
     parser.add_argument('--patience', type=int, default=3, help='Early stopping patience')
     parser.add_argument("--features", type=str, default="SWC_20,T_20,Ppt,Tair,Wx,Wy", help="Comma-separated list of features to use in training")
-    parser.add_argument("--model_names", type=str, default="LSTM,CNN",  help="Comma-separated list of Models short form like LSTM,CNN")
+    parser.add_argument("--model_names", type=str, default="LSTM,BiLSTM,RNN,CNN,AttentionLSTM,Autoregressive,Baseline",  help="Comma-separated list of Models short form like LSTM,CNN")
     args = parser.parse_args()
     main(args)

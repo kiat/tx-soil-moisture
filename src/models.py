@@ -7,6 +7,16 @@ from tensorflow.keras.losses import MeanSquaredError
 from tensorflow.keras.metrics import RootMeanSquaredError
 from keras_self_attention import SeqSelfAttention
 
+#AR
+def compile_autoregressive(input_shape):
+    model = Sequential([
+        InputLayer(input_shape=input_shape),
+        tf.keras.layers.GlobalAveragePooling1D(),
+        Dense(64, activation='relu'),
+        Dense(1, activation='linear')
+    ])
+    return model
+
 # Standard LSTM model
 def compile_lstm(input_shape):
     model = Sequential([
@@ -60,7 +70,7 @@ def compile_cnn(input_shape):
 
 
 # Attention-LSTM model
-def compile_attention_lstm(input_shape, learning_rate=0.0001):
+def compile_attention_lstm(input_shape):
     model = Sequential([
         InputLayer(input_shape=input_shape),
         LSTM(32, return_sequences=True),
@@ -69,37 +79,12 @@ def compile_attention_lstm(input_shape, learning_rate=0.0001):
         Dense(8, activation='relu'),
         Dense(1, activation='linear')
     ])
-    model.compile(
-        loss=MeanSquaredError(),
-        optimizer=Adam(learning_rate),
-        metrics=[RootMeanSquaredError()]
-    )
+    
     return model
 
-# # LSTM Autoencoder
-# def compile_lstm_autoencoder(input_shape, learning_rate=0.001):
-#     model = Sequential([
-#         LSTM(128, activation='relu', input_shape=input_shape, return_sequences=True),
-#         LSTM(64, activation='relu', return_sequences=False),
-#         RepeatVector(input_shape[0]),
-#         LSTM(64, activation='relu', return_sequences=True),
-#         LSTM(128, activation='relu', return_sequences=True),
-#         TimeDistributed(Dense(input_shape[1]))
-#     ])
-#     model.compile(optimizer=Adam(learning_rate), loss='mse')
-#     return model
+class Baseline:
+    def fit(self, X, y, *args, **kwargs):
+        return self  # no training
 
-# # Hybrid Attention-LSTM Autoencoder
-# def compile_attention_autoencoder(input_shape, learning_rate=0.001):
-#     model = Sequential([
-#         InputLayer(input_shape=input_shape),
-#         LSTM(64, return_sequences=True),
-#         SeqSelfAttention(attention_activation='softmax'),
-#         LSTM(32, return_sequences=False),
-#         RepeatVector(input_shape[0]),
-#         LSTM(32, return_sequences=True),
-#         LSTM(64, return_sequences=True),
-#         TimeDistributed(Dense(input_shape[1]))
-#     ])
-#     model.compile(optimizer=Adam(learning_rate), loss='mse')
-#     return model
+    def predict(self, X):
+        return X[:, -1, 0]
