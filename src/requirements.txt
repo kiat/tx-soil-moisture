@@ -1,0 +1,7 @@
+pandas
+numpy
+tensorflow
+scikit-learn
+fastparquet
+argparse
+keras_self_attention
