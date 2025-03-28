@@ -14,6 +14,8 @@ scikit-learn
 fastparquet
 argparse
 stats
+keras-attention
+keras_self_attention
 ```
 
 Alternatively, install manually using:
