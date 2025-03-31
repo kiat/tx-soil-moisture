@@ -1,4 +1,60 @@
-## Overview
+# TX-SOIL-MOISTURE Data Visualization & Analysis
+
+This repository contains a suite of scripts and interactive notebooks to explore, visualize, and analyze the revised final data for TX-SOIL-MOISTURE. The data are stored in the folder `datasets/Revised_Final_Data` with file names like `Station1_Revised_Final_Data.csv`, `Station2_Revised_Final_Data.csv`, etc., for stations 1 through 6.
+
+---
+
+## Static Plotting Scripts
+
+These scripts generate static charts and save them as PDF files.
+
+### Script 1. `script_plot_swc_yearly.py`
+- **Purpose:**  
+  Plots a line chart for a specified SWC parameter (e.g. `SWC_10`) for each year within a given range.  
+  Each year is plotted on a separate page in a single PDF.
+- **Usage Example:**
+  ```bash
+  python3 script_plot_swc_yearly.py --param SWC_10 --station 1 --start_year 2015 --end_year 2020
+  ```
+
+---
+
+### Script 2: `script_plot_swc_monthly.py`
+- **Purpose:**  
+  Computes and plots the monthly average of a chosen SWC parameter for each year.  
+  Each year’s monthly averages are displayed as a bar chart on a separate page of a PDF.
+- **Usage Example:**  
+  ```bash
+  python3 script_plot_swc_monthly.py --param SWC_10 --station 1 --start_year 2015 --end_year 2020
+  ```
+
+---
+
+### Script 3: `script_plot_swc_violin.py`
+- **Purpose:**  
+  Visualizes the distribution of a specified SWC parameter (e.g. `SWC_10`) for each year using violin plots.  
+  The script produces a single PDF where each page shows one year’s violin plot or arranges all years side by side for horizontal comparison.
+- **Usage Example (side-by-side):**  
+  ```bash
+  python3 script_plot_swc_violin.py --param SWC_10 --station 1 --start_year 2015 --end_year 2020
+  ```
+  
+---
+
+### Script 4: `script_plot_ppt_monthly.py`
+- **Purpose:**  
+  Calculates the monthly total precipitation (Ppt) for each year and plots it as a bar chart.  
+  Each year’s bar chart is saved on a separate page in a PDF.
+- **Usage Example:**  
+  ```bash
+  python3 script_plot_ppt_monthly.py --station 1 --start_year 2015 --end_year 2020
+  ```
+
+---
+
+## Dynamic Plotting
+
+### `Dynamic_Data_Visualization.ipynb`
 
 This notebook provides an interactive interface to explore and visualize the revised final data for TX-SOIL-MOISTURE. 
 Used Data in `../datasets/Revised_Final_Data` with file names like `Station1_Revised_Final_Data.csv` and so forth for stations 1 through 6.
