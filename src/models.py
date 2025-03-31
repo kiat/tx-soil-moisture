@@ -1,10 +1,11 @@
 import numpy as np
 import tensorflow as tf
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import LSTM, Dense, RepeatVector, TimeDistributed, Input, Bidirectional, SimpleRNN, Conv1D, Flatten, InputLayer
-from tensorflow.keras.optimizers import Adam
-from tensorflow.keras.losses import MeanSquaredError
-from tensorflow.keras.metrics import RootMeanSquaredError
+from tensorflow.keras.models import Sequential, Model
+from tensorflow.keras.layers import (
+    LSTM, Dense, RepeatVector, TimeDistributed, Input,
+    Bidirectional, SimpleRNN, Conv1D, Flatten, InputLayer,
+    GlobalAveragePooling1D, MultiHeadAttention, LayerNormalization, Dropout, Add
+)
 from keras_self_attention import SeqSelfAttention
 
 #AR
@@ -81,6 +82,41 @@ def compile_attention_lstm(input_shape):
     ])
     
     return model
+
+def compile_attention_only(input_shape):
+    inputs = Input(shape=input_shape)
+    x = MultiHeadAttention(num_heads=4, key_dim=16)(inputs, inputs)
+    x = LayerNormalization()(x)
+    x = GlobalAveragePooling1D()(x)
+    x = Dense(64, activation='relu')(x)
+    x = Dense(1)(x)
+    return Model(inputs, x)
+
+def compile_transformer(input_shape):
+    inputs = Input(shape=input_shape)
+    x = MultiHeadAttention(num_heads=4, key_dim=16)(inputs, inputs)
+    x = Add()([inputs, x])
+    x = LayerNormalization()(x)
+    ffn = Dense(64, activation='relu')(x)
+    ffn = Dense(input_shape[-1])(ffn)
+    x = Add()([x, ffn])
+    x = LayerNormalization()(x)
+    x = GlobalAveragePooling1D()(x)
+    x = Dense(32, activation='relu')(x)
+    x = Dense(1)(x)
+    return Model(inputs, x)
+
+
+
+def compile_multihead_lstm(input_shape):
+    inputs = Input(shape=input_shape)
+    x = LSTM(32, return_sequences=True)(inputs)
+    x = MultiHeadAttention(num_heads=4, key_dim=16)(x, x)
+    x = GlobalAveragePooling1D()(x)
+    x = Dense(8, activation='relu')(x)
+    outputs = Dense(1)(x)
+    return Model(inputs, outputs)
+
 
 class Baseline:
     def fit(self, X, y, *args, **kwargs):
