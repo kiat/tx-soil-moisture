@@ -22,7 +22,6 @@ python script1.py all // creates merged files for all stations
 ```
 
 Output: creates a file called ```raw_merged_data/raw_merged_station_1.csv```
-
 ```Saved cleaned data to: raw_merged_data/raw_merged_station_1.csv```
 
 ## Script 2: outputs 3 files
