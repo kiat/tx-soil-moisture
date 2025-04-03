@@ -22,7 +22,9 @@ python script1.py all // creates merged files for all stations
 ```
 
 Output: creates a file called ```raw_merged_data/raw_merged_station_1.csv```
+
 ```Saved cleaned data to: raw_merged_data/raw_merged_station_1.csv```
+
 
 ## Script 2: outputs 3 files
 - List of individual timestamps of which variable is missing for that station
@@ -37,7 +39,7 @@ python script2.py --station #
 Example usage:
 ```
 python script2.py --station # // three files outputted for station 1
-python script2.py --station all // all station processed
+python script2.py --station all // all stations processed
 ```
 
 Output: creates three files called ```missing_cleaned_data/Station1_missing_timestamps.csv```, ```missing_cleaned_data/Station1_missing_data.csv```, ```missing_cleaned_data/Station1_cleaned_data.csv```
