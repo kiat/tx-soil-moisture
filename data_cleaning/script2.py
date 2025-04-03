@@ -8,7 +8,7 @@ import os
 import warnings
 warnings.filterwarnings("ignore")
 
-# calculates and outputs missing data combined with invalid values
+# calculates and outputs missing data combined with invalid values & generate output
 
 def load_merged_data(station_id, base_dir="raw_merged_data"):
     file_path = Path(base_dir) / f"raw_merged_station_{station_id}.csv"
@@ -59,10 +59,7 @@ def find_and_replace_wrong_data(df):
         wrong_idx = df_corrected.index[(df_corrected['Wind speed'] < 0) | (df_corrected['Wind speed'] > 25)].tolist()
         if wrong_idx:
             wrong_info['Wind speed'] = wrong_idx
-            # Replace invalid values with NaN
             df_corrected.loc[(df_corrected['Wind speed'] < 0) | (df_corrected['Wind speed'] > 25), 'Wind speed'] = np.nan
-
-        print(df_corrected['Wind speed'].unique())
 
     # Wind direction: 0 to 360°
     if 'Wind direction' in df_corrected.columns:
@@ -73,7 +70,6 @@ def find_and_replace_wrong_data(df):
         wrong_idx = df_corrected.index[(df_corrected['Wind direction'] < 0) | (df_corrected['Wind direction'] > 360)].tolist()
         if wrong_idx:
             wrong_info['Wind direction'] = wrong_idx
-            # Replace invalid values with NaN
             df_corrected.loc[(df_corrected['Wind direction'] < 0) | (df_corrected['Wind direction'] > 360), 'Wind direction'] = np.nan
 
     # Solar radiation: must be non-negative
@@ -85,11 +81,10 @@ def find_and_replace_wrong_data(df):
         wrong_idx = df_corrected.index[df_corrected['Srad'] < 0].tolist()
         if wrong_idx:
             wrong_info['Srad'] = wrong_idx
-            # Replace invalid values with NaN
             df_corrected.loc[df_corrected['Srad'] < 0, 'Srad'] = np.nan
 
     # Soil Temperature: -30°C to 60°C
-    temp_cols = ['T_5', 'T_10', 'T_20', 'T_50']
+    temp_cols = ['T_5', 'T_10', 'T_20', 'T_50'] 
     for col in temp_cols:
         if col in df_corrected.columns:
             wrong_idx = df_corrected.index[(df_corrected[col] < -30) | (df_corrected[col] > 60)].tolist()
@@ -153,6 +148,18 @@ def create_missing_summary_df(missing_info):
     summary_df = pd.DataFrame(summary_rows)
     return summary_df
 
+def indv_timestamps(df):
+    df_missing = df.copy()
+    missing_values_list = []
+    for col in df_missing.columns:
+        missing_rows = df_missing[df_missing[col].isna()]
+        for timestamp in missing_rows.index:
+            formatted_timestamp = timestamp.strftime("%Y-%m-%d %H:%M:%S")  # Format timestamp
+            missing_values_list.append([formatted_timestamp, col])
+
+    missing_values_df = pd.DataFrame(missing_values_list, columns=["Timestamp", "Attribute"])
+    return missing_values_df
+
 def main():
     parser = argparse.ArgumentParser(
         description="Generate a CSV summary of missing data (including wrong values replaced) for a given station."
@@ -183,7 +190,7 @@ def main():
         process_station(station_id, args.output, args.cleaned)
 
 
-def process_station(station_id, output_filename=None, cleaned_filename=None):
+def process_station(station_id, output_filename=None, cleaned_filename=None, missing_timestamps_filename=None):
     """
     Process a single station: generate missing data summary and cleaned data.
     """
@@ -194,6 +201,7 @@ def process_station(station_id, output_filename=None, cleaned_filename=None):
     # Set default filenames if not provided
     output_filename = output_filename if output_filename else f"{output_dir}/Station{station_id}_missing_data.csv"
     cleaned_filename = cleaned_filename if cleaned_filename else f"{output_dir}/Station{station_id}_cleaned_data.csv"
+    missing_timestamps_filename = missing_timestamps_filename if missing_timestamps_filename else f"{output_dir}/Station{station_id}_missing_timestamps.csv"
 
     # Load merged data for the specified station
     df_merged = load_merged_data(station_id)
@@ -209,14 +217,27 @@ def process_station(station_id, output_filename=None, cleaned_filename=None):
     
     # Create the summary DataFrame
     summary_df = create_missing_summary_df(combined_info)
+
+    missing_indv_values = indv_timestamps(df_merged)
+    missing_indv_values.to_csv(missing_timestamps_filename, index=False)
+    print(f"Individual Missing Timestamps saved to: {missing_timestamps_filename}")
+
     
     # Save the summary DataFrame to CSV
     summary_df.to_csv(output_filename, index=False)
     print(f"Missing data summary saved to: {output_filename}")
 
     # Save the cleaned DataFrame to CSV
-    df_corrected.dropna().to_csv(cleaned_filename, index=False)
+    all_dates = pd.date_range(
+        start=df_merged.index.min(),
+        end=df_merged.index.max(),
+        freq='H'
+    )
+    df_full = df_corrected.reindex(all_dates)
+    df_corrected.to_csv(cleaned_filename, index=False)
     print(f"Cleaned data saved to: {cleaned_filename}")
+
+    df_full.to_csv(cleaned_filename)
 
 if __name__ == "__main__":
     main()
