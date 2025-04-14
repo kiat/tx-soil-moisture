@@ -1,3 +1,38 @@
+
+
+
+
+# Running Scripts
+
+## Script 1: merges MET and SOIL data
+
+### How to run script1.py:
+
+Add environment variables first in terminal
+```
+export SOIL_DATA_DIR=/path/to/soil_station
+export MET_DATA_DIR=/path/to/met_station
+```
+
+Then 
+```
+python3 cleaning_script.py --station #
+```
+
+Example usage:
+```
+python3 cleaning_script.py --station 1 // processes data station_1 
+python3 cleaning_script.py --station all // processes data for all stations
+```
+
+Output: creates a four files called ```raw_merged_data/raw_merged_station_1.csv```, ```missing_cleaned_data/Station1_missing_timestamps.csv```, ```missing_cleaned_data/Station1_missing_data.csv```, and ```missing_cleaned_data/Station1_cleaned_data.csv```
+```
+Raw merged data saved to: raw_merged_data/raw_merged_station_1.csv
+Missing data summary saved to: missing_cleaned_data/Station1_missing_data.csv
+Individual missing timestamps saved to: missing_cleaned_data/Station1_missing_timestamps.csv
+Cleaned data saved to: missing_cleaned_data/Station1_cleaned_data.csv
+```
+
 Spring 2025 Data Cleanup Team: Abi, Nethra, Ramya, Zun
 
 Here is the deepnote link for our working notebook:
