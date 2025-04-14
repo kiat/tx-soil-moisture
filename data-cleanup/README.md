@@ -13,3 +13,6 @@ NEW FEATURE: Be able to query for the following statistics...
 - Ask for soil moisture value for each moth for each season
 - Ask for soil moisture value average for each month each station per year
 - ^ Use the soil moisture value average to find what the model would be if we replace the predicted value w calculated avg prediction of the month (bcz the avg value is between 0-0.6, January is usually between 0-0.3, and august is usually 0-0.5)
+
+April 24th updates:
+Have a final Script 1 done!
