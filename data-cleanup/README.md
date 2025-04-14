@@ -6,7 +6,7 @@
 
 ## Script 1: Cleans Data
 
-Script 1 merges the SWC and MET files while removing invalid values. This script outputs four files, each of which are explained below.
+Script 1 merges the SWC and MET files while removing invalid values. This script outputs four files, each of which are explained below. Two directories, ```raw_merged_data``` and ```missing_cleaned_data```, are created automatically to hold the output files.
 - ```raw_merged_data/raw_merged_station_1.csv```
   - A cleaned dataset that combines both original MET and SWC datasets, no changes to actual values.
 -  ```missing_cleaned_data/Station1_missing_data.csv```
@@ -14,18 +14,18 @@ Script 1 merges the SWC and MET files while removing invalid values. This script
 - ```missing_cleaned_data/Station1_missing_timestamps.csv```
   - A list recording the timestamp (by hour) and parameter that is missing
 - ```missing_cleaned_data/Station1_cleaned_data.csv```
-  - A cleaned dataset that combines both  MET and SWC datasets, with invalid values removed. The missing data and individual missing timestamps were found by using this dataset/ 
+  - A cleaned dataset that combines both  MET and SWC datasets, with invalid values removed. The missing data and individual missing timestamps were found by using this dataset 
 
 
 ### How to run cleaning_script.py:
 
-Add environment variables first in terminal
+Add environment variables in terminal first.
 ```
 export SOIL_DATA_DIR=/path/to/soil_station
 export MET_DATA_DIR=/path/to/met_station
 ```
 
-Then 
+Then, you can run the following.
 ```
 python3 cleaning_script.py --station #
 ```
@@ -36,7 +36,7 @@ python3 cleaning_script.py --station 1 // processes data station_1
 python3 cleaning_script.py --station all // processes data for all stations
 ```
 
-The final output should look like this, while the ```raw_merged_data``` and ```missing_cleaned_data``` directories are created to hold the output files.
+The final output in the terminal should look like this:
 
 ```
 Raw merged data saved to: raw_merged_data/raw_merged_station_1.csv
