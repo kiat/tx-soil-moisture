@@ -234,7 +234,7 @@ def indv_timestamps(df):
             formatted_timestamp = timestamp.strftime("%Y-%m-%d %H:%M:%S")  # Format timestamp
             missing_values_list.append([formatted_timestamp, col])
 
-    missing_values_df = pd.DataFrame(missing_values_list, columns=["Timestamp", "Attribute"])
+    missing_values_df = pd.DataFrame(missing_values_list, columns=["Timestamp", "Parameter"])
     return missing_values_df
 
 def main():
