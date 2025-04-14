@@ -6,9 +6,18 @@
 
 ## Script 1: Cleans Data
 
-Script 1 merges the SWC and MET files while removing invalid values. It also prints out a list of timestamp where each data value is missing, by hour, and a list of missing ranges of data.
+Script 1 merges the SWC and MET files while removing invalid values. This script outputs four files, each of which are explained below.
+- ```raw_merged_data/raw_merged_station_1.csv```
+  - A cleaned dataset that combines both original MET and SWC datasets, no changes to actual values.
+-  ```missing_cleaned_data/Station1_missing_data.csv```
+  - A list recording the parameter, start timestamp, end timestamp, and number or missing data values.
+- ```missing_cleaned_data/Station1_missing_timestamps.csv```
+  - A list recording the timestamp (by hour) and parameter that is missing
+- ```missing_cleaned_data/Station1_cleaned_data.csv```
+  - A cleaned dataset that combines both  MET and SWC datasets, with invalid values removed. The missing data and individual missing timestamps were found by using this dataset/ 
 
-### How to run script1.py:
+
+### How to run cleaning_script.py:
 
 Add environment variables first in terminal
 ```
@@ -27,12 +36,8 @@ python3 cleaning_script.py --station 1 // processes data station_1
 python3 cleaning_script.py --station all // processes data for all stations
 ```
 
-Output: creates a four files called 
-- ```raw_merged_data/raw_merged_station_1.csv```
-  - A list
-- ```missing_cleaned_data/Station1_missing_timestamps.csv```
-- ```missing_cleaned_data/Station1_missing_data.csv```
-- ```missing_cleaned_data/Station1_cleaned_data.csv```
+The final output should look like this, while the ```raw_merged_data``` and ```missing_cleaned_data``` directories are created to hold the output files.
+
 ```
 Raw merged data saved to: raw_merged_data/raw_merged_station_1.csv
 Missing data summary saved to: missing_cleaned_data/Station1_missing_data.csv
