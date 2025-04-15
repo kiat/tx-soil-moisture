@@ -52,5 +52,5 @@ ax.legend(loc='upper right', bbox_to_anchor=(1.3, 1.1))
 plt.tight_layout()
 
 # Save to file
-plt.savefig('radar_chart_model_metrics.png', dpi=300)
+plt.savefig('radar_chart_model_metrics'+file_path+'.png', dpi=300)
 plt.close()

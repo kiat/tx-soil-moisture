@@ -13,15 +13,20 @@ from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping
 from tensorflow.keras.losses import MeanSquaredError
 from tensorflow.keras.metrics import RootMeanSquaredError, MeanAbsolutePercentageError
 
-from sklearn.preprocessing import MinMaxScaler
+
 from sklearn.metrics import mean_squared_error, mean_absolute_error, mean_absolute_percentage_error
 
 from scipy.stats import pearsonr
 
-from preprocess_data import read_and_process_csvs, engineer_features
+from data_helpers import *
 from models import * 
 
 import numpy as np
+import os
+import matplotlib
+matplotlib.use('Agg')  # Use non-GUI backend before importing pyplot
+import matplotlib.pyplot as plt
+
 
 
 ##########################################
@@ -40,45 +45,6 @@ def compute_rse(y_true, y_pred):
     return np.sqrt(numerator / denominator) if denominator != 0 else np.nan
 
 
-
-##########################################
-def normalize_data(df, features):
-    scaler = MinMaxScaler()
-
-    no_scale_features = [feat for feat in features if 'sin' in feat or 'cos' in feat]
-    scale_features = [feat for feat in features if feat not in no_scale_features]
-
-    df = df.reset_index(drop=True)
-
-    scaled_data = scaler.fit_transform(df[scale_features])
-    scaled_df = pd.DataFrame(scaled_data, columns=scale_features)
-
-    scaled_df = pd.concat([scaled_df, df[no_scale_features]], axis=1)
-
-    scaled_df = scaled_df[features]
-
-    return scaled_df.to_numpy(), scaler
-
-###########################################
-
-# def data_to_X_y(data, window_size, offset):
-#     X, y = [], []
-#     for i in range(len(data) - window_size - offset):
-#         X.append(data[i:i+window_size, :])  
-#         y.append(data[i + window_size + offset, 0])  
-
-#     return  np.array(X),  np.array(y)
-
-
-def data_to_X_y(data, window_size, offset):
-    rows = len(data) - window_size - offset
-    X = np.lib.stride_tricks.sliding_window_view(data, (window_size, data.shape[1]))[:rows, 0]
-    y = data[window_size + offset : window_size + offset + rows, 0]
-    return X, y
-
-###############################################################################
-###############################################################################
-###############################################################################
 ###############################################################################
 
 def evaluate_model(model, X_test, y_test):
@@ -104,24 +70,6 @@ def evaluate_model(model, X_test, y_test):
     print(final_results)
     return final_results
 
-
-###############################################################################
-###############################################################################
-###############################################################################
-###############################################################################
-
-    
-def split_and_stack_data(dfs, test_station_name="Station6", remove_met=False):
-    if remove_met:
-        for key in dfs.keys():
-            dfs[key] = dfs[key][["SWC_5", "SWC_10", "SWC_20", "SWC_50"]]
-
-    test_df = dfs[test_station_name].loc['2020-01-01 00:00:00':]
-    val_df = dfs[test_station_name].loc[:'2020-12-31 23:00:00']
-    
-    dfs[test_station_name] = dfs[test_station_name].drop(test_df.index)
-    
-    return dfs, val_df, test_df
 ###############################################################################
 
 
@@ -192,19 +140,16 @@ def write_model_results_to_csv(station, model_name, window_size, offset, perform
     print(f"Saved model results for {model_name} on {station} with {len(feature_str.split('_'))} features to {results_file}")
 
 
-
-###############################################################################
-###############################################################################
 ###############################################################################
 ###############################################################################
 
 
     
 def main(args):
-
+    
     model_dir = "models"
     os.makedirs(model_dir, exist_ok=True)
-    
+
     # engineer_and_save_data()
     stations = ['Station1', 'Station2', 'Station3', 'Station4', 'Station5', 'Station6']
     target_station = stations[-1]  # Dynamically select the target station
@@ -220,25 +165,48 @@ def main(args):
     # - `test_df` → Current year of target station (testing)
     # - `train_dfs` → All other stations (training)
     engineered_dfs, val_df, test_df = split_and_stack_data(engineered_dfs, test_station_name=target_station, remove_met=False)
-    print("FEATURES IN THE DATA\n")
-    for station, df in engineered_dfs.items():
-        print(f"--- {station} ---")
-        print(df.describe())  # Summary statistics
-        print("\n")
+
+
+    if 0:
+        print("FEATURES IN THE DATA\n")
+        for station, df in engineered_dfs.items():
+            print(f"--- {station} ---")
+            print(df.describe())  # Summary statistics
+            print("\n")
     all_features = args.features.split(',') if args.features else ['SWC_20', 'T_20', 'Ppt', 'Tair', 'Wx', 'Wy']
 
+    # Visualize the split if and only if the --visualize flag is set
+
+    if args.visualize:
+        # Prepare unscaled Date-indexed DataFrames
+        val_df_plot = val_df.set_index("Date")
+        test_df_plot = test_df.set_index("Date")
+        train_df_plot = concatenate_with_gaps([
+            df.set_index("Date") for name, df in engineered_dfs.items()
+            if name != target_station
+        ])
+
+
+        # Choose a feature to visualize
+        feature_for_plot = all_features[0]
+        plot_split_timeline(train_df_plot, val_df_plot, test_df_plot, feature=feature_for_plot)
+
+        return  # Exit before training
+
+    
+
     # Prepare validation & test sets
-    scaled_val, _ = normalize_data(val_df, all_features)
+    scaled_val, _ = normalize_features(val_df, all_features)
     X_val, y_val = data_to_X_y(scaled_val, args.window_size, args.offset)
 
-    scaled_test, _ = normalize_data(test_df, all_features)
+    scaled_test, _ = normalize_features(test_df, all_features)
     X_test, y_test = data_to_X_y(scaled_test, args.window_size, args.offset)
 
     # Prepare training data: merge all stations except target station
     train_data = []  
     for train_station in [s for s in stations if s != target_station]:
         print(f"Adding {train_station} to training pool...")
-        scaled_train, _ = normalize_data(engineered_dfs[train_station], all_features)
+        scaled_train, _ = normalize_features(engineered_dfs[train_station], all_features)
         X_train, y_train = data_to_X_y(scaled_train, args.window_size, args.offset)
         train_data.append((X_train, y_train))
 
@@ -331,5 +299,10 @@ if __name__ == "__main__":
     parser.add_argument('--patience', type=int, default=3, help='Early stopping patience')
     parser.add_argument("--features", type=str, default="SWC_20,T_20,Ppt,Tair,Wx,Wy", help="Comma-separated list of features to use in training")
     parser.add_argument("--model_names", type=str, default="LSTM,BiLSTM,RNN,CNN,AttentionLSTM,Autoregressive,Baseline",  help="Comma-separated list of Models short form like LSTM,CNN")
+
+    # If this is set, no models will be trained, but the train/val/test splits will be visualized
+    # and saved to the results folder.
+    parser.add_argument('--visualize', action='store_true', help='If true, plots train/val/test splits instead of running models')
+
     args = parser.parse_args()
     main(args)

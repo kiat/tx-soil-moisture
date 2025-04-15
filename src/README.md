@@ -107,6 +107,14 @@ CNN_Station5.keras
 
 These files contain the trained deep learning models, which can be loaded for inference.
 
+## Data Visualization
+
+To visualize the results, use the `visualize.py` script. This script generates plots for the training and validation loss over epochs, as well as the predicted vs. actual values, for 
+```bash
+python3 main.py --features "SWC_10" --visualize
+```
+This will create plots in the `results/visualizations` directory.
+
 ## Notes
 
 - Ensure data files (`StationX_Revised_Final_Data.csv`) are available before preprocessing.
@@ -126,6 +134,7 @@ python3 main.py --window_size 6 --offset 2 --epochs 1 --patience 1 --features "S
 ```
 make clean 
 ```
+
 
 
 
