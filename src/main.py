@@ -19,13 +19,18 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error, mean_absolu
 from scipy.stats import pearsonr
 
 from data_helpers import *
-from models import * 
+import models as model_module
 
 import numpy as np
 import os
 import matplotlib
 matplotlib.use('Agg')  # Use non-GUI backend before importing pyplot
 import matplotlib.pyplot as plt
+
+import models as model_module
+from model_entry import ModelEntry
+
+from utils import get_model_id, format_model_name
 
 
 
@@ -147,8 +152,7 @@ def write_model_results_to_csv(station, model_name, window_size, offset, perform
     
 def main(args):
     
-    model_dir = "models"
-    os.makedirs(model_dir, exist_ok=True)
+    
 
     # engineer_and_save_data()
     stations = ['Station1', 'Station2', 'Station3', 'Station4', 'Station5', 'Station6']
@@ -227,66 +231,80 @@ def main(args):
     print(f"X_test shape: {X_test.shape}, y_test shape: {y_test.shape}")
     print(f"Features being used: {all_features}")
 
-    # Define models to train
-    models = {
-        "LSTM": compile_lstm((args.window_size, len(all_features))),
-        "BiLSTM": compile_bilstm((args.window_size, len(all_features))),
-        "RNN": compile_rnn((args.window_size, len(all_features))),
-        "CNN": compile_cnn((args.window_size, len(all_features))),
-        "AttentionLSTM": compile_attention_lstm((args.window_size, len(all_features))),
-        "Autoregressive": compile_autoregressive((args.window_size, len(all_features))),
-        "Baseline": Baseline(),
-    }
 
-    # Keep only the models that are passed by arguments.
-    model_names = set(args.model_names.split(","))
-    models_we_process = {key: models[key] for key in model_names if key in models}
+    model_dir = "models"
+    os.makedirs(model_dir, exist_ok=True)
 
+    # Normalize model IDs from CLI input like: "lstm,attention_lstm"
+    def normalize_id(name: str) -> str:
+        return name.lower().replace("_", "")
+
+    requested_ids = set(normalize_id(n) for n in args.model_names.split(","))
+
+    # Build models dynamically from compile_* functions in models.py
+    models_we_process = {}
+
+    for name in dir(model_module):
+        if name.startswith("compile_"):
+            internal_name = name.replace("compile_", "")        # e.g. attention_lstm
+            model_id = normalize_id(internal_name)              # e.g. attentionlstm
+
+            if model_id in requested_ids:
+                compile_fn = getattr(model_module, name)
+                models_we_process[model_id] = ModelEntry(internal_name, compile_fn)
+    print(f"Models to be processed: {models_we_process.keys()}")
     # Train each model with transfer learning
-    for model_name, model in models_we_process.items():
-        print(f"\n Training {model_name} across stations...\n")
-        
-        if model_name == "Baseline":
+    for model_id, model_entry in models_we_process.items():
+        model = model_entry.build((args.window_size, len(all_features)))
+
+        print(f"\nTraining {model_entry} across stations...\n")  # __str__ used automatically
+
+        if model_id == "baseline":
             model.fit(X_train, y_train)
             performance = evaluate_model(model, X_test, y_test)
 
-            model_path = os.path.join(model_dir, f"model_{model_name}_NOTE.txt")
-            with open(model_path, "w") as f:
+            note_path = os.path.join(model_dir, f"model_{model_id}_NOTE.txt")
+            with open(note_path, "w") as f:
                 f.write("Baseline model - no weights saved.\n")
 
-            write_model_results_to_csv(target_station, model_name, args.window_size, args.offset, performance, '_'.join(all_features))
-            print(f"{model_name} Final Test Loss: {performance['mean_squared_error']}\n")
-            continue  # skip to next model
-        
-        model.compile(loss=MeanSquaredError(), optimizer=Adam(learning_rate=0.001), metrics=[RootMeanSquaredError(), MeanAbsolutePercentageError()])
-        
-        # Train on all stations EXCEPT the target station
+            feature_str = '_'.join(all_features)
+            write_model_results_to_csv(target_station, str(model_entry), args.window_size, args.offset, performance, feature_str)
+            print(f"{model_entry} Final Test Loss: {performance['mean_squared_error']}\n")
+            continue
+
+        # Compile and train model
+        model.compile(
+            loss=MeanSquaredError(),
+            optimizer=Adam(learning_rate=0.001),
+            metrics=[RootMeanSquaredError(), MeanAbsolutePercentageError()]
+        )
+
         history = model.fit(
             X_train, y_train,
-            validation_data=(X_val, y_val),  # Validate on past years of target station
+            validation_data=(X_val, y_val),
             epochs=args.epochs,
             verbose=1,
             callbacks=[EarlyStopping(monitor='val_loss', patience=args.patience, restore_best_weights=True)]
         )
 
         print("\nFinal Evaluation on Test Set...\n")
-        performance = evaluate_model(model, X_test, y_test)  
+        performance = evaluate_model(model, X_test, y_test)
 
-        # Save the trained model
-        # model_path = os.path.join("models", f"{model_name}.keras")
-
-        main_name = f"model_{model_name}_ws{args.window_size}_offset{args.offset}_{args.features}"
+        # Save trained model
+        feature_str = '_'.join(all_features)
+        main_name = f"model_{model_id}_ws{args.window_size}_offset{args.offset}_{feature_str}"
         model_path = os.path.join(model_dir, f"{main_name}.keras")
         model.save(model_path)
-        print(f"{model_name} saved at {model_path}")
+        print(f"{model_entry} saved at {model_path}")
 
         # Save results
-        write_model_results_to_csv(target_station, model_name, args.window_size, args.offset, performance, '_'.join(all_features))
-        write_loss_history_to_csv(target_station, model_name, args.window_size, args.offset, history.history, '_'.join(all_features))
+        write_model_results_to_csv(target_station, str(model_entry), args.window_size, args.offset, performance, feature_str)
+        write_loss_history_to_csv(target_station, str(model_entry), args.window_size, args.offset, history.history, feature_str)
 
-        print(f"{model_name} Final Test Loss: {performance['mean_squared_error']}\n")
+        print(f"{model_entry} Final Test Loss: {performance['mean_squared_error']}\n")
 
     print("All Runs Complete! All results saved.")
+
 
 
 

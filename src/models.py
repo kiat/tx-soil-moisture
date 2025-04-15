@@ -8,10 +8,11 @@ from tensorflow.keras.layers import (
 )
 from keras_self_attention import SeqSelfAttention
 
+
 #AR
 def compile_autoregressive(input_shape):
     model = Sequential([
-        InputLayer(input_shape=input_shape),
+        InputLayer(shape=input_shape),
         tf.keras.layers.GlobalAveragePooling1D(),
         Dense(64, activation='relu'),
         Dense(1, activation='linear')
@@ -31,7 +32,7 @@ def compile_lstm(input_shape):
     return model
 
 # Bidirectional LSTM model
-def compile_bilstm(input_shape):
+def compile_bi_lstm(input_shape):
     model = Sequential([
         Input(shape=input_shape),
         Bidirectional(LSTM(32, activation='tanh', return_sequences=True)),
@@ -73,7 +74,7 @@ def compile_cnn(input_shape):
 # Attention-LSTM model
 def compile_attention_lstm(input_shape):
     model = Sequential([
-        InputLayer(input_shape=input_shape),
+        InputLayer(shape=input_shape),
         LSTM(32, return_sequences=True),
         SeqSelfAttention(attention_activation='softmax'),
         LSTM(32),
@@ -117,6 +118,15 @@ def compile_multihead_lstm(input_shape):
     outputs = Dense(1)(x)
     return Model(inputs, outputs)
 
+def compile_baseline(input_shape):
+    return Baseline()
+
+def compile_moving_average(input_shape, window_size=3):
+    return MovingAverageBaseline(window_size=window_size)
+
+
+
+
 
 class Baseline:
     def fit(self, X, y, *args, **kwargs):
@@ -124,3 +134,22 @@ class Baseline:
 
     def predict(self, X):
         return X[:, -1, 0]
+
+class MovingAverageBaseline:
+    def __init__(self, window_size=3):
+        self.window_size = window_size
+
+    def fit(self, X, y, *args, **kwargs):
+        return self  # Still no training
+
+    def predict(self, X):
+        # X shape = (batch_size, time_steps, features)
+        N = self.window_size
+        if N > X.shape[1]:
+            raise ValueError(f"Window size {N} is larger than the input sequence length {X.shape[1]}")
+        
+        # Take the last N time steps and average across the time axis
+        return X[:, -N:, 0].mean(axis=1)
+
+
+
