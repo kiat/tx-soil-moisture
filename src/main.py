@@ -30,7 +30,6 @@ import matplotlib.pyplot as plt
 import models as model_module
 from model_entry import ModelEntry
 
-from utils import get_model_id, format_model_name
 
 
 
