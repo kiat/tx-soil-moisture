@@ -28,7 +28,6 @@ export MET_DATA_DIR=/path/to/met_station
 Then, you can run the following.
 ```
 python3 script1.py --station #
-
 ```
 
 Example usage:
@@ -46,6 +45,8 @@ Missing data ranges saved to: missing_cleaned_data/missing_ranges_station_1.csv
 Individual missing timestamps saved to: missing_cleaned_data/missing_timestamps_station_1.csv
 Cleaned data saved to: missing_cleaned_data/cleaned_data_station_1.csv
 ```
+
+#### Deleting Files
 
 When you need to delete files, you can either delete the files for one specific station or all the stations
 Example usage:
