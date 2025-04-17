@@ -33,7 +33,7 @@ python3 script1.py --station #
 Example usage:
 ```
 python3 script1.py --all                 # processes data for all stations 
-python3 script1.py --station 1           # processes data for station_1
+python3 script1.py --station 1           # processes data for station_1 only
 ```
 
 The final output in the terminal should look like this:
@@ -53,7 +53,7 @@ Example usage:
 
 ```
 python3 script1.py --all --clean         # deletes .csv files for all stations
-python3 script1.py --station 2 --clean   # deletes .csv files for all stations
+python3 script1.py --station 1 --clean   # deletes .csv files for station 1 only
 ```
 
 This is the out that is supposed to appear in the terminal:
