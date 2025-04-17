@@ -36,6 +36,21 @@ def engineer_features(dfs):
     for station_name, df in dfs.items():
         print(f"Engineering features for {station_name}")
 
+        #precipitation
+        # --- precipitation fixes ---
+        df['Ppt'] = df['Ppt'].fillna(0.0)
+        df['Ppt_RainFlag'] = (df['Ppt'] > 0).astype(int)
+        df['Ppt_log'] = np.log1p(df['Ppt'])
+        df['Ppt_3h_sum'] = df['Ppt'].rolling(3, min_periods=1).sum()
+        df['Ppt_24h_sum'] = df['Ppt'].rolling(24, min_periods=1).sum()
+        # time‑since‑rain:
+        hours_since = []
+        count = 0
+        for v in df['Ppt']:
+            count = 0 if v > 0 else count + 1
+            hours_since.append(count)
+        df['HoursSinceRain'] = hours_since
+
         # Wind features
         if 'Windspeed' in df and 'Winddirection' in df:
             wv = df.pop('Windspeed')
