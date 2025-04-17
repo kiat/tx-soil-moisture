@@ -178,7 +178,6 @@ def find_and_replace_wrong_data(df):
         wrong_idx = df_corrected.index[(df_corrected['Tair'] < -30) | (df_corrected['Tair'] > 60)].tolist()
         if wrong_idx:
             wrong_info['Tair'] = wrong_idx
-            # Replace invalid values with NaN
             df_corrected.loc[(df_corrected['Tair'] < -30) | (df_corrected['Tair'] > 60), 'Tair'] = np.nan
 
     
@@ -251,7 +250,6 @@ def delete_generated_files(station_id=None, output_dirs=["raw_merged_data", "mis
                     if file.is_file() and f"station_{station_id}" in file.name:
                         file.unlink()  # Delete the file
                         deleted_files.append(file.name)
-                        print(f"Deleted: {file}")  # Debug statement
                 if not deleted_files:
                     print(f"No files found for Station {station_id} in {output_dir}.")
                 else:
@@ -263,7 +261,6 @@ def delete_generated_files(station_id=None, output_dirs=["raw_merged_data", "mis
                     if file.is_file():
                         file.unlink()  # Delete the file
                         deleted_files.append(file.name)
-                        print(f"Deleted: {file}")  # Debug statement
                 if not deleted_files:
                     print(f"No files found in {output_dir}.")
                 else:
