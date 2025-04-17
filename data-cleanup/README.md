@@ -26,9 +26,7 @@ export MET_DATA_DIR=/path/to/met_station
 ```
 
 Then, you can run the following.
-```
-python3 script1.py --station #
-```
+``` python3 script1.py --station # ```: station numbers in place of #, or "all"
 
 Example usage:
 ```
