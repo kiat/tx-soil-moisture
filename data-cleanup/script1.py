@@ -22,7 +22,7 @@ def load_soil_data(file_name, base_dir=sm_base_dir):
     file_path = Path(base_dir) / f"{file_name}.dat"
     if not file_path.exists():
         raise FileNotFoundError(f"File not found: {file_path}")
-    df = pd.read_csv(file_path, sep=",")
+    df = pd.read_csv(file_path, sep=",", na_values=["", "NA", "null"])
 
     # Convert Date to datetime format and set as index
     df['Date'] = pd.to_datetime(df['Date'], format='%m/%d/%y %H:%M', errors='coerce')
@@ -49,7 +49,7 @@ def load_met_data(file_name, base_dir=met_base_dir):
     file_path = Path(base_dir) / f"{file_name}.dat"
     if not file_path.exists():
         raise FileNotFoundError(f"File not found: {file_path}")
-    df = pd.read_csv(file_path, sep=",")
+    df = pd.read_csv(file_path, sep=",", na_values=["", "NA", "null"])
 
     # Convert Date to datetime format and set as index
     df['Date'] = pd.to_datetime(df['Date'], format='%m/%d/%y %H:%M', errors='coerce')
@@ -74,7 +74,7 @@ def save_cleaned_data(df, station_id, output_dir="raw_merged_data"):
     # Save the DataFrame to a file
     os.makedirs(output_dir, exist_ok=True)
     output_path = f"{output_dir}/raw_merged_station_{station_id}.csv"
-    df.to_csv(output_path)
+    df.to_csv(output_path, na_rep='NaN')
     print(f"Saved cleaned data to: {output_path}")
 
 
@@ -89,7 +89,7 @@ def load_merged_data(station_id, df=None):
         # Load from file if no DataFrame is provided and not in cache
         base_dir = "raw_merged_data"
         file_path = Path(base_dir) / f"raw_merged_station_{station_id}.csv"
-        df = pd.read_csv(file_path, index_col=0, parse_dates=True)
+        df = pd.read_csv(file_path, index_col=0, parse_dates=True, na_values=["", "NA", "null"])
         return df
 
 def find_missing_data(df):
@@ -291,7 +291,7 @@ def process_station(station_id, output_ranges_filename=None, cleaned_filename=No
 
     # Save raw merged data
     cleaned_data_cache[station_id] = df_merged
-    df_merged.to_csv(raw_merged_filename)
+    df_merged.to_csv(raw_merged_filename, na_rep='NaN')
     print(f"Raw merged data saved to: {raw_merged_filename}")
 
     # Detect missing and wrong data
@@ -304,16 +304,16 @@ def process_station(station_id, output_ranges_filename=None, cleaned_filename=No
     missing_indv_values = indv_timestamps(df_merged)
 
     # Save output of the ranges
-    summary_df.to_csv(output_ranges_filename, index=False)
+    summary_df.to_csv(output_ranges_filename, index=False, na_rep='NaN')
     print(f"Missing data ranges saved to: {output_ranges_filename}")
 
-    missing_indv_values.to_csv(missing_timestamps_filename, index=False)
+    missing_indv_values.to_csv(missing_timestamps_filename, index=False, na_rep='NaN')
     print(f"Individual missing timestamps saved to: {missing_timestamps_filename}")
 
     # Save cleaned dataset with hourly reindexing
     all_dates = pd.date_range(start=df_merged.index.min(), end=df_merged.index.max(), freq='H')
-    df_full = df_corrected.reindex(all_dates)
-    df_full.to_csv(cleaned_filename)
+    df_full = df_corrected.reindex(all_dates)  # Retain NaN values without filling them
+    df_full.to_csv(cleaned_filename, na_rep='NaN')  # Ensure NaN is explicitly represented in the output
     print(f"Cleaned data saved to: {cleaned_filename}")
 
 
