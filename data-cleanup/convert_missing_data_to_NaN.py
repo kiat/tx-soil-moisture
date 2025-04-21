@@ -67,18 +67,16 @@ def load_met_data(file_name, base_dir=met_base_dir):
     
     return df
 
-def save_cleaned_data(df, station_id, output_dir="raw_merged_data"):
-    # Save the DataFrame to the cache
-    cleaned_data_cache[station_id] = df
+# def save_cleaned_data(df, station_id, output_dir="raw_merged_data"):
+#     # Save the DataFrame to the cache
+#     cleaned_data_cache[station_id] = df
 
-    # Save the DataFrame to a file
-    os.makedirs(output_dir, exist_ok=True)
-    output_path = f"{output_dir}/raw_merged_station_{station_id}.csv"
-    df.to_csv(output_path, na_rep='NaN')
-    print(f"Saved cleaned data to: {output_path}")
+#     # Save the DataFrame to a file
+#     os.makedirs(output_dir, exist_ok=True)
+#     output_path = f"{output_dir}/raw_merged_station_{station_id}.csv"
+#     df.to_csv(output_path, na_rep='NaN')
+#     print(f"Saved cleaned data to: {output_path}")
 
-
-############# script 2 below
 def load_merged_data(station_id, df=None):
     if df is not None:
         return df
@@ -275,7 +273,7 @@ def process_station(station_id, output_ranges_filename=None, cleaned_filename=No
     missing_output_dir = "missing_cleaned_data"
     raw_output_dir = "raw_merged_data"
     os.makedirs(missing_output_dir, exist_ok=True)
-    os.makedirs(raw_output_dir, exist_ok=True)
+    # os.makedirs(raw_output_dir, exist_ok=True)
 
     output_ranges_filename = output_ranges_filename or f"{missing_output_dir}/missing_ranges_station_{station_id}.csv"
     cleaned_filename = cleaned_filename or f"{missing_output_dir}/cleaned_data_station_{station_id}.csv"
