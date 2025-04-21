@@ -7,7 +7,7 @@ Script 1 merges the SWC and MET files while removing invalid values. This script
   - A cleaned dataset that combines both  MET and SWC datasets, with invalid values removed. The missing data and individual missing timestamps were found by using this dataset 
 
 
-### How to run cleaning_script.py:
+### How to run con.py:
 
 Add environment variables in terminal first.
 ```
@@ -17,12 +17,12 @@ export MET_DATA_DIR=/path/to/met_station
 
 Then, you can run the following.
 
-``` python3 script1.py --station # ```: station numbers in place of #, or "all"
+``` python3 convert_missing_data_to_NaN.py --station # ```: station numbers in place of #, or "all"
 
 Example usage:
 ```
-python3 script1.py --all                 # processes data for all stations 
-python3 script1.py --station 1           # processes data for station_1 only
+python3 convert_missing_data_to_NaN.py --all                 # processes data for all stations 
+python3 convert_missing_data_to_NaN.py --station 1           # processes data for station_1 only
 ```
 
 The final output in the terminal should look like this:
