@@ -42,7 +42,3 @@ Cleaned data saved to: missing_cleaned_data/cleaned_data_station_6.csv
 
 ****************************************************************
 Spring 2025 Data Cleanup Team: Abi, Nethra, Ramya, Zun
-
-TO-DO:
-- Classify short, medium, long, and very large gaps, with an assessment of using Station 3 (which has complete data) as a reference.  1. Short Gaps (Hours to Days) (<24 hours) 2. Medium Gaps (Days to Weeks) (1–7 days) (24–168 hours) 3. Long Gaps (Weeks to Months) (7–30 days) (168 hours–720 hours) 4. Very Large Gaps (Months to Years) (over 30 days) (>720 hours)
-- Overal Data Imputation Script
