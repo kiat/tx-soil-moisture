@@ -436,7 +436,7 @@ NOTE: Best Overall in MSE and strong performance in generalization
 | 1    | **Ppt_24h_sum**  | LSTM             | **0.02651** | 0.12907   | 55.36   | **0.5259** |
 | 2    | Ppt_RainFlag     | LSTM             | 0.02708   | **0.12662** | **54.62** | 0.5168 |
 | 3    | HoursSinceRain   | LSTM             | 0.02721   | 0.13165   | 56.34   | 0.5243 |
-| 4    | Ppt              | Autoregressive   | 0.02758   | 0.13121   | 56.31   | 0.5076 |
+| 4    | Ppt              | LSTM             | 0.02758   | 0.13121   | 56.31   | 0.5076 |
 
 **Conclusion**:  
 `Ppt_24h_sum` with **LSTM** had the **lowest MSE** and the **highest correlation**, making it the **best overall feature-engineered input** for accurate soil moisture forecasting using `SWC_10`.
