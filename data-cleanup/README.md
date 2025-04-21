@@ -45,22 +45,6 @@ Individual missing timestamps saved to: missing_cleaned_data/missing_timestamps_
 Cleaned data saved to: missing_cleaned_data/cleaned_data_station_1.csv
 ```
 
-#### Deleting Files
-
-When you need to delete files, you can either delete the files for one specific station or all the stations
-Example usage:
-
-```
-python3 script1.py --all --clean         # deletes .csv files for all stations
-python3 script1.py --station 1 --clean   # deletes .csv files for station 1 only
-```
-
-This is the out that is supposed to appear in the terminal:
-
-```
-Deleted files for Station 1 in raw_merged_data: ['raw_merged_station_1.csv']
-Deleted files for Station 1 in missing_cleaned_data: ['cleaned_data_station_1.csv', 'missing_ranges_station_1.csv', 'missing_timestamps_station_1.csv']
-```
 
 ## Script 2
 
