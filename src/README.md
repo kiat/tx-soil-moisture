@@ -429,15 +429,19 @@ Use case: Captures recent rain accumulation, which may influence soil moisture o
 
 NOTE: Best Overall in MSE and strong performance in generalization
 
-Top 3 Feature Combinations by MSE
+### 🏆 Top 4 Feature Combinations by MSE
 
-| Rank | Feature         | MSE       | MAE       | SMAPE   | CORR   |
-|------|------------------|-----------|-----------|---------|--------|
-| 1️⃣   | **Ppt_24h_sum**  | **0.02651** | 0.12907   | 55.36   | **0.5259** |
-| 2️⃣   | Ppt_RainFlag     | 0.02708   | **0.12662** | **54.62** | 0.5168 |
-| 3️⃣   | HoursSinceRain   | 0.02721   | 0.13165   | 56.34   | 0.5243 |
+| Rank | Feature         | Model           | MSE       | MAE       | SMAPE   | CORR   |
+|------|------------------|------------------|-----------|-----------|---------|--------|
+| 1    | **Ppt_24h_sum**  | LSTM             | **0.02651** | 0.12907   | 55.36   | **0.5259** |
+| 2    | Ppt_RainFlag     | LSTM             | 0.02708   | **0.12662** | **54.62** | 0.5168 |
+| 3    | HoursSinceRain   | LSTM             | 0.02721   | 0.13165   | 56.34   | 0.5243 |
+| 4    | Ppt              | Autoregressive   | 0.02758   | 0.13121   | 56.31   | 0.5076 |
 
-**Conclusion**: `Ppt_24h_sum` had the **lowest MSE and lowest CORR**, making it the best overall feature for accurate soil moisture forecasting.
+**Conclusion**:  
+✅ `Ppt_24h_sum` with **LSTM** had the **lowest MSE** and the **highest correlation**, making it the **best overall feature-engineered input** for accurate soil moisture forecasting using `SWC_10`.
+
+`Ppt_RainFlag` was also a strong candidate, with the **lowest MAE and SMAPE**, indicating better robustness on relative error metrics.
 
 ### 2. Ppt_RainFlag
 #### Description: Binary indicator of whether it rained at all during the current hour.
