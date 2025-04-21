@@ -379,7 +379,7 @@ The `MultiheadLSTM` model achieved the **lowest MSE** and the **highest correlat
 
 ---
 
-## 🧪 How to Run the Best Model
+## How to Run the Best Model
 
 To reproduce the best model using only `SWC_10` with a 48-hour window and 168-hour offset, run:
 
