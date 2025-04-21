@@ -18,7 +18,6 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error, mean_absolu
 
 from scipy.stats import pearsonr
 
-from data_helpers import *
 import models as model_module
 
 import numpy as np
@@ -28,7 +27,8 @@ matplotlib.use('Agg')  # Use non-GUI backend before importing pyplot
 import matplotlib.pyplot as plt
 
 import models as model_module
-from model_entry import ModelEntry
+from core.model_entry import ModelEntry
+from core.data_helpers import *
 
 
 
@@ -196,7 +196,6 @@ def main(args):
 
         return  # Exit before training
 
-    
 
     # Prepare validation & test sets
     scaled_val, _ = normalize_features(val_df, all_features)
@@ -231,7 +230,7 @@ def main(args):
     print(f"Features being used: {all_features}")
 
 
-    model_dir = "models"
+    model_dir = "saved_models"
     os.makedirs(model_dir, exist_ok=True)
 
     # Normalize model IDs from CLI input like: "lstm,attention_lstm"

@@ -26,9 +26,16 @@ pip install pandas numpy tensorflow scikit-learn fastparquet argparse stats
 
 ## File Descriptions
 
-- `main.py`: Main script to train different models and evaluate performance.
-- `preprocess_data.py`: Script for data preprocessing, including loading CSV files, engineering features, and saving the data as Parquet.
-- `run_experiments.sh`: Bash script to run experiments with different offsets.
+- `main.py`: Main training script for deep learning models. Handles data loading, feature normalization, training, evaluation, and result logging.
+- `models.py`: Contains all model architectures, including LSTM, BiLSTM, RNN, CNN, Transformer variants, and baselines.
+- `core/data_helpers.py`: Utilities for loading and preprocessing data, feature engineering, normalization, window generation, and visualization.
+- `core/model_entry.py`: A lightweight wrapper to standardize model naming and building from compile functions.
+- `run_experiments.sh`: Bash script to run multiple experiments with varying offsets and feature configurations.
+- `Revised_Final_Data/`: Folder containing cleaned and timestamp-aligned station datasets (CSV format).
+- `models/`: Directory where trained `.keras` model files are saved.
+- `results/`: Output directory for evaluation metrics and training loss CSVs, as well as plots from `--visualize`.
+- `requirements.txt`: List of Python dependencies needed to run the project.
+- `README.md`: Project overview, usage instructions, and model descriptions.
 
 ## Running the Project
 
@@ -87,7 +94,7 @@ After training, results are saved in CSV files:
 
 ## Model Outputs
 
-Trained models are saved in the `models/` directory as `.keras` files. The model filenames follow this pattern:
+Trained models are saved in the `saved_models/` directory as `.keras` files. The model filenames follow this pattern:
 
 ```plaintext
 <model_name>_<station_name>.keras
