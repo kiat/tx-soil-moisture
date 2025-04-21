@@ -348,9 +348,12 @@ class MovingAverageBaseline:
 
 
 
+
+
+
+
+
 ## Results
-
-
 
 
 ### Which models performed best?
@@ -398,8 +401,8 @@ python3 main.py --window_size 48 --offset 168 --epochs 10 --patience 3 --feature
 ```
 
 
-RESULTS STORED HERE
-results_ws48_offset168_SWC_10.csv
+RESULTS STORED HERE (once run)
+results/results_ws48_offset168_SWC_10.csv
 
 
 
@@ -416,8 +419,6 @@ df['Ppt_24h_sum'] = df['Ppt'].rolling(24, min_periods=1).sum()
 ```
 Use case: Captures recent rain accumulation, which may influence soil moisture over a daily timescale.
 
-File: results_ws48_offset168_SWC_10_Ppt_24h_sum.csv
-
 NOTE: Best Overall in MSE and strong performance in generalization
 
 ### 2. Ppt_RainFlag
@@ -429,8 +430,6 @@ Implementation:
 df['Ppt_RainFlag'] = (df['Ppt'] > 0).astype(int)
 ```
 Use case: Captures presence of rain as a categorical signal — helpful for models like LSTM that learn patterns over time.
-
-File: results_ws48_offset168_SWC_10_Ppt_RainFlag.csv
 
 Best in MAE and SMAPE — shows excellent generalization with simpler input
 
