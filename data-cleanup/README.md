@@ -1,8 +1,9 @@
 # Running Scripts
 
-## Script 1
+## convert_missing_data_to_NaN.py
 
-Script 1 merges the SWC and MET files while removing invalid values. This script outputs four files, each of which are explained below. The ```missing_cleaned_data``` directory is created automatically to hold the output file.
+The script ```convert_missing_data_to_NaN.py``` inputs the original data folder files, so one SWC file and one MET file for each station. The script identifies missing and invalid values in the dataset, and marks those values as NaN value. The ```missing_cleaned_data``` directory is created automatically to hold the output file for each station. You can run a single station at a time, or run the flag ```--all``` to run all stations at once. Examples of terminal commands and working outputs are provided below.
+
 - ```cleaned_data_station_1.csv```
   - A cleaned dataset that combines both  MET and SWC datasets, with invalid values removed. The missing data and individual missing timestamps were found by using this dataset 
 
@@ -15,17 +16,14 @@ export SOIL_DATA_DIR=/path/to/soil_station
 export MET_DATA_DIR=/path/to/met_station
 ```
 
-Then, you can run the following.
-
-``` python3 convert_missing_data_to_NaN.py --station # ```: station numbers in place of #, or "all"
-
+Then, you can run the following. You can replace the # with the number of the specific station you wish to clean, or use the ```--all``` flag to run all stations
 Example usage:
 ```
+python3 convert_missing_data_to_NaN.py --station #           # processes data for station only
 python3 convert_missing_data_to_NaN.py --all                 # processes data for all stations 
-python3 convert_missing_data_to_NaN.py --station 1           # processes data for station_1 only
 ```
 
-The final output in the terminal should look like this:
+The final output in the terminal should look like this, this example covers stations 1 to 6:
 
 ```
 Processing Station 1...
@@ -41,12 +39,6 @@ Cleaned data saved to: missing_cleaned_data/cleaned_data_station_5.csv
 Processing Station 6...
 Cleaned data saved to: missing_cleaned_data/cleaned_data_station_6.csv
 ```
-
-
-## Script 2
-
-Script is still under progress.
-
 
 ****************************************************************
 Spring 2025 Data Cleanup Team: Abi, Nethra, Ramya, Zun
