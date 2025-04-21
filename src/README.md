@@ -430,6 +430,16 @@ Use case: Captures recent rain accumulation, which may influence soil moisture o
 
 NOTE: Best Overall in MSE and strong performance in generalization
 
+Top 3 Feature Combinations by MSE
+
+| Rank | Feature         | MSE       | MAE       | SMAPE   | CORR   |
+|------|------------------|-----------|-----------|---------|--------|
+| 1️⃣   | **Ppt_24h_sum**  | **0.02651** | 0.12907   | 55.36   | 0.5259 |
+| 2️⃣   | Ppt_RainFlag     | 0.02708   | **0.12662** | **54.62** | 0.5168 |
+| 3️⃣   | HoursSinceRain   | 0.02721   | 0.13165   | 56.34   | 0.5243 |
+
+**Conclusion**: `Ppt_24h_sum` had the **lowest MSE** (and also better in all other measures), making it the best overall feature for accurate soil moisture forecasting.
+
 ### 2. Ppt_RainFlag
 #### Description: Binary indicator of whether it rained at all during the current hour.
 
