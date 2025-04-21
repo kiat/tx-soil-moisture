@@ -381,16 +381,20 @@ The `MultiheadLSTM` model achieved the **lowest MSE** and the **highest correlat
 
 ## How to Run the Best Model
 
-To reproduce the best model using only `SWC_10` with a 48-hour window and 168-hour offset, run:
+To compare the best models using only `SWC_10` with a 48-hour window and 168-hour offset, run the following in a bash file:
 
-```python
-python3 main.py \
-  --window_size 48 \
-  --offset 168 \
-  --epochs 100 \
-  --patience 3 \
-  --features "SWC_10" \
-  --model_names "multiheadlstm"
+```bash
+# Attention-LSTM
+python3 main.py --window_size 48 --offset 168 --epochs 10 --patience 3 --features "SWC_10" --model_names AttentionLSTM
+# Attention-Only
+python3 main.py --window_size 48 --offset 168 --epochs 10 --patience 3 --features "SWC_10" --model_names attentiononly
+# Transformer
+python3 main.py --window_size 48 --offset 168 --epochs 10 --patience 3 --features "SWC_10" --model_names transformer
+# Multihead-LSTM
+python3 main.py --window_size 48 --offset 168 --epochs 10 --patience 3 --features "SWC_10" --model_names multiheadlstm
+# Baseline
+python3 main.py --window_size 48 --offset 168 --epochs 10 --patience 3 --features "SWC_10" --model_names baseline
+
 ```
 
 
