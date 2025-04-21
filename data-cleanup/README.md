@@ -1,18 +1,8 @@
-
-
-
-
 # Running Scripts
 
 ## Script 1
 
-Script 1 merges the SWC and MET files while removing invalid values. This script outputs four files, each of which are explained below. Two directories, ```raw_merged_data``` and ```missing_cleaned_data```, are created automatically to hold the output files.
-- ```raw_merged_station_1.csv```
-  - A cleaned dataset that combines both original MET and SWC datasets, no changes to actual values.
-- ```missing_ranges_station_1.csv```
-  - A list recording the parameter, start timestamp, end timestamp, and number or missing data values.
-- ```missing_timestamps_station_1.csv```
-  - A list recording the timestamp (by hour) and parameter that is missing
+Script 1 merges the SWC and MET files while removing invalid values. This script outputs four files, each of which are explained below. The ```missing_cleaned_data``` directory is created automatically to hold the output file.
 - ```cleaned_data_station_1.csv```
   - A cleaned dataset that combines both  MET and SWC datasets, with invalid values removed. The missing data and individual missing timestamps were found by using this dataset 
 
