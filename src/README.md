@@ -124,7 +124,7 @@ This will create plots in the `results/visualizations` directory.
 python3 main.py --window_size 6 --offset 2 --epochs 1 --patience 1 --features "SWC_10,Ppt" --model_names "LSTM"
 ```
 
-## 🧩 Model Architectures
+## Model Architectures
 
 Below is a summary of each model implementation available via the `--model_names` flag.
 
