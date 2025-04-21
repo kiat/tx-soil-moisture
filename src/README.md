@@ -349,14 +349,14 @@ class MovingAverageBaseline:
 
 
 ## Results
-Which models performed best?
+### Which models performed best?
 
 
 Which feature was best for ppt?
 Upon observation, the best combination of features was the SWC_10, Ppt result. As a result of this, we feature engineered some more features based on them, and had experiments for which was best. 
 
-1. Ppt_24h_sum
-Description: Sum of precipitation over the last 24 hours (rolling window).
+### 1. Ppt_24h_sum
+#### Description: Sum of precipitation over the last 24 hours (rolling window).
 
 Implementation:
 
@@ -369,8 +369,8 @@ File: results_ws48_offset168_SWC_10_Ppt_24h_sum.csv
 
 ✅ Best Overall in MSE and strong performance in generalization
 
-3. Ppt_RainFlag
-Description: Binary indicator of whether it rained at all during the current hour.
+### 2. Ppt_RainFlag
+#### Description: Binary indicator of whether it rained at all during the current hour.
 
 Implementation:
 
@@ -383,8 +383,8 @@ File: results_ws48_offset168_SWC_10_Ppt_RainFlag.csv
 
 ✅ Best in MAE and SMAPE — shows excellent generalization with simpler input
 
-4. HoursSinceRain
-Description: Number of hours since the last rain event.
+### 3. HoursSinceRain
+#### Description: Number of hours since the last rain event.
 
 Implementation:
 
