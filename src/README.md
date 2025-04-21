@@ -407,7 +407,7 @@ results/results_ws48_offset168_SWC_10.csv
 
 
 ### Which feature was best for ppt?
-Upon observation, the best combination of features was the SWC_10, Ppt result. As a result of this, we feature engineered some more features based on them, and had experiments for which was best. 
+Upon observation, the best combination of features was the SWC_10, Ppt result. As a result of this, we feature engineered some more features based on ppt, and had experiments for which was best. 
 
 ### 1. Ppt_24h_sum
 #### Description: Sum of precipitation over the last 24 hours (rolling window).
