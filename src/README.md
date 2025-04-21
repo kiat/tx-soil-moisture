@@ -349,10 +349,57 @@ class MovingAverageBaseline:
 
 
 ## Results
+
+
+
+
 ### Which models performed best?
+#### SWC_10 Model Evaluation - 48 Hour Window
+
+This project evaluates time series deep learning models for soil moisture prediction using the `SWC_10` feature. The evaluation compares multiple models trained with a **48-hour window size** and an **offset of 168 hours**, tested on `Station6`.
+
+---
+
+###  Best Overall Model
+
+###  Model: `MultiheadLSTM`
+- **Feature Used**: `SWC_10`
+- **Window Size**: 48
+- **Offset**: 168
+- **Test Station**: Station6
+
+| Metric  | Value        |
+|---------|--------------|
+| MSE     | **0.026735** |
+| MAE     | 0.120191     |
+| SMAPE   | 52.33        |
+| CORR    | **0.5344**   |
+
+The `MultiheadLSTM` model achieved the **lowest MSE** and the **highest correlation**, making it the best performer overall.
+
+---
+
+## 🧪 How to Run the Best Model
+
+To reproduce the best model using only `SWC_10` with a 48-hour window and 168-hour offset, run:
+
+```python
+python3 main.py \
+  --window_size 48 \
+  --offset 168 \
+  --epochs 100 \
+  --patience 3 \
+  --features "SWC_10" \
+  --model_names "multiheadlstm"
+```
 
 
-Which feature was best for ppt?
+RESULTS STORED HERE
+results_ws48_offset168_SWC_10.csv
+
+
+
+### Which feature was best for ppt?
 Upon observation, the best combination of features was the SWC_10, Ppt result. As a result of this, we feature engineered some more features based on them, and had experiments for which was best. 
 
 ### 1. Ppt_24h_sum
@@ -367,7 +414,7 @@ Use case: Captures recent rain accumulation, which may influence soil moisture o
 
 File: results_ws48_offset168_SWC_10_Ppt_24h_sum.csv
 
-✅ Best Overall in MSE and strong performance in generalization
+NOTE: Best Overall in MSE and strong performance in generalization
 
 ### 2. Ppt_RainFlag
 #### Description: Binary indicator of whether it rained at all during the current hour.
@@ -381,7 +428,7 @@ Use case: Captures presence of rain as a categorical signal — helpful for mode
 
 File: results_ws48_offset168_SWC_10_Ppt_RainFlag.csv
 
-✅ Best in MAE and SMAPE — shows excellent generalization with simpler input
+Best in MAE and SMAPE — shows excellent generalization with simpler input
 
 ### 3. HoursSinceRain
 #### Description: Number of hours since the last rain event.
