@@ -409,6 +409,15 @@ results/results_ws48_offset168_SWC_10.csv
 ### Which feature was best for ppt?
 Upon observation, the best combination of features was the SWC_10, Ppt result. As a result of this, we feature engineered some more features based on ppt, and had experiments for which was best. 
 
+### Experiments run with the following
+```bash
+python3 main.py --window_size 48 --offset 168 --epochs 10 --patience 3 --features "SWC_10,Ppt" --model_names LSTM
+python3 main.py --window_size 48 --offset 168 --epochs 10 --patience 3 --features "SWC_10,Ppt_log" --model_names LSTM
+python3 main.py --window_size 48 --offset 168 --epochs 10 --patience 3 --features "SWC_10,Ppt_RainFlag" --model_names LSTM
+python3 main.py --window_size 48 --offset 168 --epochs 10 --patience 3 --features "SWC_10,Ppt_24h_sum" --model_names LSTM
+python3 main.py --window_size 48 --offset 168 --epochs 10 --patience 3 --features "SWC_10,HoursSinceRain" --model_names LSTM
+```
+
 ### 1. Ppt_24h_sum
 #### Description: Sum of precipitation over the last 24 hours (rolling window).
 
