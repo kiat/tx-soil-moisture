@@ -16,7 +16,7 @@ export SOIL_DATA_DIR=/path/to/soil_station
 export MET_DATA_DIR=/path/to/met_station
 ```
 
-Then, you can run the following. You can replace the # with the number of the specific station you wish to clean, or use the ```--all``` flag to run all stations
+Then, you can run the following. You can replace the # with the number of the specific station you wish to clean, or use the ```--all``` flag to run all stations.
 Example usage:
 ```
 python3 convert_missing_data_to_NaN.py --station #           # processes data for station only
