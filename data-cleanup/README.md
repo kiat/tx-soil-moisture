@@ -39,10 +39,17 @@ The final output in the terminal should look like this:
 
 ```
 Processing Station 1...
-Raw merged data saved to: raw_merged_data/raw_merged_station_1.csv
-Missing data ranges saved to: missing_cleaned_data/missing_ranges_station_1.csv
-Individual missing timestamps saved to: missing_cleaned_data/missing_timestamps_station_1.csv
 Cleaned data saved to: missing_cleaned_data/cleaned_data_station_1.csv
+Processing Station 2...
+Cleaned data saved to: missing_cleaned_data/cleaned_data_station_2.csv
+Processing Station 3...
+Cleaned data saved to: missing_cleaned_data/cleaned_data_station_3.csv
+Processing Station 4...
+Cleaned data saved to: missing_cleaned_data/cleaned_data_station_4.csv
+Processing Station 5...
+Cleaned data saved to: missing_cleaned_data/cleaned_data_station_5.csv
+Processing Station 6...
+Cleaned data saved to: missing_cleaned_data/cleaned_data_station_6.csv
 ```
 
 
