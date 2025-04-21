@@ -32,20 +32,7 @@ pip install pandas numpy tensorflow scikit-learn fastparquet argparse stats
 
 ## Running the Project
 
-### Step 1: Preprocess Data
-
-Before training models, preprocess raw CSV files into Parquet format:
-
-```bash
-python3 preprocess_data.py
-```
-
-This script will:
-- Read CSV files (`StationX_Revised_Final_Data.csv`).
-- Apply feature engineering.
-- Save processed data as Parquet files.
-
-### Step 2: Train Models
+### Step 1: Train Models
 
 Run the training script with default parameters:
 
@@ -54,14 +41,23 @@ python3 main.py --window_size 168 --offset 24 --epochs 10 --patience 3 --feature
 ```
 
 Parameters:
-- `--window_size`: Number of time steps used for training (default: 168).
-- `--offset`: How far ahead to predict (default: 24).
-- `--epochs`: Number of training epochs (default: 10).
-- `--patience`: Early stopping patience (default: 3).
-- `--features`: Comma-separated list of features to use.
--  `--model_names`: "LSTM"
 
-### Step 3: Run Experiments with Different Offsets
+### Available Arguments
+
+| Argument        | Description                                 | Default                                                       |
+| --------------- | ------------------------------------------- | ------------------------------------------------------------- |
+| `--window_size` | Size of input window (in time steps)        | `168`                                                         |
+| `--offset`      | Forecasting horizon (in time steps)         | `24`                                                          |
+| `--epochs`      | Number of training epochs                   | `10`                                                          |
+| `--patience`    | Early stopping patience                     | `3`                                                           |
+| `--features`    | Comma-separated list of input features      | `"SWC_20,T_20,Ppt,Tair,Wx,Wy"`                                |
+| `--model_names` | Comma-separated model names to train        | `"LSTM,BiLSTM,RNN,CNN,AttentionLSTM,Autoregressive,Baseline"` |
+| `--visualize`   | Plot data splits instead of training models | *(optional flag)*                                             |
+
+---
+
+
+### Step 2: Run Experiments with Different Offsets
 
 To train models with multiple offsets, execute:
 
@@ -71,7 +67,7 @@ bash run_experiments.sh
 
 This script tests offsets of 24, 72, and 168 while keeping other parameters constant.
 
-### Step 4: Evaluate Model Performance
+### Step 3: Evaluate Model Performance
 
 After training, results are saved in CSV files:
 
@@ -134,6 +130,23 @@ python3 main.py --window_size 6 --offset 2 --epochs 1 --patience 1 --features "S
 ```
 make clean 
 ```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
