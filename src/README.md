@@ -116,6 +116,8 @@ This will create plots in the `results/visualizations` directory.
 - Ensure data files (`StationX_Revised_Final_Data.csv`) are available before preprocessing.
 - Modify `run_experiments.sh` to customize offsets, features, or model parameters.
 
+- This is how experiments were run for the most part
+
 
 
 # Example Command 
@@ -343,6 +345,60 @@ class MovingAverageBaseline:
             raise ValueError(f"Window size {N} too large for sequence length {X.shape[1]}")
         return X[:, -N:, 0].mean(axis=1)
 ```
+
+
+
+## Results
+Which models performed best?
+
+
+Which feature was best for ppt?
+Upon observation, the best combination of features was the SWC_10, Ppt result. As a result of this, we feature engineered some more features based on them, and had experiments for which was best. 
+
+1. Ppt_24h_sum
+Description: Sum of precipitation over the last 24 hours (rolling window).
+
+Implementation:
+
+```python
+df['Ppt_24h_sum'] = df['Ppt'].rolling(24, min_periods=1).sum()
+```
+Use case: Captures recent rain accumulation, which may influence soil moisture over a daily timescale.
+
+File: results_ws48_offset168_SWC_10_Ppt_24h_sum.csv
+
+✅ Best Overall in MSE and strong performance in generalization
+
+3. Ppt_RainFlag
+Description: Binary indicator of whether it rained at all during the current hour.
+
+Implementation:
+
+```python
+df['Ppt_RainFlag'] = (df['Ppt'] > 0).astype(int)
+```
+Use case: Captures presence of rain as a categorical signal — helpful for models like LSTM that learn patterns over time.
+
+File: results_ws48_offset168_SWC_10_Ppt_RainFlag.csv
+
+✅ Best in MAE and SMAPE — shows excellent generalization with simpler input
+
+4. HoursSinceRain
+Description: Number of hours since the last rain event.
+
+Implementation:
+
+```python
+hours_since = []
+count = 0
+for v in df['Ppt']:
+    count = 0 if v > 0 else count + 1
+    hours_since.append(count)
+df['HoursSinceRain'] = hours_since
+```
+Use case: Tracks drying period since last moisture event — relevant for evaporation/absorption trends.
+
+File: results_ws48_offset168_SWC_10_HoursSinceRain.csv
 
 **Usage:**
 - Specify via `--model_names MovingAverage`.
