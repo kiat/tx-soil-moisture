@@ -412,7 +412,6 @@ Upon observation, the best combination of features was the SWC_10, Ppt result. A
 ### Experiments run with the following
 ```bash
 python3 main.py --window_size 48 --offset 168 --epochs 10 --patience 3 --features "SWC_10,Ppt" --model_names LSTM
-python3 main.py --window_size 48 --offset 168 --epochs 10 --patience 3 --features "SWC_10,Ppt_log" --model_names LSTM
 python3 main.py --window_size 48 --offset 168 --epochs 10 --patience 3 --features "SWC_10,Ppt_RainFlag" --model_names LSTM
 python3 main.py --window_size 48 --offset 168 --epochs 10 --patience 3 --features "SWC_10,Ppt_24h_sum" --model_names LSTM
 python3 main.py --window_size 48 --offset 168 --epochs 10 --patience 3 --features "SWC_10,HoursSinceRain" --model_names LSTM
