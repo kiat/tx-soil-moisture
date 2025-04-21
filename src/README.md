@@ -124,15 +124,15 @@ This will create plots in the `results/visualizations` directory.
 python3 main.py --window_size 6 --offset 2 --epochs 1 --patience 1 --features "SWC_10,Ppt" --model_names "LSTM"
 ```
 
-## Model Architectures
+## 🧩 Model Architectures
 
-Below is a summary of each model implementation available via the --model_names flag.
+Below is a summary of each model implementation available via the `--model_names` flag.
 
-1. Autoregressive (AR)
+### 1. Autoregressive (AR)
 
 A simple forecasting baseline that pools information over time before a small feed‑forward network:
 
-# AR model definition
+```python
 def compile_autoregressive(input_shape):
     model = Sequential([
         InputLayer(input_shape=input_shape),
@@ -141,17 +141,18 @@ def compile_autoregressive(input_shape):
         Dense(1, activation='linear')       # single-step forecast
     ])
     return model
+```
 
-2. LSTM
+---
+
+### 2. LSTM
 
 Standard stacked LSTM network:
+- Three LSTM layers (32 → 16 → 8 units)
+- Dense bottleneck (8 units)
+- Linear output
 
-Three LSTM layers (32 → 16 → 8 units)
-
-Dense bottleneck (8 units)
-
-Linear output
-
+```python
 def compile_lstm(input_shape):
     model = Sequential([
         Input(shape=input_shape),
@@ -162,11 +163,15 @@ def compile_lstm(input_shape):
         Dense(1, activation='linear')
     ])
     return model
+```
 
-3. Bidirectional LSTM (BiLSTM)
+---
+
+### 3. Bidirectional LSTM (BiLSTM)
 
 Symmetric two‑directional LSTM stacking:
 
+```python
 def compile_bi_lstm(input_shape):
     model = Sequential([
         Input(input_shape=input_shape),
@@ -177,11 +182,15 @@ def compile_bi_lstm(input_shape):
         Dense(1, activation='linear')
     ])
     return model
+```
 
-4. Simple RNN
+---
+
+### 4. Simple RNN
 
 Single-layer RNN baseline:
 
+```python
 def compile_rnn(input_shape):
     model = Sequential([
         Input(input_shape=input_shape),
@@ -190,11 +199,15 @@ def compile_rnn(input_shape):
         Dense(1, activation='linear')
     ])
     return model
+```
 
-5. CNN for Time Series
+---
+
+### 5. CNN for Time Series
 
 1D convolution followed by a dense head:
 
+```python
 def compile_cnn(input_shape):
     model = Sequential([
         Input(input_shape=input_shape),
@@ -204,32 +217,38 @@ def compile_cnn(input_shape):
         Dense(1, activation='linear')
     ])
     return model
+```
 
-6. Attention-LSTM
+---
+
+### 6. Attention-LSTM
 
 Integrates self‑attention into an LSTM stack to let the model focus on key time steps:
 
+```python
 def compile_attention_lstm(input_shape):
     model = Sequential([
         InputLayer(input_shape=input_shape),
         LSTM(32, return_sequences=True),
-        SeqSelfAttention(attention_activation='softmax'),  # attention layer
+        SeqSelfAttention(attention_activation='softmax'),
         LSTM(32),
         Dense(8, activation='relu'),
         Dense(1, activation='linear')
     ])
     return model
+```
 
-How it works:
+**How it works:**
+- `SeqSelfAttention` computes a weighted combination of the LSTM outputs at each time step.
+- Attention scores (via softmax) highlight important lags before the second LSTM.
 
-SeqSelfAttention computes a weighted combination of the LSTM outputs at each time step.
+---
 
-The attention scores (via softmax) highlight important lags before the second LSTM.
-
-7. Attention-Only
+### 7. Attention-Only
 
 A pure Transformer‑style encoder block for time series:
 
+```python
 def compile_attention_only(input_shape):
     inputs = Input(input_shape=input_shape)
     x = MultiHeadAttention(num_heads=4, key_dim=16)(inputs, inputs)
@@ -238,19 +257,20 @@ def compile_attention_only(input_shape):
     x = Dense(64, activation='relu')(x)
     outputs = Dense(1)(x)
     return Model(inputs, outputs)
+```
 
-Key points:
+**Key points:**
+- Multi-head attention attends to multiple temporal patterns in parallel.
+- Layer normalization stabilizes training.
+- Global pooling collapses the time dimension into a summary vector.
 
-Multi-head attention allows the model to attend to multiple temporal patterns in parallel.
+---
 
-Layer normalization stabilizes training.
-
-Global pooling collapses the time dimension into a summary vector.
-
-8. Transformer
+### 8. Transformer
 
 Implements a single Transformer encoder block:
 
+```python
 def compile_transformer(input_shape):
     inputs = Input(input_shape=input_shape)
     # 1) Self-attention + residual
@@ -267,19 +287,20 @@ def compile_transformer(input_shape):
     x = Dense(32, activation='relu')(x)
     outputs = Dense(1)(x)
     return Model(inputs, outputs)
+```
 
-Transformer details:
+**Details:**
+- Residual connections (Add layers) help gradient flow.
+- Layer normalization after each block stabilizes learning.
+- The feed‑forward network expands then projects back to the input dimensionality.
 
-Residual connections (Add layers) help gradient flow.
+---
 
-LayerNormalization after each block stabilizes learning.
-
-Feed‑forward network expands then projects back to input dimensionality.
-
-9. Multi‑Head LSTM
+### 9. Multi-head LSTM
 
 Combines LSTM with multi‑head attention:
 
+```python
 def compile_multihead_lstm(input_shape):
     inputs = Input(input_shape=input_shape)
     x = LSTM(32, return_sequences=True)(inputs)
@@ -288,21 +309,29 @@ def compile_multihead_lstm(input_shape):
     x = Dense(8, activation='relu')(x)
     outputs = Dense(1)(x)
     return Model(inputs, outputs)
+```
 
-10. Baseline
+---
+
+### 10. Baseline
 
 A trivial predictor that returns the last observed value of the first feature:
 
+```python
 class Baseline:
     def fit(self, X, y, *args, **kwargs):
         return self
     def predict(self, X):
         return X[:, -1, 0]
+```
 
-11. Moving Average Baseline
+---
+
+### 11. Moving Average Baseline
 
 Computes the simple average of the last N steps of the first feature:
 
+```python
 class MovingAverageBaseline:
     def __init__(self, window_size=3):
         self.window_size = window_size
@@ -313,17 +342,22 @@ class MovingAverageBaseline:
         if N > X.shape[1]:
             raise ValueError(f"Window size {N} too large for sequence length {X.shape[1]}")
         return X[:, -N:, 0].mean(axis=1)
+```
 
-Usage:
+**Usage:**
+- Specify via `--model_names MovingAverage`.
+- `window_size` defaults to 3 (modify in the `compile_moving_average` wrapper if needed).
 
-Specify via --model_names ``MovingAverage.
-
-window_size defaults to 3, but can be customized in code or by modifying the compile_moving_average wrapper.
 # Clean up 
 
 ```
 make clean 
 ```
+
+
+
+
+
 
 
 
