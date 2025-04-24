@@ -19,13 +19,18 @@ TODOs:
 
 
 # Students
+## Summer 2025
+* Abijith Chandrasekar Vij <abicv0306@utexas.edu>
 
 
 ## Spring 2025
 
-
-* Alexander N Hoang <alex.hoang@utexas.edu> (Models with attention mechanisim)
-* 
+* Alexander N Hoang <alex.hoang@utexas.edu> 
+* Chris Ho <chris.ho@utexas.edu>
+* Zun Cao <zc6222@utexas.edu>
+* Shree-Nethra Middela <nmiddela@utexas.edu>
+* Ramya Kappaganthula <ramyakappaganthula@utexas.edu>
+* Abijith Chandrasekar Vij <abicv0306@utexas.edu>
 
 
 ## Fall 2024
