@@ -1,6 +1,6 @@
 # Time Series Prediction with Deep Learning Models
 
-This repository contains scripts to preprocess time series data, train multiple deep learning models (LSTM, BiLSTM, RNN, CNN) for time series forecasting, and evaluate their performance.
+This repository contains scripts to preprocess time series data, train multiple deep learning models (LSTM, BiLSTM, RNN, CNN) for time series forecasting, and evaluate their performance. To learn how the code works from start to finish, a good place to start would be `main.py`, which has comments throughout the code explaining what each section does, as well as what methods are used.
 
 ## Prerequisites
 
@@ -36,6 +36,10 @@ pip install pandas numpy tensorflow scikit-learn fastparquet argparse stats
 - `results/`: Output directory for evaluation metrics and training loss CSVs, as well as plots from `--visualize`.
 - `requirements.txt`: List of Python dependencies needed to run the project.
 - `README.md`: Project overview, usage instructions, and model descriptions.
+- `archive/`: Directory containing archived results for reference.
+    - `results_ws<window_size>_offset<offset>_<features>.csv`: Stores model evaluation metrics, including R2 score, MSE, MAE, MAPE, SMAPE, RSE, and correlation coefficient.
+    - `loss_history_<model>_ws<window_size>_offset<offset>_<features>.csv`: Stores loss history per epoch, including training and validation loss.
+    - `visualize.py` files: Script to visualize training and validation loss over epochs, as well as predicted vs. actual values.
 
 ## Running the Project
 

@@ -6,3 +6,4 @@ fastparquet
 argparse
 keras-attention
 keras_self_attention
+matplotlib
