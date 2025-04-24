@@ -20,6 +20,14 @@ TODOs:
 
 # Students
 
+
+## Spring 2025
+
+
+* Alexander N Hoang <alex.hoang@utexas.edu> (Models with attention mechanisim)
+* 
+
+
 ## Fall 2024
 
 * Ayaan Nazir <nazir@utexas.edu> (Using Satelite dataset)
