@@ -79,15 +79,17 @@ def engineer_features(dfs):
     return engineered_dfs
 
 
-##########################################
+# Normalize features
 def normalize_features(df, features):
     scaler = MinMaxScaler()
-
+    # Identify features to scale and not to scale
     no_scale_features = [feat for feat in features if 'sin' in feat or 'cos' in feat]
     scale_features = [feat for feat in features if feat not in no_scale_features]
 
+    # Reset index to avoid issues with scaling
     df = df.reset_index(drop=True)
 
+    # Scale the features
     scaled_data = scaler.fit_transform(df[scale_features])
     scaled_df = pd.DataFrame(scaled_data, columns=scale_features)
 
@@ -110,18 +112,22 @@ def normalize_features(df, features):
 #     return  np.array(X),  np.array(y)
 
 
+# Convert data to X and y windows with offset
 def data_to_X_y(data, window_size, offset):
+    # Calculate the number of rows for X and y
     rows = len(data) - window_size - offset
+    # Now, use sliding_window_view to create the X array
     X = np.lib.stride_tricks.sliding_window_view(data, (window_size, data.shape[1]))[:rows, 0]
+    # Then we slice the y array accordingly
     y = data[window_size + offset : window_size + offset + rows, 0]
     return X, y
 
 
 
-###############################################################################
 
 # Split data into train, validation, and test sets
-    
+# By default, the test set is the 2020 data in Station6, and the validation set is the rest of Station6
+# The training set is all other stations
 def split_and_stack_data(dfs, test_station_name="Station6", remove_met=False):
     if remove_met:
         for key in dfs.keys():
@@ -142,9 +148,8 @@ def split_and_stack_data(dfs, test_station_name="Station6", remove_met=False):
 
 
 
-#######################################################################################
 
-# Methods for visualizing the data splits
+# Methods for visualizing the data splits, using the --visualize flag in main
 
 def plot_split_timeline(train_df, val_df, test_df, feature, save_dir="results/data_splits/"):
     os.makedirs(save_dir, exist_ok=True)  # Ensure folder exists
