@@ -118,6 +118,8 @@ def compile_multihead_lstm(input_shape):
     outputs = Dense(1)(x)
     return Model(inputs, outputs)
 
+
+# NOTE: The following models are special cases handled separately in main.py
 def compile_baseline(input_shape):
     return Baseline()
 

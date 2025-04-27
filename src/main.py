@@ -182,13 +182,14 @@ def main(args):
         print(f"\nTraining {model_entry} across stations...\n")  # __str__ used automatically
 
         # This is an edge case, but we need to handle the Baseline model separately
-        if model_id == "baseline":
+        if model_id in ["baseline", "movingaverage"]:
+            # Baseline models do not require training
             model.fit(X_train, y_train)
             performance = evaluate_model(model, X_test, y_test)
 
             note_path = os.path.join(model_dir, f"model_{model_id}_NOTE.txt")
             with open(note_path, "w") as f:
-                f.write("Baseline model - no weights saved.\n")
+                f.write(model_id+" model - no weights saved.\n")
 
             feature_str = '_'.join(all_features)
             write_model_results_to_csv(target_station, str(model_entry), args.window_size, args.offset, performance, feature_str)
