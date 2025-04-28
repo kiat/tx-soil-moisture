@@ -12,7 +12,7 @@ We are imputing missing data based on the length for each missing data:
   - SWC, SWC_5-50: KNN or linear interpolation
   - Tair: use nearby station values
   - RH: has an inverse relationship with Tair, use this knowledge to check consistency
-  - Wind speed: linear interpolation
+  - Wind speed: not sure
   - Wind direction: circular interpolation, because circular data
   - Srad: 24 nearest neighbors before and after (KNN)
 
@@ -26,9 +26,9 @@ We are imputing missing data based on the length for each missing data:
 - Variables:
   - Tair: nearby station values
   - RH: same as short gaps (inverse with Tair)
-  - Wind speed: atandard interpolation
+  - Wind speed: not sure
   - Wind direction: circular interpolation because we have circular data
-  - Srad: interpolate considering seasonal patterns
+  - Srad: not sure
   - Ppt: 
     - Use nearby station values
     - Idea: First classify into "yes it rained" and "no it didn’t rain"
