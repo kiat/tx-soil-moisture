@@ -1,50 +1,50 @@
 # Interpolation Strategy for Missing Data
 
-We classify missing data based on the gap length:
+We are imputing missing data based on the length for each missing data:
 
 ## Short Gaps (Daily missing)
-- **Method**: 
-  - **KNN (K-Nearest Neighbors)** (using scikit-learn)
+- Method: 
+  - KNN (k-nearest neighbors from scikit-learn)
     - Non-parametric supervised learning algorithm
     - Predicts based on the nearest values beside it (good for short term gaps)
     - Use 24 hours before and after the missing point
-- **Variables**:
-  - **SWC, SWC_5-50**: KNN or linear interpolation
-  - **Tair**: Use nearby station values
-  - **RH (Relative Humidity)**: Use inverse relationship with Tair to check consistency
-  - **Wind speed**: Basic interpolation
-  - **Wind direction**: Circular interpolation may be needed
-  - **Srad**: Use 24 near neighbors before and after
+- Variables:
+  - SWC, SWC_5-50: KNN or linear interpolation
+  - Tair: use nearby station values
+  - RH: has an inverse relationship with Tair, use this knowledge to check consistency
+  - Wind speed: linear interpolation
+  - Wind direction: circular interpolation, because circular data
+  - Srad: 24 nearest neighbors before and after (KNN)
 
-## Medium Gaps (Weekly missing)
-- **Methods**:
-  - **SARIMA** or **ARIMA**: accounts for seasonality
-  - **Regression-based models**: Random Forest, Gradient Boosting
-    - Can use unless *all features* are NaN
-  - **Holt-Winters**: 
+## Medium Gaps (1 week or less missing)
+- Methods:
+  - SARIMA/ARIMA: accounts for seasonality
+  - Regression-based models: Random Forest, Gradient Boosting
+    - Can use unless all features are NaN
+  - NEW --> Holt-Winters: 
     - Good for seasonality, cyclic behavior, and smoothing averages
-- **Variables**:
-  - **Tair**: Nearby station values
-  - **RH**: Same as short gaps (inverse with Tair)
-  - **Wind speed**: Standard interpolation
-  - **Wind direction**: Circular interpolation
-  - **Srad**: Interpolate considering seasonal patterns
-  - **Ppt (Precipitation)**: 
+- Variables:
+  - Tair: nearby station values
+  - RH: same as short gaps (inverse with Tair)
+  - Wind speed: atandard interpolation
+  - Wind direction: circular interpolation because we have circular data
+  - Srad: interpolate considering seasonal patterns
+  - Ppt: 
     - Use nearby station values
-    - **Idea**: First classify into "yes it rained" and "no it didn’t rain"
+    - Idea: First classify into "yes it rained" and "no it didn’t rain"
     - Then, if "yes", predict the rain amount
 
-## Long Gaps (1 week - 1 month)
-- **Methods**:
-  - **Prophet** (from Facebook/Meta)
+## Long Gaps (1 week - 1 month missing)
+- Methods:
+  - Prophet (https://facebook.github.io/prophet/) (from Facebook/Meta)
     - Designed for time series with strong seasonal effects
     - Robust to missing data and seasonality changes
-  - **State-Space Models**
-- **Variables**: Same general strategy as medium gaps
+  - Explore state-space
+- Variables --> similar to as medium gaps
 
-## Very Long Gaps (Longer than 1 month)
-- **Methods**:
-  - **Machine Learning algorithms**:
+## Very Long Gaps (more than 1 month missing)
+- Methods:
+  - ML algorithms:
     - Random Forest
     - Gradient Boosting
     - LSTM (Long Short-Term Memory neural networks)
