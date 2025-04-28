@@ -6,8 +6,8 @@ We are imputing missing data based on the length for each missing data:
 - Method: 
   - KNN (k-nearest neighbors from scikit-learn)
     - Non-parametric supervised learning algorithm
-    - Predicts based on the nearest values beside it (good for short term gaps)
-    - Use 24 hours before and after the missing point
+    - Predicts based on the nearest values beside it (so works well with short term gaps)
+    - Use 24 hours before and after the missing point - KNN
 - Variables:
   - SWC, SWC_5-50: KNN or linear interpolation
   - Tair: use nearby station values
@@ -31,8 +31,8 @@ We are imputing missing data based on the length for each missing data:
   - Srad: not sure
   - Ppt: 
     - Use nearby station values
-    - Idea: First classify into "yes it rained" and "no it didn’t rain"
-    - Then, if "yes", predict the rain amount
+    - Idea: classify into "yes it rained" and "no it didn’t rain"
+    - Only if "yes" predict the rain amount
 
 ## Long Gaps (1 week - 1 month missing)
 - Methods:
