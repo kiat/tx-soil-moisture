@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # Load your data
-file_path = 'results_ws168_offset168_SWC_10_Ppt_Tair_YearSin_YearCos.csv'
+file_path = 'results_ws48_offset168_SWC_10.csv'
 df = pd.read_csv(file_path)
 
 # Select metrics to include in the radar chart
@@ -52,5 +52,5 @@ ax.legend(loc='upper right', bbox_to_anchor=(1.3, 1.1))
 plt.tight_layout()
 
 # Save to file
-plt.savefig('radar_chart_model_metrics.png', dpi=300)
+plt.savefig('radar_chart_model_metrics'+file_path+'.png', dpi=300)
 plt.close()
