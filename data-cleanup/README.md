@@ -1,18 +1,47 @@
+# Running Scripts
+
+## convert_missing_data_to_NaN.py
+
+The script ```convert_missing_data_to_NaN.py``` inputs the original data folder files, so one SWC file and one MET file for each station. The script identifies missing and invalid values in the dataset, and marks those values as NaN values. The ```missing_cleaned_data``` directory is created automatically to hold the output file for each station. You can run a single station at a time, or run the flag ```--all``` to run all stations at once. Examples of terminal commands and working outputs are provided. Here is the output of the script: 
+
+- ```cleaned_data_station_1.csv```
+  - This is a csv file of a cleaned dataset that combines both  MET and SWC datasets, with invalid and missing values removed and marked as NaN.
+
+
+### How to run convert_missing_data_to_NaN.py:
+
+Add environment variables in terminal first.
+```
+export SOIL_DATA_DIR=/path/to/soil_station
+export MET_DATA_DIR=/path/to/met_station
+```
+
+Then, you can run the following. You can replace the # with the number of the specific station you wish to clean, or use the ```--all``` flag to run all stations.
+Example usage:
+```
+python3 convert_missing_data_to_NaN.py --station #           # processes data for station only
+python3 convert_missing_data_to_NaN.py --all                 # processes data for all stations 
+```
+
+The final output in the terminal should look like this, this example covers stations 1 to 6:
+
+```
+Processing Station 1...
+Cleaned data saved to: missing_cleaned_data/cleaned_data_station_1.csv
+Processing Station 2...
+Cleaned data saved to: missing_cleaned_data/cleaned_data_station_2.csv
+Processing Station 3...
+Cleaned data saved to: missing_cleaned_data/cleaned_data_station_3.csv
+Processing Station 4...
+Cleaned data saved to: missing_cleaned_data/cleaned_data_station_4.csv
+Processing Station 5...
+Cleaned data saved to: missing_cleaned_data/cleaned_data_station_5.csv
+Processing Station 6...
+Cleaned data saved to: missing_cleaned_data/cleaned_data_station_6.csv
+```
+
+****************************************************************
 Spring 2025 Data Cleanup Team: Abi, Nethra, Ramya, Zun
-
-Here is the deepnote link for our working notebook:
-https://deepnote.com/workspace/UT-Austin-fe53bdd3-3bba-4d00-8ae5-a7ded30c81d4/project/2025SoilMoistureProject-25f43899-5656-4a70-8169-abc0aacffbd3/notebook/Notebook-1-b3dbdcbd31604f5599e27d7bdd9f4c09?utm_source=share-modal&utm_medium=product-shared-content&utm_campaign=notebook&utm_content=25f43899-5656-4a70-8169-abc0aacffbd3
-
-- Overall, script is ready, needs to print out cleaned Station files
-- Need to collaborate to include Zun's working script & data visualizations
-
-
-Finish putting the script into a format where we give a file input and recieve a file output
-NEW FEATURE: Be able to query for the following statistics...
-- Ask for soil moisture value for each month for each station (should complete a PEMDAS operation)
-- Ask for soil moisture value for each moth for each season
-- Ask for soil moisture value average for each month each station per year
-- ^ Use the soil moisture value average to find what the model would be if we replace the predicted value w calculated avg prediction of the month (bcz the avg value is between 0-0.6, January is usually between 0-0.3, and august is usually 0-0.5)
 
 
 # Soil Data Pipeline - datacleaning
