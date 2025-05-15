@@ -3,7 +3,7 @@
 # Research Questions/Tasks 
 ------------------------
 
- 1. Develop a Data Clean Script! 
+1. Develop a Data Clean Script! 
 Sensors failed to record data in different times. It can be a short period of time or a longer period. Our goal is to develop a script that given the original dataset can report which parts of data is missing and then impute the dataset using different techniques like average method, interpolation or others. It should generate a smooth time-series data as if the data is originally recorded. 
 
  1.a. Check all data attributes of Ppt, SWCs, Ts, RH, Wind, SR, etc.
