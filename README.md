@@ -41,9 +41,9 @@ Meeting time: Wednesday 5pm.
 
 ## Summer 2023 and Fall 2023
 
-* Hornsby, Trey C <tch2497@my.utexas.edu> (313E Student)
-* Benjamin C Cartwright <bencart0905@utexas.edu> (CS329 student)
-* Ali Hajibeigi <ahajibeigi@utexas.edu>  (313E Student) 
+* Hornsby, Trey C <tch2497@my.utexas.edu> 
+* Benjamin C Cartwright <bencart0905@utexas.edu> 
+* Ali Hajibeigi <ahajibeigi@utexas.edu>  
 
 Meetings Fridays at 2:00 PM
 over Zoom https://utexas.zoom.us/my/kia.teymourian
