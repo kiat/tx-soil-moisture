@@ -67,6 +67,26 @@ def merge_raw_data(station_id, soil_base_dir, met_base_dir):
     if 'Ppt_soil' in merged.columns and 'Ppt_met' in merged.columns:
         merged['Ppt'] = merged['Ppt_met']
         merged.drop(columns=['Ppt_soil', 'Ppt_met'], inplace=True)
+        
+    if station_id == 1:
+        merged['latitude'] = 30.3989
+        merged['longitude'] = -98.6105
+    elif station_id == 2:
+        merged['latitude'] = 30.4193
+        merged['longitude'] = -98.8046
+    elif station_id == 3:
+        merged['latitude'] = 30.4421
+        merged['longitude'] = -98.8427  
+    elif station_id == 4:
+        merged['latitude'] = 30.4600
+        merged['longitude'] = -98.9407
+    elif station_id == 5:
+        merged['latitude'] = 30.2454
+        merged['longitude'] = -98.7059
+    elif station_id == 6:
+        merged['latitude'] = 30.2758
+        merged['longitude'] = -98.7242
+            
     return merged
 
 
@@ -220,6 +240,8 @@ def main():
     print(f"Missing/invalid summary saved to: {miss_out}")
 
     # Build cleaned full‐timeline and save
+    corrected_df.index = pd.to_datetime(corrected_df.index)
+    
     full_idx = pd.date_range(start=merged_df.index.min(), end=merged_df.index.max(), freq='H')
     full_df = corrected_df.reindex(full_idx)
     clean_out = args.cleaned_output or f"cleaned_data/Station{station_id}_cleaned_data.csv"
