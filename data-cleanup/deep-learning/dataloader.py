@@ -193,7 +193,7 @@ def get_feature_columns(df, exclude_cols) -> List[str]:
             if col not in exclude_cols 
             and ('Sin' not in col and 'Cos' not in col)]
     
-def process_station_data(station_id, window_size, overlap, exclude_cols) -> Tuple[torch.Tensor, StandardScaler, List[str]]:
+def process_station_data(station_id, window_size, overlap, exclude_cols) -> Tuple[torch.Tensor, StandardScaler, List[str], List[str]]:
     """
     Feature engineer and create window for station
     """
@@ -206,17 +206,20 @@ def process_station_data(station_id, window_size, overlap, exclude_cols) -> Tupl
     df = df.drop('datetime', axis=1)
     
     # Get features and normalize
-    features = get_feature_columns(df, exclude_cols)
-    df, scaler = normalize_features(df, features, None)
+    all_features = df.columns
+    norm_features = get_feature_columns(df, exclude_cols)
+    norm_feat_indices = [df.columns.get_loc(feat) for feat in norm_features]
+    
+    df, scaler = normalize_features(df, norm_features, None)
     
     # Create windows
     windows = make_windows(df, window_size, overlap)
     
     print(f"Processed data for Station {station_id}")
     
-    return windows, scaler, features
+    return windows, scaler, all_features, norm_feat_indices
 
-def get_windows_data(stations=None, window_size=24, overlap=0.5) -> Tuple[torch.Tensor, List[StandardScaler], List[str]]:
+def get_windows_data(stations=None, window_size=24, overlap=0.5) -> Tuple[torch.Tensor, List[StandardScaler], List[str], List[str]]:
     
     if stations is None:
         stations = list(range(1, 7))
@@ -227,23 +230,26 @@ def get_windows_data(stations=None, window_size=24, overlap=0.5) -> Tuple[torch.
     
     all_station_windows = []
     scalers = []
-    features = None
+    
+    all_features = None
+    norm_feat_indices = None
 
     # lat_long_stats = get_lat_long_stats()
     for station_id in stations:  
-        windows, scaler, station_features = process_station_data(
+        windows, scaler, station_all_features, station_norm_feat_indices = process_station_data(
             station_id, window_size, overlap, exclude_cols
         )
 
-        if features == None:
-            features = station_features
+        if all_features == None or norm_feat_indices == None:
+            all_features = station_all_features
+            norm_feat_indices = station_norm_feat_indices
             
         all_station_windows.append(windows)
         scalers.append(scaler)
     
     windows_data = torch.cat(all_station_windows, dim=0)
 
-    return windows_data, scalers, features
+    return windows_data, scalers, all_features, norm_feat_indices
 
 
 ORIGINAL_FEATURE_NUM = 20
