@@ -1,0 +1,3 @@
+Station,Model,Features,Offset,MSE,MAE,MAPE,SMAPE,RSE,CORR
+Station6,ar,SWC_20_T_20_Ppt_Tair_Wx_Wy,24,0.011544159710562477,,inf,,,
+Station6,lstm,SWC_20_T_20_Ppt_Tair_Wx_Wy,24,0.0060168821225168355,,inf,,,
