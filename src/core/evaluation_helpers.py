@@ -106,12 +106,12 @@ def write_model_results_to_csv(station, model_name, window_size, offset, perform
             writer.writerow(headers)
         writer.writerow([
             station, model_name, feature_str, offset,
-            performance.get("mean_squared_error"),
-            performance.get("mean_absolute_error"),
-            performance.get("mean_absolute_percentage_error"),
-            performance.get("smape"),
-            performance.get("rse"),
-            performance.get("corr")
+            performance.get("MSE"),
+            performance.get("MAE"),
+            performance.get("MAPE"),
+            performance.get("SMAPE"),
+            performance.get("RSE"),
+            performance.get("CORR")
         ])
     print(f"Saved model results for {model_name} on {station} with {len(feature_str.split('_'))} features to {results_file}")
 
