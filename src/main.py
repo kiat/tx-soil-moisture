@@ -78,7 +78,7 @@ def evaluate_model(model, dataloader, criterion, device):
 
     mse = total_loss / num_samples
     mae = torch.mean(torch.abs(all_targets - all_preds)).item()
-    mape = torch.mean(torch.abs((all_targets - all_preds) / (all_targets + epsilon))) * 100
+    mape = (torch.mean(torch.abs((all_targets - all_preds) / (all_targets + epsilon))) * 100) / num_samples
     smape_numerator = torch.abs(all_preds - all_targets)
     smape_denominator = torch.abs(all_targets) + torch.abs(all_preds) + epsilon
     smape = torch.mean(2 * smape_numerator / smape_denominator) * 100
@@ -185,14 +185,15 @@ def main(args):
     for model_name, model_class in process_queue.items():
         print(f"\n===== Processing {model_name.upper()} =====")
         input_dim = X_train_t.shape[2]
-        model = model_class(input_dim=input_dim).to(device)
         criterion = nn.MSELoss()
         
         if model_name in ["baseline", "movingaverage"]:
             print(f"Evaluating non-trainable baseline model: {model_name.upper()}")
+            model = model_class().to(device)
             performance = evaluate_model(model, test_loader, criterion, device)
         else:
             print(f"Training {model_name.upper()}...")
+            model = model_class(input_dim=input_dim).to(device)
             optimizer = optim.Adam(model.parameters(), lr=0.001)
             early_stopper = EarlyStopping(patience=args.patience, restore_best_weights=True)
             history = {'loss': [], 'val_loss': []}

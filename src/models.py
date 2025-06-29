@@ -60,7 +60,8 @@ class LSTMModel(nn.Module):
         super().__init__()
         if input_dim <= 0:
             raise ValueError(f"input_dim must be positive, got {input_dim}")
-        self.lstm1 = nn.LSTM(input_size=input_dim, hidden_size=32, batch_first=True)
+        self.proj_inp = nn.Linear(input_dim, 64)
+        self.lstm1 = nn.LSTM(input_size=64, hidden_size=32, batch_first=True)
         self.lstm2 = nn.LSTM(input_size=32, hidden_size=16, batch_first=True)
         self.lstm3 = nn.LSTM(input_size=16, hidden_size=8, batch_first=True)
         self.fc1 = nn.Linear(8, 8)
@@ -68,6 +69,7 @@ class LSTMModel(nn.Module):
         self.tanh = nn.Tanh()
 
     def forward(self, x):
+        x  = self.proj_inp(x)  # Project input to 64 dimensions
         x, _ = self.lstm1(x)
         x, _ = self.lstm2(x)
         x, _ = self.lstm3(x)  # x shape: (batch, seq_len, 8)
@@ -82,7 +84,8 @@ class BiLSTMModel(nn.Module):
         super().__init__()
         if input_dim <= 0:
             raise ValueError(f"input_dim must be positive, got {input_dim}")
-        self.lstm1 = nn.LSTM(input_size=input_dim, hidden_size=32, batch_first=True, bidirectional=True)
+        self.proj_inp = nn.Linear(input_dim, 64)
+        self.lstm1 = nn.LSTM(input_size=64, hidden_size=32, batch_first=True, bidirectional=True)
         self.lstm2 = nn.LSTM(input_size=64, hidden_size=16, batch_first=True, bidirectional=True)
         self.lstm3 = nn.LSTM(input_size=32, hidden_size=8, batch_first=True, bidirectional=True)
         self.fc1 = nn.Linear(16, 8) # 2 * hidden_size (8) because of bidirectionality
@@ -90,6 +93,7 @@ class BiLSTMModel(nn.Module):
         self.tanh = nn.Tanh()
 
     def forward(self, x):
+        x  = self.proj_inp(x)  # Project input to 64 dimensions
         x, _ = self.lstm1(x)
         x, _ = self.lstm2(x)
         _, (hn, _) = self.lstm3(x)
@@ -104,12 +108,14 @@ class RNNModel(nn.Module):
         super().__init__()
         if input_dim <= 0:
             raise ValueError(f"input_dim must be positive, got {input_dim}")
-        self.rnn = nn.RNN(input_size=input_dim, hidden_size=32, batch_first=True)
+        self.proj_inp = nn.Linear(input_dim, 64)
+        self.rnn = nn.RNN(input_size=64, hidden_size=32, batch_first=True)
         self.fc1 = nn.Linear(32, 8)
         self.fc2 = nn.Linear(8, 1)
         self.relu = nn.ReLU()
 
     def forward(self, x):
+        x  = self.proj_inp(x)  # Project input to 64 dimensions
         _, hn = self.rnn(x) # Get the last hidden state
         x = hn.squeeze(0)
         x = self.relu(self.fc1(x))
@@ -123,7 +129,8 @@ class CNNModel(nn.Module):
         if input_dim <= 0:
             raise ValueError(f"input_dim must be positive, got {input_dim}")
         # Add padding=1 to handle small sequence lengths (kernel_size=3 requires at least 3 timesteps)
-        self.conv1 = nn.Conv1d(in_channels=input_dim, out_channels=32, kernel_size=3, padding=1)
+        self.proj_inp = nn.Linear(input_dim, 64)
+        self.conv1 = nn.Conv1d(in_channels=64, out_channels=32, kernel_size=3, padding=1)
         self.pool = nn.AdaptiveAvgPool1d(1) # Added pooling for fixed-size output
         self.fc1 = nn.Linear(32, 8)
         self.fc2 = nn.Linear(8, 1)
@@ -132,6 +139,7 @@ class CNNModel(nn.Module):
 
     def forward(self, x):
         # PyTorch Conv1D expects (batch, features, sequence_length)
+        x  = self.proj_inp(x)  # Project input to 64 dimensions
         x = x.permute(0, 2, 1)
         x = self.tanh(self.conv1(x))
         x = self.pool(x)
@@ -145,7 +153,8 @@ class AttentionLSTM(nn.Module):
         super().__init__()
         if input_dim <= 0:
             raise ValueError(f"input_dim must be positive, got {input_dim}")
-        self.lstm1 = nn.LSTM(input_dim, 32, batch_first=True)
+        self.proj_inp = nn.Linear(input_dim, 64)
+        self.lstm1 = nn.LSTM(64, 32, batch_first=True)
         self.attention = nn.MultiheadAttention(embed_dim=32, num_heads=4, batch_first=True)
         self.lstm2 = nn.LSTM(32, 32, batch_first=True)
         self.fc1 = nn.Linear(32, 8)
@@ -153,6 +162,7 @@ class AttentionLSTM(nn.Module):
         self.relu = nn.ReLU()
 
     def forward(self, x):
+        x  = self.proj_inp(x)  # Project input to 64 dimensions
         lstm_out, _ = self.lstm1(x)
         attn_output, _ = self.attention(lstm_out, lstm_out, lstm_out)
         _, (hn, _) = self.lstm2(attn_output)
@@ -207,11 +217,12 @@ class TransformerModel(nn.Module):
                 
         # Using a standard Transformer Encoder Layer is cleaner
         encoder_layer = nn.TransformerEncoderLayer(
-            d_model=input_dim, 
+            d_model=64, 
             nhead=num_heads, 
             dim_feedforward=64,
             batch_first=True
         )
+        self.proj_inp = nn.Linear(input_dim, 64)
         self.transformer_encoder = nn.TransformerEncoder(encoder_layer, num_layers=1)
         
         self.pool = nn.AdaptiveAvgPool1d(1)
@@ -220,6 +231,7 @@ class TransformerModel(nn.Module):
         self.relu = nn.ReLU()
 
     def forward(self, x):
+        x  = self.proj_inp(x)  # Project input to 64 dimensions
         x = self.transformer_encoder(x)
         x = x.permute(0, 2, 1)
         x = self.pool(x).squeeze(-1)
@@ -241,7 +253,8 @@ class MultiHeadLSTM(nn.Module):
             if num_heads == 0:
                 num_heads = 1
                 
-        self.lstm = nn.LSTM(input_dim, 32, batch_first=True)
+        self.proj_inp = nn.Linear(input_dim, 64)
+        self.lstm = nn.LSTM(64, 32, batch_first=True)
         self.attention = nn.MultiheadAttention(embed_dim=32, num_heads=num_heads, batch_first=True)
         self.pool = nn.AdaptiveAvgPool1d(1)
         self.fc1 = nn.Linear(32, 8)
@@ -249,6 +262,7 @@ class MultiHeadLSTM(nn.Module):
         self.relu = nn.ReLU()
 
     def forward(self, x):
+        x  = self.proj_inp(x)  # Project input to 64 dimensions
         lstm_out, _ = self.lstm(x)
         attn_output, _ = self.attention(lstm_out, lstm_out, lstm_out)
         # Pool the features across the sequence length from the attention output
