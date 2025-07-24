@@ -137,3 +137,9 @@ satellite/AMSRData/
 # .dat files (result of downloading merged datasets from notebooks)
 # *.dat
 .Rproj.user
+
+# Data directories
+data-cleanup/cleaned_data/
+data-cleanup/feature_engineered/
+data-cleanup/missing_data/
+data-cleanup/raw_merged_data/
