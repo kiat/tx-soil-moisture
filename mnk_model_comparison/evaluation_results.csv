@@ -1,0 +1,13 @@
+model,config,label,params,output_horizon,season,rmse,mae,mape,corr,features
+xgboost,1,XGBOOST | Horizon=48 | Season=spring,"{'n_estimators': 100, 'max_depth': 3, 'learning_rate': 0.1}",48,spring,0.025784977068956983,0.016681028378706327,0.06977303002391501,0.7519414558595712,"['SWC_10', 'T_5']"
+xgboost,1,XGBOOST | Horizon=72 | Season=spring,"{'n_estimators': 100, 'max_depth': 3, 'learning_rate': 0.1}",72,spring,0.029775567270051824,0.022155818586143874,0.09421285330721252,0.660631790037726,"['SWC_10', 'T_5']"
+xgboost,1,XGBOOST | Horizon=168 | Season=spring,"{'n_estimators': 100, 'max_depth': 3, 'learning_rate': 0.1}",168,spring,0.03404796531685115,0.028275805423535954,0.1262536951861254,0.5299850138859811,"['SWC_10', 'T_5']"
+xgboost,1,XGBOOST | Horizon=48 | Season=summer,"{'n_estimators': 100, 'max_depth': 3, 'learning_rate': 0.1}",48,summer,0.031915328782045616,0.019250683558055728,0.0930784546734592,0.6236246370968233,"['SWC_10', 'T_5']"
+xgboost,1,XGBOOST | Horizon=72 | Season=summer,"{'n_estimators': 100, 'max_depth': 3, 'learning_rate': 0.1}",72,summer,0.03771267487719606,0.025985009237835113,0.1289446856957385,0.43579958266713414,"['SWC_10', 'T_5']"
+xgboost,1,XGBOOST | Horizon=168 | Season=summer,"{'n_estimators': 100, 'max_depth': 3, 'learning_rate': 0.1}",168,summer,0.03533481867024586,0.02783127332036573,0.14778570842713576,0.47833383092749326,"['SWC_10', 'T_5']"
+xgboost,1,XGBOOST | Horizon=48 | Season=fall,"{'n_estimators': 100, 'max_depth': 3, 'learning_rate': 0.1}",48,fall,0.02322129217136233,0.016258662408752036,0.1001244467259641,0.8305950471439396,"['SWC_10', 'T_5']"
+xgboost,1,XGBOOST | Horizon=72 | Season=fall,"{'n_estimators': 100, 'max_depth': 3, 'learning_rate': 0.1}",72,fall,0.028935267835287805,0.02196659484134585,0.13779778140987375,0.7348397044750552,"['SWC_10', 'T_5']"
+xgboost,1,XGBOOST | Horizon=168 | Season=fall,"{'n_estimators': 100, 'max_depth': 3, 'learning_rate': 0.1}",168,fall,0.035377815466143686,0.030505328857481723,0.19307813583785566,0.6065731404905423,"['SWC_10', 'T_5']"
+xgboost,1,XGBOOST | Horizon=48 | Season=winter,"{'n_estimators': 100, 'max_depth': 3, 'learning_rate': 0.1}",48,winter,0.014990974460403319,0.007824616802556842,0.02805596255529691,0.5737573652352854,"['SWC_10', 'T_5']"
+xgboost,1,XGBOOST | Horizon=72 | Season=winter,"{'n_estimators': 100, 'max_depth': 3, 'learning_rate': 0.1}",72,winter,0.016475519873973735,0.009823315051458186,0.03542394136984463,0.437435342859396,"['SWC_10', 'T_5']"
+xgboost,1,XGBOOST | Horizon=168 | Season=winter,"{'n_estimators': 100, 'max_depth': 3, 'learning_rate': 0.1}",168,winter,0.015573985197478083,0.011775741195057834,0.043613410131859015,0.41625546592871254,"['SWC_10', 'T_5']"

@@ -12,7 +12,7 @@ LOG_TO_CSV = True
 INPUT_WINDOW = 72                     # 3 days (hourly data)
 OUTPUT_HORIZON = 48                   # Default: 2 days ahead
 OUTPUT_HORIZONS = [48, 72, 168]       # Test 2-day, 3-day, 1-week horizons
-TEST_FULL = False                     # Whether to test all output horizons or just one
+TEST_FULL = True                     # Whether to test all output horizons or just one
 
 HIGH_CORR_FILTER = False
 THRESHOLD = 0.95
@@ -24,7 +24,7 @@ SEASONS = {
     "fall":   ("09-01", "11-30"),
     "winter": ("12-01", "02-28"),  # Non-leap year for simplicity
 }
-TEST_SEASONS = False
+TEST_SEASONS = True
 
 TRAIN_START_YEAR = ''              # If left empty, will default to 2015 (Start of Dataset)
 TRAIN_END_YEAR = '2018-12-31'
@@ -36,7 +36,7 @@ TARGET_COL = 'SWC_10'
 MANUAL_KEEP = ['SWC_10', 'T_5']
 
 # === Tuning Mode ===
-TUNE = True
+TUNE = False
 
 # === Default Model Parameters ===
 MODEL_PARAMS = {
@@ -54,7 +54,17 @@ MODEL_PARAMS = {
         "dense_units": 64,
         "dropout_rate": 0.3,
         "learning_rate": 0.001,
-    }
+    },
+    "sarima": {
+        "order": (1, 1, 1),
+        "seasonal_order": (1, 1, 1, 24)
+    },
+    "autoarima": {},  # uses internal tuning
+    "xgboost": {
+        "n_estimators": 100,
+        "max_depth": 3,
+        "learning_rate": 0.1
+    },
 }
 
 # === Hyperparameter Grids for Tuning ===
@@ -93,7 +103,9 @@ model_meta = {
     "lstm": {"requires_windowing": True},
     "arima": {"requires_windowing": False},
     "arimax": {"requires_windowing": False},
-    "xgboost": {"requires_windowing": False},  # when added
+    "autoarima": {"requires_windowing": False},
+    "sarima": {"requires_windowing": False},
+    "xgboost": {"requires_windowing": True},
 }
 
 # "Ppt", "Tair", "RH", "Srad", "Wind_X", "Wind_Y"
