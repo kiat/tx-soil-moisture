@@ -43,93 +43,93 @@ def get_train_test_split(df, train_start=TRAIN_START_YEAR, train_end=TRAIN_END_Y
     test_df = df[(df.index >= f"{test_year}-01-01") & (df.index <= f"{test_year}-12-31")]
     return train_df, test_df
 
-def run_forecast(train_df, test_df, season=None, horizon=None, models=MODELS_TO_RUN):
-    for model_name in models:
-        print(f"\n=== Running Model: {model_name.upper()} ===")
-        requires_windowing = model_meta[model_name]["requires_windowing"]
-        param_list = PARAM_GRID[model_name] if TUNE else [MODEL_PARAMS[model_name]]
+def run_forecast(train_df, test_df, season, horizon, model_name, model_params, config_id):
+    # for model_name in models:
+    print(f"\n=== Running Model: {model_name.upper()} ===")
+    requires_windowing = model_meta[model_name]["requires_windowing"]
+    param_list = PARAM_GRID[model_name] if TUNE else [MODEL_PARAMS[model_name]]
 
-        for config_id, model_params in enumerate(param_list, 1):
-            print(f"\n→ Config {config_id} | Params: {model_params}")
-            label = f"{model_name.upper()} | Horizon={horizon} | Season={season or 'All'}"
+    # for config_id, model_params in enumerate(param_list, 1):
+    print(f"\n→  Params: {model_params}")
+    label = f"{model_name.upper()} | Horizon={horizon} | Season={season or 'All'}"
 
-            if requires_windowing:
-                train_filtered = filter_features(train_df.copy(), MANUAL_KEEP, label_col=TARGET_COL, threshold=THRESHOLD, auto_drop_high_corr=HIGH_CORR_FILTER)
-                test_filtered = filter_features(test_df.copy(), MANUAL_KEEP, label_col=TARGET_COL, threshold=THRESHOLD, auto_drop_high_corr=HIGH_CORR_FILTER)
-                target_scaler = StandardScaler()
-                train_scaled = target_scaler.fit_transform(train_filtered)
-                test_scaled = target_scaler.transform(test_filtered)
+    if requires_windowing:
+        train_filtered = filter_features(train_df.copy(), MANUAL_KEEP, label_col=TARGET_COL, threshold=THRESHOLD, auto_drop_high_corr=HIGH_CORR_FILTER)
+        test_filtered = filter_features(test_df.copy(), MANUAL_KEEP, label_col=TARGET_COL, threshold=THRESHOLD, auto_drop_high_corr=HIGH_CORR_FILTER)
+        target_scaler = StandardScaler()
+        train_scaled = target_scaler.fit_transform(train_filtered)
+        test_scaled = target_scaler.transform(test_filtered)
 
-                X_train, y_train = data_to_X_y(train_scaled, window_size=INPUT_WINDOW, offset=horizon)
-                X_test, y_test = data_to_X_y(test_scaled, window_size=INPUT_WINDOW, offset=horizon)
+        X_train, y_train = data_to_X_y(train_scaled, window_size=INPUT_WINDOW, offset=horizon)
+        X_test, y_test = data_to_X_y(test_scaled, window_size=INPUT_WINDOW, offset=horizon)
 
-                if model_name == "cnn":
-                    model = build_cnn_model(input_shape=X_train.shape[1:], params=model_params)
-                    model.fit(X_train, y_train, epochs=40)
-                elif model_name == "lstm":
-                    model = build_lstm_model(input_shape=X_train.shape[1:], params=model_params)
-                    model.fit(X_train, y_train, epochs=40)
-                elif model_name == "xgboost":
-                    model = build_xgboost_model(X_train, y_train, X_test, params=model_params)  # already trained
-                    X_test = X_test.reshape((X_test.shape[0], -1))
+        if model_name == "cnn":
+            model = build_cnn_model(input_shape=X_train.shape[1:], params=model_params)
+            model.fit(X_train, y_train, epochs=40)
+        elif model_name == "lstm":
+            model = build_lstm_model(input_shape=X_train.shape[1:], params=model_params)
+            model.fit(X_train, y_train, epochs=40)
+        elif model_name == "xgboost":
+            model = build_xgboost_model(X_train, y_train, X_test, params=model_params)  # already trained
+            X_test = X_test.reshape((X_test.shape[0], -1))
 
 
-                y_pred = model.predict(X_test)
+        y_pred = model.predict(X_test)
 
-                TARGET_INDEX = train_filtered.columns.get_loc(TARGET_COL)
-                target_mean = target_scaler.mean_[TARGET_INDEX]
-                target_std = target_scaler.scale_[TARGET_INDEX]
+        TARGET_INDEX = train_filtered.columns.get_loc(TARGET_COL)
+        target_mean = target_scaler.mean_[TARGET_INDEX]
+        target_std = target_scaler.scale_[TARGET_INDEX]
 
-                # Manually inverse-transform only the target dimension
-                y_pred = y_pred.reshape(-1, 1) * target_std + target_mean
-                y_true = y_test.reshape(-1, 1) * target_std + target_mean
-                # if model_name in ["cnn", "lstm"]:
-                #     plot_predictions(X_test, y_test, model, target_scaler=target_scaler, original_data=test_filtered, label_col=TARGET_COL)
-            else:
-                y_train = train_df[TARGET_COL].values
-                y_test = test_df[TARGET_COL].values
-                dates = test_df.index
+        # Manually inverse-transform only the target dimension
+        y_pred = y_pred.reshape(-1, 1) * target_std + target_mean
+        y_true = y_test.reshape(-1, 1) * target_std + target_mean
+        # if model_name in ["cnn", "lstm"]:
+        #     plot_predictions(X_test, y_test, model, target_scaler=target_scaler, original_data=test_filtered, label_col=TARGET_COL)
+    else:
+        y_train = train_df[TARGET_COL].values
+        y_test = test_df[TARGET_COL].values
+        dates = test_df.index
 
-                if model_name == "arimax":
-                    feature_sets = generate_exog_feature_sets(EXOG_FEATURES) if SEARCH_ARIMAX_FEATURES else [tuple(EXOG_FEATURES)]
-                    for exog_features in feature_sets:
-                        print(f"→ Trying ARIMAX with features: {exog_features}")
-                        exog_train = train_df[list(exog_features)]
-                        exog_test = test_df[list(exog_features)]
-                        model = build_arimax_model(model_params, exog_train)(y_train)
-                        y_pred = model.forecast(steps=len(y_test), exog=exog_test)
-                        break
-                elif model_name == "autoarima":
-                    model = auto_arima(y_train, seasonal=False, stepwise=True, suppress_warnings=True)
-                    y_pred = model.predict(n_periods=len(y_test))
-                elif model_name == "sarima":
-                    order = model_params.get("order", (1, 1, 1))
-                    seasonal_order = model_params.get("seasonal_order", (1, 1, 1, 24))
-                    model = SARIMAX(y_train, order=order, seasonal_order=seasonal_order).fit(disp=False)
-                    y_pred = model.forecast(steps=len(y_test))
-                else:
-                    model = build_arima_model(model_params)(y_train)
-                    y_pred = model.forecast(steps=len(y_test))
-                y_true = y_test
-                if model_name not in ['cnn', 'lstm', 'xgboost']:
-                    plot_predictions(y_true=y_true, y_pred=y_pred, dates=dates, title=f"{label}")
+        if model_name == "arimax":
+            feature_sets = generate_exog_feature_sets(EXOG_FEATURES) if SEARCH_ARIMAX_FEATURES else [tuple(EXOG_FEATURES)]
+            for exog_features in feature_sets:
+                print(f"→ Trying ARIMAX with features: {exog_features}")
+                exog_train = train_df[list(exog_features)]
+                exog_test = test_df[list(exog_features)]
+                model = build_arimax_model(model_params, exog_train)(y_train)
+                y_pred = model.forecast(steps=len(y_test), exog=exog_test)
+                break
+        elif model_name == "autoarima":
+            model = auto_arima(y_train, seasonal=False, stepwise=True, suppress_warnings=True)
+            y_pred = model.predict(n_periods=len(y_test))
+        elif model_name == "sarima":
+            order = model_params.get("order", (1, 1, 1))
+            seasonal_order = model_params.get("seasonal_order", (1, 1, 1, 24))
+            model = SARIMAX(y_train, order=order, seasonal_order=seasonal_order).fit(disp=False)
+            y_pred = model.forecast(steps=len(y_test))
+        else:
+            model = build_arima_model(model_params)(y_train)
+            y_pred = model.forecast(steps=len(y_test))
+        y_true = y_test
+        # if model_name not in ['cnn', 'lstm', 'xgboost']:
+        #     plot_predictions(y_true=y_true, y_pred=y_pred, dates=dates, title=f"{label}")
 
-            rmse = root_mean_squared_error(y_true, y_pred)
-            mae = mean_absolute_error(y_true, y_pred)
-            mape = mean_absolute_percentage_error(y_true, y_pred)
-            corr = pearsonr(y_true.flatten(), y_pred.flatten()).statistic
-            features_used = list(exog_features) if model_name == "arimax" else (MANUAL_KEEP if model_name in ["cnn", "lstm", "xgboost"] else None)
+    rmse = root_mean_squared_error(y_true, y_pred)
+    mae = mean_absolute_error(y_true, y_pred)
+    mape = mean_absolute_percentage_error(y_true, y_pred)
+    corr = pearsonr(y_true.flatten(), y_pred.flatten()).statistic
+    features_used = list(exog_features) if model_name == "arimax" else (MANUAL_KEEP if model_name in ["cnn", "lstm", "xgboost"] else None)
 
-            log_results(model_name, config_id, label, {
-                "params": model_params,
-                "output_horizon": horizon,
-                "season": season or "All",
-                "rmse": rmse,
-                "mae": mae,
-                "mape": mape,
-                "corr": corr,
-                "features": features_used
-            })
+    log_results(model_name, config_id, label, {
+        "params": model_params,
+        "output_horizon": horizon,
+        "season": season or "All",
+        "rmse": rmse,
+        "mae": mae,
+        "mape": mape,
+        "corr": corr,
+        "features": features_used
+    })
 
 def run_pipeline(data, models = MODELS_TO_RUN):
     for model_name in models:
@@ -148,7 +148,7 @@ def run_pipeline(data, models = MODELS_TO_RUN):
                         print(f"Skipping {season}: not enough data")
                         continue
                     for h in OUTPUT_HORIZONS:
-                        run_forecast(train_df, seasonal_df, season=season, horizon=h, models=models)
+                        run_forecast(train_df, seasonal_df, season=season, horizon=h, model_name=model_name, model_params=params, config_id=i+1)
 
             elif TEST_SEASONS:
                 train_df, _ = get_train_test_split(data)
@@ -157,16 +157,16 @@ def run_pipeline(data, models = MODELS_TO_RUN):
                     if len(seasonal_df) < INPUT_WINDOW + OUTPUT_HORIZON:
                         print(f"Skipping {season}: not enough data")
                         continue
-                    run_forecast(train_df, seasonal_df, season=season, horizon=OUTPUT_HORIZON, models=models)
+                    run_forecast(train_df, seasonal_df, season=season, horizon=h, model_name=model_name, model_params=params, config_id=i+1)
 
             elif TEST_FULL:
                 for h in OUTPUT_HORIZONS:
                     train_df, test_df = get_train_test_split(data)
-                    run_forecast(train_df, test_df, season=None, horizon=h, models=models)
+                    run_forecast(train_df, test_df, season=None, horizon=h, model_name=model_name, model_params=params, config_id=i+1)
 
             else:
                 train_df, test_df = get_train_test_split(data)
-                run_forecast(train_df, test_df, season=None, horizon=OUTPUT_HORIZON, models=models)
+                run_forecast(train_df, test_df, season=None, horizon=OUTPUT_HORIZON, model_name=model_name, model_params=params, config_id=i+1)
 
     if LOG_TO_CSV:
         save_results_to_csv()

@@ -20,11 +20,11 @@ THRESHOLD = 0.95
 # === Date Ranges ===
 SEASONS = {
     "spring": ("03-01", "05-31"),
-    "summer": ("06-01", "08-31"),
+    "summer": ("06-01", "08-31"), 
     "fall":   ("09-01", "11-30"),
     "winter": ("12-01", "02-28"),  # Non-leap year for simplicity
 }
-TEST_SEASONS = True
+TEST_SEASONS = False
 
 TRAIN_START_YEAR = ''              # If left empty, will default to 2015 (Start of Dataset)
 TRAIN_END_YEAR = '2018-12-31'
@@ -36,7 +36,7 @@ TARGET_COL = 'SWC_10'
 MANUAL_KEEP = ['SWC_10', 'T_5']
 
 # === Tuning Mode ===
-TUNE = False
+TUNE = True
 
 # === Default Model Parameters ===
 MODEL_PARAMS = {
@@ -54,6 +54,11 @@ MODEL_PARAMS = {
         "dense_units": 64,
         "dropout_rate": 0.3,
         "learning_rate": 0.001,
+    },
+    "arima": {
+        "p": 1,
+        "d": 1,
+        "q": 1
     },
     "sarima": {
         "order": (1, 1, 1),
@@ -76,7 +81,7 @@ RAW_PARAM_GRID = {
         "activation": ["tanh","relu"],
         "dense_units": [64, 128],
         "dropout_rate": [0.3, 0.5],
-        "learning_rate": [0.001],
+        "learning_rate": [0.001, 0.0005],
     },
     "lstm": {
         "lstm_units": [32, 64],
@@ -86,9 +91,15 @@ RAW_PARAM_GRID = {
         "learning_rate": [0.001, 0.0005],
     },
     "arima": {
-        "p": [1, 2],
+        "p": [0, 1, 2],
         "d": [0, 1],
-        "q": [1, 2]
+        "q": [0, 1, 2],
+        "seasonal": [True, False]
+    },
+    "xgboost": {
+        "n_estimators": [50, 100, 200],        # Number of boosting rounds (trees)
+        "max_depth": [3, 5, 7],                # Maximum depth of each tree
+        "learning_rate": [0.01, 0.1, 0.3]
     }
 }
 # Automatically expand to full config list
