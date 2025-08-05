@@ -1,109 +1,34 @@
 model,config,label,params,output_horizon,season,rmse,mae,mape,corr,features
-arima,1,ARIMA | Horizon=48 | Season=All,"{'d': 0, 'p': 0, 'q': 0, 'seasonal': True}",48,All,0.054478216491511036,0.04650503420010696,0.26938856559603236,,
-arima,1,ARIMA | Horizon=72 | Season=All,"{'d': 0, 'p': 0, 'q': 0, 'seasonal': True}",72,All,0.054478216491511036,0.04650503420010696,0.26938856559603236,,
-arima,1,ARIMA | Horizon=168 | Season=All,"{'d': 0, 'p': 0, 'q': 0, 'seasonal': True}",168,All,0.054478216491511036,0.04650503420010696,0.26938856559603236,,
-arima,2,ARIMA | Horizon=48 | Season=All,"{'d': 0, 'p': 0, 'q': 0, 'seasonal': False}",48,All,0.054478216491511036,0.04650503420010696,0.26938856559603236,,
-arima,2,ARIMA | Horizon=72 | Season=All,"{'d': 0, 'p': 0, 'q': 0, 'seasonal': False}",72,All,0.054478216491511036,0.04650503420010696,0.26938856559603236,,
-arima,2,ARIMA | Horizon=168 | Season=All,"{'d': 0, 'p': 0, 'q': 0, 'seasonal': False}",168,All,0.054478216491511036,0.04650503420010696,0.26938856559603236,,
-arima,3,ARIMA | Horizon=48 | Season=All,"{'d': 0, 'p': 0, 'q': 1, 'seasonal': True}",48,All,0.05447698831767988,0.04650283702535693,0.2693817814259385,0.015017279370340683,
-arima,3,ARIMA | Horizon=72 | Season=All,"{'d': 0, 'p': 0, 'q': 1, 'seasonal': True}",72,All,0.05447698831767988,0.04650283702535693,0.2693817814259385,0.015017279370340683,
-arima,3,ARIMA | Horizon=168 | Season=All,"{'d': 0, 'p': 0, 'q': 1, 'seasonal': True}",168,All,0.05447698831767988,0.04650283702535693,0.2693817814259385,0.015017279370340683,
-arima,4,ARIMA | Horizon=48 | Season=All,"{'d': 0, 'p': 0, 'q': 1, 'seasonal': False}",48,All,0.05447698831767988,0.04650283702535693,0.2693817814259385,0.015017279370340683,
-arima,4,ARIMA | Horizon=72 | Season=All,"{'d': 0, 'p': 0, 'q': 1, 'seasonal': False}",72,All,0.05447698831767988,0.04650283702535693,0.2693817814259385,0.015017279370340683,
-arima,4,ARIMA | Horizon=168 | Season=All,"{'d': 0, 'p': 0, 'q': 1, 'seasonal': False}",168,All,0.05447698831767988,0.04650283702535693,0.2693817814259385,0.015017279370340683,
-arima,5,ARIMA | Horizon=48 | Season=All,"{'d': 0, 'p': 0, 'q': 2, 'seasonal': True}",48,All,0.05447656542968064,0.046501156836305214,0.2693785350360637,0.019071865187253317,
-arima,5,ARIMA | Horizon=72 | Season=All,"{'d': 0, 'p': 0, 'q': 2, 'seasonal': True}",72,All,0.05447656542968064,0.046501156836305214,0.2693785350360637,0.019071865187253317,
-arima,5,ARIMA | Horizon=168 | Season=All,"{'d': 0, 'p': 0, 'q': 2, 'seasonal': True}",168,All,0.05447656542968064,0.046501156836305214,0.2693785350360637,0.019071865187253317,
-arima,6,ARIMA | Horizon=48 | Season=All,"{'d': 0, 'p': 0, 'q': 2, 'seasonal': False}",48,All,0.05447656542968064,0.046501156836305214,0.2693785350360637,0.019071865187253317,
-arima,6,ARIMA | Horizon=72 | Season=All,"{'d': 0, 'p': 0, 'q': 2, 'seasonal': False}",72,All,0.05447656542968064,0.046501156836305214,0.2693785350360637,0.019071865187253317,
-arima,6,ARIMA | Horizon=168 | Season=All,"{'d': 0, 'p': 0, 'q': 2, 'seasonal': False}",168,All,0.05447656542968064,0.046501156836305214,0.2693785350360637,0.019071865187253317,
-arima,7,ARIMA | Horizon=48 | Season=All,"{'d': 0, 'p': 1, 'q': 0, 'seasonal': True}",48,All,0.053511224472164394,0.045054773475236204,0.2640926084992429,0.37687800546377853,
-arima,7,ARIMA | Horizon=72 | Season=All,"{'d': 0, 'p': 1, 'q': 0, 'seasonal': True}",72,All,0.053511224472164394,0.045054773475236204,0.2640926084992429,0.37687800546377853,
-arima,7,ARIMA | Horizon=168 | Season=All,"{'d': 0, 'p': 1, 'q': 0, 'seasonal': True}",168,All,0.053511224472164394,0.045054773475236204,0.2640926084992429,0.37687800546377853,
-arima,8,ARIMA | Horizon=48 | Season=All,"{'d': 0, 'p': 1, 'q': 0, 'seasonal': False}",48,All,0.053511224472164394,0.045054773475236204,0.2640926084992429,0.37687800546377853,
-arima,8,ARIMA | Horizon=72 | Season=All,"{'d': 0, 'p': 1, 'q': 0, 'seasonal': False}",72,All,0.053511224472164394,0.045054773475236204,0.2640926084992429,0.37687800546377853,
-arima,8,ARIMA | Horizon=168 | Season=All,"{'d': 0, 'p': 1, 'q': 0, 'seasonal': False}",168,All,0.053511224472164394,0.045054773475236204,0.2640926084992429,0.37687800546377853,
-arima,9,ARIMA | Horizon=48 | Season=All,"{'d': 0, 'p': 1, 'q': 1, 'seasonal': True}",48,All,0.053721685097242615,0.04542380690926751,0.26546700403563955,0.3311237857727592,
-arima,9,ARIMA | Horizon=72 | Season=All,"{'d': 0, 'p': 1, 'q': 1, 'seasonal': True}",72,All,0.053721685097242615,0.04542380690926751,0.26546700403563955,0.3311237857727592,
-arima,9,ARIMA | Horizon=168 | Season=All,"{'d': 0, 'p': 1, 'q': 1, 'seasonal': True}",168,All,0.053721685097242615,0.04542380690926751,0.26546700403563955,0.3311237857727592,
-arima,10,ARIMA | Horizon=48 | Season=All,"{'d': 0, 'p': 1, 'q': 1, 'seasonal': False}",48,All,0.053721685097242615,0.04542380690926751,0.26546700403563955,0.3311237857727592,
-arima,10,ARIMA | Horizon=72 | Season=All,"{'d': 0, 'p': 1, 'q': 1, 'seasonal': False}",72,All,0.053721685097242615,0.04542380690926751,0.26546700403563955,0.3311237857727592,
-arima,10,ARIMA | Horizon=168 | Season=All,"{'d': 0, 'p': 1, 'q': 1, 'seasonal': False}",168,All,0.053721685097242615,0.04542380690926751,0.26546700403563955,0.3311237857727592,
-arima,11,ARIMA | Horizon=48 | Season=All,"{'d': 0, 'p': 1, 'q': 2, 'seasonal': True}",48,All,0.053653616039236546,0.045307890631334294,0.26503622214466455,0.34640259511358673,
-arima,11,ARIMA | Horizon=72 | Season=All,"{'d': 0, 'p': 1, 'q': 2, 'seasonal': True}",72,All,0.053653616039236546,0.045307890631334294,0.26503622214466455,0.34640259511358673,
-arima,11,ARIMA | Horizon=168 | Season=All,"{'d': 0, 'p': 1, 'q': 2, 'seasonal': True}",168,All,0.053653616039236546,0.045307890631334294,0.26503622214466455,0.34640259511358673,
-arima,12,ARIMA | Horizon=48 | Season=All,"{'d': 0, 'p': 1, 'q': 2, 'seasonal': False}",48,All,0.053653616039236546,0.045307890631334294,0.26503622214466455,0.34640259511358673,
-arima,12,ARIMA | Horizon=72 | Season=All,"{'d': 0, 'p': 1, 'q': 2, 'seasonal': False}",72,All,0.053653616039236546,0.045307890631334294,0.26503622214466455,0.34640259511358673,
-arima,12,ARIMA | Horizon=168 | Season=All,"{'d': 0, 'p': 1, 'q': 2, 'seasonal': False}",168,All,0.053653616039236546,0.045307890631334294,0.26503622214466455,0.34640259511358673,
-arima,13,ARIMA | Horizon=48 | Season=All,"{'d': 0, 'p': 2, 'q': 0, 'seasonal': True}",48,All,0.053742737059554055,0.04545901373709704,0.26559760913531827,0.3262811690825828,
-arima,13,ARIMA | Horizon=72 | Season=All,"{'d': 0, 'p': 2, 'q': 0, 'seasonal': True}",72,All,0.053742737059554055,0.04545901373709704,0.26559760913531827,0.3262811690825828,
-arima,13,ARIMA | Horizon=168 | Season=All,"{'d': 0, 'p': 2, 'q': 0, 'seasonal': True}",168,All,0.053742737059554055,0.04545901373709704,0.26559760913531827,0.3262811690825828,
-arima,14,ARIMA | Horizon=48 | Season=All,"{'d': 0, 'p': 2, 'q': 0, 'seasonal': False}",48,All,0.053742737059554055,0.04545901373709704,0.26559760913531827,0.3262811690825828,
-arima,14,ARIMA | Horizon=72 | Season=All,"{'d': 0, 'p': 2, 'q': 0, 'seasonal': False}",72,All,0.053742737059554055,0.04545901373709704,0.26559760913531827,0.3262811690825828,
-arima,14,ARIMA | Horizon=168 | Season=All,"{'d': 0, 'p': 2, 'q': 0, 'seasonal': False}",168,All,0.053742737059554055,0.04545901373709704,0.26559760913531827,0.3262811690825828,
-arima,15,ARIMA | Horizon=48 | Season=All,"{'d': 0, 'p': 2, 'q': 1, 'seasonal': True}",48,All,0.053668835417450836,0.04533408333398531,0.2651336636043234,0.343026542641529,
-arima,15,ARIMA | Horizon=72 | Season=All,"{'d': 0, 'p': 2, 'q': 1, 'seasonal': True}",72,All,0.053668835417450836,0.04533408333398531,0.2651336636043234,0.343026542641529,
-arima,15,ARIMA | Horizon=168 | Season=All,"{'d': 0, 'p': 2, 'q': 1, 'seasonal': True}",168,All,0.053668835417450836,0.04533408333398531,0.2651336636043234,0.343026542641529,
-arima,16,ARIMA | Horizon=48 | Season=All,"{'d': 0, 'p': 2, 'q': 1, 'seasonal': False}",48,All,0.053668835417450836,0.04533408333398531,0.2651336636043234,0.343026542641529,
-arima,16,ARIMA | Horizon=72 | Season=All,"{'d': 0, 'p': 2, 'q': 1, 'seasonal': False}",72,All,0.053668835417450836,0.04533408333398531,0.2651336636043234,0.343026542641529,
-arima,16,ARIMA | Horizon=168 | Season=All,"{'d': 0, 'p': 2, 'q': 1, 'seasonal': False}",168,All,0.053668835417450836,0.04533408333398531,0.2651336636043234,0.343026542641529,
-arima,17,ARIMA | Horizon=48 | Season=All,"{'d': 0, 'p': 2, 'q': 2, 'seasonal': True}",48,All,0.05361444864214899,0.04523974167812143,0.2647824412673924,0.35500021903453044,
-arima,17,ARIMA | Horizon=72 | Season=All,"{'d': 0, 'p': 2, 'q': 2, 'seasonal': True}",72,All,0.05361444864214899,0.04523974167812143,0.2647824412673924,0.35500021903453044,
-arima,17,ARIMA | Horizon=168 | Season=All,"{'d': 0, 'p': 2, 'q': 2, 'seasonal': True}",168,All,0.05361444864214899,0.04523974167812143,0.2647824412673924,0.35500021903453044,
-arima,18,ARIMA | Horizon=48 | Season=All,"{'d': 0, 'p': 2, 'q': 2, 'seasonal': False}",48,All,0.05361444864214899,0.04523974167812143,0.2647824412673924,0.35500021903453044,
-arima,18,ARIMA | Horizon=72 | Season=All,"{'d': 0, 'p': 2, 'q': 2, 'seasonal': False}",72,All,0.05361444864214899,0.04523974167812143,0.2647824412673924,0.35500021903453044,
-arima,18,ARIMA | Horizon=168 | Season=All,"{'d': 0, 'p': 2, 'q': 2, 'seasonal': False}",168,All,0.05361444864214899,0.04523974167812143,0.2647824412673924,0.35500021903453044,
-arima,19,ARIMA | Horizon=48 | Season=All,"{'d': 1, 'p': 0, 'q': 0, 'seasonal': True}",48,All,0.08345708159499099,0.06989023692342912,0.4224819157016357,,
-arima,19,ARIMA | Horizon=72 | Season=All,"{'d': 1, 'p': 0, 'q': 0, 'seasonal': True}",72,All,0.08345708159499099,0.06989023692342912,0.4224819157016357,,
-arima,19,ARIMA | Horizon=168 | Season=All,"{'d': 1, 'p': 0, 'q': 0, 'seasonal': True}",168,All,0.08345708159499099,0.06989023692342912,0.4224819157016357,,
-arima,20,ARIMA | Horizon=48 | Season=All,"{'d': 1, 'p': 0, 'q': 0, 'seasonal': False}",48,All,0.08345708159499099,0.06989023692342912,0.4224819157016357,,
-arima,20,ARIMA | Horizon=72 | Season=All,"{'d': 1, 'p': 0, 'q': 0, 'seasonal': False}",72,All,0.08345708159499099,0.06989023692342912,0.4224819157016357,,
-arima,20,ARIMA | Horizon=168 | Season=All,"{'d': 1, 'p': 0, 'q': 0, 'seasonal': False}",168,All,0.08345708159499099,0.06989023692342912,0.4224819157016357,,
-arima,21,ARIMA | Horizon=48 | Season=All,"{'d': 1, 'p': 0, 'q': 1, 'seasonal': True}",48,All,0.0834570815904645,0.06989023691904886,0.42248191567672033,,
-arima,21,ARIMA | Horizon=72 | Season=All,"{'d': 1, 'p': 0, 'q': 1, 'seasonal': True}",72,All,0.0834570815904645,0.06989023691904886,0.42248191567672033,,
-arima,21,ARIMA | Horizon=168 | Season=All,"{'d': 1, 'p': 0, 'q': 1, 'seasonal': True}",168,All,0.0834570815904645,0.06989023691904886,0.42248191567672033,,
-arima,22,ARIMA | Horizon=48 | Season=All,"{'d': 1, 'p': 0, 'q': 1, 'seasonal': False}",48,All,0.0834570815904645,0.06989023691904886,0.42248191567672033,,
-arima,22,ARIMA | Horizon=72 | Season=All,"{'d': 1, 'p': 0, 'q': 1, 'seasonal': False}",72,All,0.0834570815904645,0.06989023691904886,0.42248191567672033,,
-arima,22,ARIMA | Horizon=168 | Season=All,"{'d': 1, 'p': 0, 'q': 1, 'seasonal': False}",168,All,0.0834570815904645,0.06989023691904886,0.42248191567672033,,
-arima,23,ARIMA | Horizon=48 | Season=All,"{'d': 1, 'p': 0, 'q': 2, 'seasonal': True}",48,All,0.08345707637988832,0.0698902318769616,0.4224818869965437,-0.015017279370272396,
-arima,23,ARIMA | Horizon=72 | Season=All,"{'d': 1, 'p': 0, 'q': 2, 'seasonal': True}",72,All,0.08345707637988832,0.0698902318769616,0.4224818869965437,-0.015017279370272396,
-arima,23,ARIMA | Horizon=168 | Season=All,"{'d': 1, 'p': 0, 'q': 2, 'seasonal': True}",168,All,0.08345707637988832,0.0698902318769616,0.4224818869965437,-0.015017279370272396,
-arima,24,ARIMA | Horizon=48 | Season=All,"{'d': 1, 'p': 0, 'q': 2, 'seasonal': False}",48,All,0.08345707637988832,0.0698902318769616,0.4224818869965437,-0.015017279370272396,
-arima,24,ARIMA | Horizon=72 | Season=All,"{'d': 1, 'p': 0, 'q': 2, 'seasonal': False}",72,All,0.08345707637988832,0.0698902318769616,0.4224818869965437,-0.015017279370272396,
-arima,24,ARIMA | Horizon=168 | Season=All,"{'d': 1, 'p': 0, 'q': 2, 'seasonal': False}",168,All,0.08345707637988832,0.0698902318769616,0.4224818869965437,-0.015017279370272396,
-arima,25,ARIMA | Horizon=48 | Season=All,"{'d': 1, 'p': 1, 'q': 0, 'seasonal': True}",48,All,0.08345708159499099,0.06989023692342912,0.4224819157016357,,
-arima,25,ARIMA | Horizon=72 | Season=All,"{'d': 1, 'p': 1, 'q': 0, 'seasonal': True}",72,All,0.08345708159499099,0.06989023692342912,0.4224819157016357,,
-arima,25,ARIMA | Horizon=168 | Season=All,"{'d': 1, 'p': 1, 'q': 0, 'seasonal': True}",168,All,0.08345708159499099,0.06989023692342912,0.4224819157016357,,
-arima,26,ARIMA | Horizon=48 | Season=All,"{'d': 1, 'p': 1, 'q': 0, 'seasonal': False}",48,All,0.08345708159499099,0.06989023692342912,0.4224819157016357,,
-arima,26,ARIMA | Horizon=72 | Season=All,"{'d': 1, 'p': 1, 'q': 0, 'seasonal': False}",72,All,0.08345708159499099,0.06989023692342912,0.4224819157016357,,
-arima,26,ARIMA | Horizon=168 | Season=All,"{'d': 1, 'p': 1, 'q': 0, 'seasonal': False}",168,All,0.08345708159499099,0.06989023692342912,0.4224819157016357,,
-arima,27,ARIMA | Horizon=48 | Season=All,"{'d': 1, 'p': 1, 'q': 1, 'seasonal': True}",48,All,0.08345704559269117,0.06989020208527427,0.42248171753682245,-0.011594136614511615,
-arima,27,ARIMA | Horizon=72 | Season=All,"{'d': 1, 'p': 1, 'q': 1, 'seasonal': True}",72,All,0.08345704559269117,0.06989020208527427,0.42248171753682245,-0.011594136614511615,
-arima,27,ARIMA | Horizon=168 | Season=All,"{'d': 1, 'p': 1, 'q': 1, 'seasonal': True}",168,All,0.08345704559269117,0.06989020208527427,0.42248171753682245,-0.011594136614511615,
-arima,28,ARIMA | Horizon=48 | Season=All,"{'d': 1, 'p': 1, 'q': 1, 'seasonal': False}",48,All,0.08345704559269117,0.06989020208527427,0.42248171753682245,-0.011594136614511615,
-arima,28,ARIMA | Horizon=72 | Season=All,"{'d': 1, 'p': 1, 'q': 1, 'seasonal': False}",72,All,0.08345704559269117,0.06989020208527427,0.42248171753682245,-0.011594136614511615,
-arima,28,ARIMA | Horizon=168 | Season=All,"{'d': 1, 'p': 1, 'q': 1, 'seasonal': False}",168,All,0.08345704559269117,0.06989020208527427,0.42248171753682245,-0.011594136614511615,
-arima,29,ARIMA | Horizon=48 | Season=All,"{'d': 1, 'p': 1, 'q': 2, 'seasonal': True}",48,All,0.08345714879834866,0.06989030396650707,0.42248229303059365,-0.02350937157431558,
-arima,29,ARIMA | Horizon=72 | Season=All,"{'d': 1, 'p': 1, 'q': 2, 'seasonal': True}",72,All,0.08345714879834866,0.06989030396650707,0.42248229303059365,-0.02350937157431558,
-arima,29,ARIMA | Horizon=168 | Season=All,"{'d': 1, 'p': 1, 'q': 2, 'seasonal': True}",168,All,0.08345714879834866,0.06989030396650707,0.42248229303059365,-0.02350937157431558,
-arima,30,ARIMA | Horizon=48 | Season=All,"{'d': 1, 'p': 1, 'q': 2, 'seasonal': False}",48,All,0.08345714879834866,0.06989030396650707,0.42248229303059365,-0.02350937157431558,
-arima,30,ARIMA | Horizon=72 | Season=All,"{'d': 1, 'p': 1, 'q': 2, 'seasonal': False}",72,All,0.08345714879834866,0.06989030396650707,0.42248229303059365,-0.02350937157431558,
-arima,30,ARIMA | Horizon=168 | Season=All,"{'d': 1, 'p': 1, 'q': 2, 'seasonal': False}",168,All,0.08345714879834866,0.06989030396650707,0.42248229303059365,-0.02350937157431558,
-arima,31,ARIMA | Horizon=48 | Season=All,"{'d': 1, 'p': 2, 'q': 0, 'seasonal': True}",48,All,0.08345708159499099,0.06989023692342912,0.4224819157016357,,
-arima,31,ARIMA | Horizon=72 | Season=All,"{'d': 1, 'p': 2, 'q': 0, 'seasonal': True}",72,All,0.08345708159499099,0.06989023692342912,0.4224819157016357,,
-arima,31,ARIMA | Horizon=168 | Season=All,"{'d': 1, 'p': 2, 'q': 0, 'seasonal': True}",168,All,0.08345708159499099,0.06989023692342912,0.4224819157016357,,
-arima,32,ARIMA | Horizon=48 | Season=All,"{'d': 1, 'p': 2, 'q': 0, 'seasonal': False}",48,All,0.08345708159499099,0.06989023692342912,0.4224819157016357,,
-arima,32,ARIMA | Horizon=72 | Season=All,"{'d': 1, 'p': 2, 'q': 0, 'seasonal': False}",72,All,0.08345708159499099,0.06989023692342912,0.4224819157016357,,
-arima,32,ARIMA | Horizon=168 | Season=All,"{'d': 1, 'p': 2, 'q': 0, 'seasonal': False}",168,All,0.08345708159499099,0.06989023692342912,0.4224819157016357,,
-arima,33,ARIMA | Horizon=48 | Season=All,"{'d': 1, 'p': 2, 'q': 1, 'seasonal': True}",48,All,0.08345708159499099,0.06989023692342912,0.4224819157016357,,
-arima,33,ARIMA | Horizon=72 | Season=All,"{'d': 1, 'p': 2, 'q': 1, 'seasonal': True}",72,All,0.08345708159499099,0.06989023692342912,0.4224819157016357,,
-arima,33,ARIMA | Horizon=168 | Season=All,"{'d': 1, 'p': 2, 'q': 1, 'seasonal': True}",168,All,0.08345708159499099,0.06989023692342912,0.4224819157016357,,
-arima,34,ARIMA | Horizon=48 | Season=All,"{'d': 1, 'p': 2, 'q': 1, 'seasonal': False}",48,All,0.08345708159499099,0.06989023692342912,0.4224819157016357,,
-arima,34,ARIMA | Horizon=72 | Season=All,"{'d': 1, 'p': 2, 'q': 1, 'seasonal': False}",72,All,0.08345708159499099,0.06989023692342912,0.4224819157016357,,
-arima,34,ARIMA | Horizon=168 | Season=All,"{'d': 1, 'p': 2, 'q': 1, 'seasonal': False}",168,All,0.08345708159499099,0.06989023692342912,0.4224819157016357,,
-arima,35,ARIMA | Horizon=48 | Season=All,"{'d': 1, 'p': 2, 'q': 2, 'seasonal': True}",48,All,0.08346211711037138,0.06989526019903798,0.42251018774891796,-0.037654276699945255,
-arima,35,ARIMA | Horizon=72 | Season=All,"{'d': 1, 'p': 2, 'q': 2, 'seasonal': True}",72,All,0.08346211711037138,0.06989526019903798,0.42251018774891796,-0.037654276699945255,
-arima,35,ARIMA | Horizon=168 | Season=All,"{'d': 1, 'p': 2, 'q': 2, 'seasonal': True}",168,All,0.08346211711037138,0.06989526019903798,0.42251018774891796,-0.037654276699945255,
-arima,36,ARIMA | Horizon=48 | Season=All,"{'d': 1, 'p': 2, 'q': 2, 'seasonal': False}",48,All,0.08346211711037138,0.06989526019903798,0.42251018774891796,-0.037654276699945255,
-arima,36,ARIMA | Horizon=72 | Season=All,"{'d': 1, 'p': 2, 'q': 2, 'seasonal': False}",72,All,0.08346211711037138,0.06989526019903798,0.42251018774891796,-0.037654276699945255,
-arima,36,ARIMA | Horizon=168 | Season=All,"{'d': 1, 'p': 2, 'q': 2, 'seasonal': False}",168,All,0.08346211711037138,0.06989526019903798,0.42251018774891796,-0.037654276699945255,
+cnn,1,CNN | Horizon=48 | Season=All,"{'activation': 'tanh', 'dense_units': 64, 'dropout_rate': 0.3, 'filters': 32, 'kernel_size': 3, 'learning_rate': 0.001}",48,All,0.027688867602984772,0.01928680381710435,0.09496732442710772,0.8236133699290287,"['SWC_10', 'T_5']"
+cnn,2,CNN | Horizon=48 | Season=All,"{'activation': 'tanh', 'dense_units': 64, 'dropout_rate': 0.3, 'filters': 32, 'kernel_size': 3, 'learning_rate': 0.0005}",48,All,0.025686769264765104,0.017870611977526023,0.08648841557402713,0.8553381618285755,"['SWC_10', 'T_5']"
+cnn,3,CNN | Horizon=48 | Season=All,"{'activation': 'tanh', 'dense_units': 64, 'dropout_rate': 0.3, 'filters': 32, 'kernel_size': 5, 'learning_rate': 0.001}",48,All,0.027766800335693124,0.01986657837525423,0.10305160367531954,0.8244108474244782,"['SWC_10', 'T_5']"
+cnn,4,CNN | Horizon=48 | Season=All,"{'activation': 'tanh', 'dense_units': 64, 'dropout_rate': 0.3, 'filters': 32, 'kernel_size': 5, 'learning_rate': 0.0005}",48,All,0.028534805323705774,0.019852279772604373,0.09668889763286995,0.8184303612296534,"['SWC_10', 'T_5']"
+cnn,5,CNN | Horizon=48 | Season=All,"{'activation': 'tanh', 'dense_units': 64, 'dropout_rate': 0.3, 'filters': 64, 'kernel_size': 3, 'learning_rate': 0.001}",48,All,0.025979296505113336,0.018614849011624402,0.09288990904983485,0.8465722950113821,"['SWC_10', 'T_5']"
+cnn,6,CNN | Horizon=48 | Season=All,"{'activation': 'tanh', 'dense_units': 64, 'dropout_rate': 0.3, 'filters': 64, 'kernel_size': 3, 'learning_rate': 0.0005}",48,All,0.025416744418360334,0.017654895550402023,0.08641780898543226,0.8563746849558219,"['SWC_10', 'T_5']"
+xgboost,1,XGBOOST | Horizon=48 | Season=All,"{'learning_rate': 0.01, 'max_depth': 3, 'n_estimators': 50}",48,All,0.039216016124269316,0.03344681912694492,0.19245631942876124,0.8656773469179023,"['SWC_10', 'T_5']"
+xgboost,2,XGBOOST | Horizon=48 | Season=All,"{'learning_rate': 0.01, 'max_depth': 3, 'n_estimators': 100}",48,All,0.0314710341501398,0.026265035645167956,0.1480921474510659,0.8684242855054252,"['SWC_10', 'T_5']"
+xgboost,3,XGBOOST | Horizon=48 | Season=All,"{'learning_rate': 0.01, 'max_depth': 3, 'n_estimators': 200}",48,All,0.025871142105538626,0.019513784145567387,0.1047199589313002,0.8700026337178605,"['SWC_10', 'T_5']"
+xgboost,4,XGBOOST | Horizon=48 | Season=All,"{'learning_rate': 0.01, 'max_depth': 5, 'n_estimators': 50}",48,All,0.03963838747651207,0.033506536168082066,0.19300679308274862,0.8432370115718856,"['SWC_10', 'T_5']"
+xgboost,5,XGBOOST | Horizon=48 | Season=All,"{'learning_rate': 0.01, 'max_depth': 5, 'n_estimators': 100}",48,All,0.031914037343875254,0.026035974247820545,0.14729686140866846,0.8551671181276738,"['SWC_10', 'T_5']"
+xgboost,6,XGBOOST | Horizon=48 | Season=All,"{'learning_rate': 0.01, 'max_depth': 5, 'n_estimators': 200}",48,All,0.02665308944750589,0.019245196905284964,0.10421133700680363,0.8578855824659833,"['SWC_10', 'T_5']"
+xgboost,7,XGBOOST | Horizon=48 | Season=All,"{'learning_rate': 0.01, 'max_depth': 7, 'n_estimators': 50}",48,All,0.03949728557912712,0.03331162256372491,0.19183548486323662,0.8339651234810435,"['SWC_10', 'T_5']"
+xgboost,8,XGBOOST | Horizon=48 | Season=All,"{'learning_rate': 0.01, 'max_depth': 7, 'n_estimators': 100}",48,All,0.032329946133489405,0.02588296399941588,0.1466991324743738,0.8380469505775586,"['SWC_10', 'T_5']"
+xgboost,9,XGBOOST | Horizon=48 | Season=All,"{'learning_rate': 0.01, 'max_depth': 7, 'n_estimators': 200}",48,All,0.027656015612133423,0.019521509332088002,0.10633258909191146,0.8426203414383423,"['SWC_10', 'T_5']"
+xgboost,10,XGBOOST | Horizon=48 | Season=All,"{'learning_rate': 0.1, 'max_depth': 3, 'n_estimators': 50}",48,All,0.024337316885912084,0.015372594975575752,0.07786199064122029,0.8687015266494589,"['SWC_10', 'T_5']"
+xgboost,11,XGBOOST | Horizon=48 | Season=All,"{'learning_rate': 0.1, 'max_depth': 3, 'n_estimators': 100}",48,All,0.02433716454311163,0.015125086938572606,0.07643286710178426,0.867979610068828,"['SWC_10', 'T_5']"
+xgboost,12,XGBOOST | Horizon=48 | Season=All,"{'learning_rate': 0.1, 'max_depth': 3, 'n_estimators': 200}",48,All,0.024834294360716568,0.015368653055118324,0.07886263020369348,0.8625555279771557,"['SWC_10', 'T_5']"
+xgboost,13,XGBOOST | Horizon=48 | Season=All,"{'learning_rate': 0.1, 'max_depth': 5, 'n_estimators': 50}",48,All,0.02611291094926407,0.016541189907853835,0.08624150433245209,0.8480262001304189,"['SWC_10', 'T_5']"
+xgboost,14,XGBOOST | Horizon=48 | Season=All,"{'learning_rate': 0.1, 'max_depth': 5, 'n_estimators': 100}",48,All,0.027207589899386434,0.01740556384383546,0.0923107721170167,0.8358763832731418,"['SWC_10', 'T_5']"
+xgboost,15,XGBOOST | Horizon=48 | Season=All,"{'learning_rate': 0.1, 'max_depth': 5, 'n_estimators': 200}",48,All,0.029214936966338013,0.019336278326780875,0.10500548238371227,0.8151428935083679,"['SWC_10', 'T_5']"
+xgboost,16,XGBOOST | Horizon=48 | Season=All,"{'learning_rate': 0.1, 'max_depth': 7, 'n_estimators': 50}",48,All,0.029278548144537727,0.01855430874285544,0.09961742501813237,0.8082096047087058,"['SWC_10', 'T_5']"
+xgboost,17,XGBOOST | Horizon=48 | Season=All,"{'learning_rate': 0.1, 'max_depth': 7, 'n_estimators': 100}",48,All,0.031011202323804287,0.020176427749797804,0.11039645243234152,0.7882169541203772,"['SWC_10', 'T_5']"
+xgboost,18,XGBOOST | Horizon=48 | Season=All,"{'learning_rate': 0.1, 'max_depth': 7, 'n_estimators': 200}",48,All,0.03226515781931549,0.021507940586362784,0.11883732262502814,0.7752772161872536,"['SWC_10', 'T_5']"
+xgboost,19,XGBOOST | Horizon=48 | Season=All,"{'learning_rate': 0.3, 'max_depth': 3, 'n_estimators': 50}",48,All,0.025729499736730367,0.01632388113801712,0.08431805107890775,0.8529400159408385,"['SWC_10', 'T_5']"
+xgboost,20,XGBOOST | Horizon=48 | Season=All,"{'learning_rate': 0.3, 'max_depth': 3, 'n_estimators': 100}",48,All,0.02757502615966787,0.017789403169015672,0.09459257901497356,0.8313771445559626,"['SWC_10', 'T_5']"
+xgboost,21,XGBOOST | Horizon=48 | Season=All,"{'learning_rate': 0.3, 'max_depth': 3, 'n_estimators': 200}",48,All,0.03388209118716042,0.02356921686393777,0.13296382071571058,0.7593675421341778,"['SWC_10', 'T_5']"
+xgboost,22,XGBOOST | Horizon=48 | Season=All,"{'learning_rate': 0.3, 'max_depth': 5, 'n_estimators': 50}",48,All,0.03013328323854966,0.019266024203675104,0.10470941448254516,0.8005815143770005,"['SWC_10', 'T_5']"
+xgboost,23,XGBOOST | Horizon=48 | Season=All,"{'learning_rate': 0.3, 'max_depth': 5, 'n_estimators': 100}",48,All,0.03422652157412706,0.02280498494579826,0.12785681819782352,0.7510964364654302,"['SWC_10', 'T_5']"
+xgboost,24,XGBOOST | Horizon=48 | Season=All,"{'learning_rate': 0.3, 'max_depth': 5, 'n_estimators': 200}",48,All,0.03925894956228811,0.027477014765989006,0.15734299378502387,0.6974803835363694,"['SWC_10', 'T_5']"
+xgboost,25,XGBOOST | Horizon=48 | Season=All,"{'learning_rate': 0.3, 'max_depth': 7, 'n_estimators': 50}",48,All,0.03536225154578076,0.024150340656040575,0.13597033275185583,0.7361627149921942,"['SWC_10', 'T_5']"
+xgboost,26,XGBOOST | Horizon=48 | Season=All,"{'learning_rate': 0.3, 'max_depth': 7, 'n_estimators': 100}",48,All,0.03742793459964875,0.025877336597939272,0.14678963599780726,0.7113838289581582,"['SWC_10', 'T_5']"
+xgboost,27,XGBOOST | Horizon=48 | Season=All,"{'learning_rate': 0.3, 'max_depth': 7, 'n_estimators': 200}",48,All,0.03838768120887641,0.026808009099590954,0.1525359156032431,0.7031658873862269,"['SWC_10', 'T_5']"

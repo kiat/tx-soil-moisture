@@ -36,7 +36,7 @@ TARGET_COL = 'SWC_10'
 MANUAL_KEEP = ['SWC_10', 'T_5']
 
 # === Tuning Mode ===
-TUNE = True
+TUNE = False
 
 # === Default Model Parameters ===
 MODEL_PARAMS = {
