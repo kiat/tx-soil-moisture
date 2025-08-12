@@ -31,7 +31,7 @@ from sklearn.model_selection import ParameterGrid
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import Sequential
-from tensorflow.keras.layers import Conv1D, GlobalAveragePooling1D, Dense, Dropout, LSTM
+from tensorflow.keras.layers import Conv1D, GlobalAveragePooling1D, Dense, Dropout, LSTM, Bidirectional
 
 # Time-series (classical)
 # Core statsmodels / pmdarima used in the pipeline

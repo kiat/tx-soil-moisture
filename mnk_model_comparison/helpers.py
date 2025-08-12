@@ -1,4 +1,6 @@
-from imports import *
+import imports
+from imports import * 
+from tensorflow.keras.layers import Bidirectional
 
 
 '''     Feature Filtering - Manual and Automated       '''
@@ -143,6 +145,17 @@ def build_cnn_model(input_shape, params):
 def build_lstm_model(input_shape, params):
     model = Sequential([
         LSTM(params["lstm_units"], activation=params["activation"], return_sequences=False, input_shape=input_shape),
+        Dense(params["dense_units"], activation=params["activation"]),
+        Dropout(params["dropout_rate"]),
+        Dense(1)
+    ])
+    optimizer = tf.keras.optimizers.Adam(learning_rate=params["learning_rate"])
+    model.compile(loss='mae', optimizer=optimizer, metrics=[tf.keras.metrics.RootMeanSquaredError()])
+    return model
+
+def build_bilstm_model(input_shape, params):
+    model = Sequential([
+        Bidirectional(LSTM(params["lstm_units"], activation=params["activation"], return_sequences=False), input_shape=input_shape),
         Dense(params["dense_units"], activation=params["activation"]),
         Dropout(params["dropout_rate"]),
         Dense(1)

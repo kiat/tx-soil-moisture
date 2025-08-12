@@ -5,7 +5,8 @@ from sklearn.model_selection import ParameterGrid
 INPUT_PATH = 'C:/Users/mnabh/Research - Soil Moisture Content/tx-soil-moisture/datasets/Revised_Final_Data/Station3_Revised_Final_Data.csv'
 
 # === Models to Run ===
-MODELS_TO_RUN = ['cnn', 'lstm', 'arima', 'arimax']
+# MODELS_TO_RUN = ['cnn', 'lstm', 'arima', 'arimax']
+MODELS_TO_RUN = ['cnn', 'lstm', 'arima', 'arimax', 'bilstm']
 LOG_TO_CSV = True
 
 # === Data Windowing Parameters ===
@@ -33,7 +34,7 @@ TEST_YEAR = 2019
 
 # === Target and Feature Selection ===
 TARGET_COL = 'SWC_10'
-MANUAL_KEEP = ['SWC_10', 'T_5']
+MANUAL_KEEP = ['SWC_10', 'DaySin', 'DayCos', 'YearSin', 'YearCos']
 
 # === Tuning Mode ===
 TUNE = False
@@ -55,7 +56,19 @@ MODEL_PARAMS = {
         "dropout_rate": 0.3,
         "learning_rate": 0.001,
     },
+    "bilstm": {
+        "lstm_units": 64,
+        "activation": "tanh",
+        "dense_units": 64,
+        "dropout_rate": 0.3,
+        "learning_rate": 0.001,
+    },
     "arima": {
+        "p": 1,
+        "d": 1,
+        "q": 1
+    },
+    "arimax": {
         "p": 1,
         "d": 1,
         "q": 1
@@ -90,6 +103,13 @@ RAW_PARAM_GRID = {
         "dropout_rate": [0.3, 0.5],
         "learning_rate": [0.001, 0.0005],
     },
+    "bilstm": {
+        "lstm_units": [32, 64],
+        "activation": ["tanh", "relu"],
+        "dense_units": [64, 128],
+        "dropout_rate": [0.3, 0.5],
+        "learning_rate": [0.001, 0.0005],
+    },
     "arima": {
         "p": [0, 1, 2],
         "d": [0, 1],
@@ -112,6 +132,7 @@ PARAM_GRID = {
 model_meta = {
     "cnn": {"requires_windowing": True},
     "lstm": {"requires_windowing": True},
+    "bilstm": {"requires_windowing": True},
     "arima": {"requires_windowing": False},
     "arimax": {"requires_windowing": False},
     "autoarima": {"requires_windowing": False},
@@ -120,5 +141,5 @@ model_meta = {
 }
 
 # "Ppt", "Tair", "RH", "Srad", "Wind_X", "Wind_Y"
-EXOG_FEATURES = ['T_5', 'Ppt']
+EXOG_FEATURES = ['DaySin', 'DayCos', 'YearSin', 'YearCos']
 SEARCH_ARIMAX_FEATURES = False          # Whether to test all subsets of exogenous features

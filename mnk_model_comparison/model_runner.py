@@ -1,9 +1,11 @@
 # model_runner.py
 
-from imports import *
+import imports
+from imports import * 
 
 from config import *
 from helpers import *
+from tensorflow.keras.layers import Bidirectional
 
 # Global results list and utilities
 results = []
@@ -60,6 +62,9 @@ def run_forecast(train_df, test_df, season, horizon, model_name, model_params, c
         elif model_name == "lstm":
             model = build_lstm_model(input_shape=X_train.shape[1:], params=model_params)
             model.fit(X_train, y_train, epochs=40)
+        elif model_name == "bilstm":
+            model = build_bilstm_model(input_shape=X_train.shape[1:], params=model_params)
+            model.fit(X_train, y_train, epochs=40)
         elif model_name == "xgboost":
             model = build_xgboost_model(X_train, y_train, X_test, params=model_params)  # already trained
             X_test = X_test.reshape((X_test.shape[0], -1))
@@ -104,11 +109,13 @@ def run_forecast(train_df, test_df, season, horizon, model_name, model_params, c
         y_true = y_test
         # if model_name not in ['cnn', 'lstm', 'xgboost']:
         #     plot_predictions(y_true=y_true, y_pred=y_pred, dates=dates, title=f"{label}")
+    y_true = np.asarray(y_true).ravel()
+    y_pred = np.asarray(y_pred).ravel()
 
     rmse = root_mean_squared_error(y_true, y_pred)
     mae = mean_absolute_error(y_true, y_pred)
     mape = mean_absolute_percentage_error(y_true, y_pred)
-    corr = pearsonr(y_true.flatten(), y_pred.flatten()).statistic
+    corr = pearsonr(y_true, y_pred).statistic
     features_used = list(exog_features) if model_name == "arimax" else (MANUAL_KEEP if model_name in ["cnn", "lstm", "xgboost"] else None)
 
     log_results(model_name, config_id, label, {
