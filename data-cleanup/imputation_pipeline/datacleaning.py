@@ -195,8 +195,10 @@ def main():
         description="Generate merged, missing/invalid summary, and cleaned full‐timeline CSVs for a soil station."
     )
     parser.add_argument("--station", "-s", type=int, default=1, help="Station ID (1–6).")
-    parser.add_argument("--soil-base-dir", type=str, default="../datasets/TX-Data/soil_station", help="Path to soil .dat files.")
-    parser.add_argument("--met-base-dir", type=str, default="../datasets/TX-Data/met_station", help="Path to MET .dat files.")
+    parser.add_argument("--soil-base-dir", type=str, default="../../datasets/TX-Data/soil_station", help="Path to soil .dat files.")
+    parser.add_argument("--met-base-dir", type=str, default="../../datasets/TX-Data/met_station", help="Path to MET .dat files.")
+    
+    # --- MODIFIED OUTPUT PATHS: Use local directories ---
     parser.add_argument("--raw-output-dir", type=str, default="raw_merged_data", help="Directory for merged CSVs.")
     parser.add_argument("--missing-output", type=str, default=None, help="Filename for missing/invalid summary CSV.")
     parser.add_argument("--cleaned-output", type=str, default=None, help="Filename for cleaned full‐timeline CSV.")
