@@ -5,7 +5,7 @@ from sklearn.model_selection import ParameterGrid
 INPUT_PATH = 'C:/Users/mnabh/Research - Soil Moisture Content/tx-soil-moisture/datasets/Revised_Final_Data/Station3_Revised_Final_Data.csv'
 
 # === Models to Run ===
-# MODELS_TO_RUN = ['cnn', 'lstm', 'arima', 'arimax']
+# MODELS_TO_RUN = ['cnn', 'lstm', 'bilstm', 'arima', 'arimax', 'xgboost']
 MODELS_TO_RUN = ['cnn', 'lstm', 'arima', 'arimax', 'bilstm']
 LOG_TO_CSV = True
 
@@ -13,7 +13,7 @@ LOG_TO_CSV = True
 INPUT_WINDOW = 72                     # 3 days (hourly data)
 OUTPUT_HORIZON = 48                   # Default: 2 days ahead
 OUTPUT_HORIZONS = [48, 72, 168]       # Test 2-day, 3-day, 1-week horizons
-TEST_FULL = True                     # Whether to test all output horizons or just one
+TEST_FULL = True                      # Whether to test all output horizons or just one
 
 HIGH_CORR_FILTER = False
 THRESHOLD = 0.95

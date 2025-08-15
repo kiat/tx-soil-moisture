@@ -1,0 +1,24 @@
+# Core
+pandas
+numpy
+scipy
+matplotlib
+seaborn
+ipython
+
+# Scikit-learn
+scikit-learn
+
+# Deep Learning
+tensorflow
+
+# Time-series modeling
+statsmodels
+pmdarima
+
+# Optional: if you intend to use these alternative forecasting packages
+statsforecast
+utilsforecast
+
+# Gradient boosting
+xgboost

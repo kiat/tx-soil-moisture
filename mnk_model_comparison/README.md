@@ -1,6 +1,6 @@
 # Soil Moisture Model Comparison Pipeline
 
-This repository contains a machine learning pipeline for comparing multiple forecasting models (CNN, LSTM, ARIMA, XGBoost) on soil moisture and related datasets. The pipeline supports hyperparameter tuning, feature selection, and evaluation across different forecast horizons and seasonal splits.
+This repository contains a machine learning pipeline for comparing multiple forecasting models (CNN, LSTM, BiLSTM, ARIMA, ARIMAX, XGBoost) on soil moisture and related datasets. The pipeline supports hyperparameter tuning, feature selection, and evaluation across different forecast horizons and seasonal splits. There is also explicit control for inout features and other variables through config.py
 
 ---
 
@@ -12,6 +12,14 @@ This repository contains a machine learning pipeline for comparing multiple fore
 - **`imports.py`** – A single file containing all required imports for the project. Importing this file smoothly sets up your environment.
 - **`data_analysis.ipynb`** – Jupyter notebook for exploratory data analysis (EDA) and interactive testing of the pipeline.
 - **`evaluation_results.csv`** – Output file containing results for each model/config combination.
+
+---
+
+## Setup
+
+### Install dependencies
+```bash
+pip install -r requirements.txt
 
 ---
 
