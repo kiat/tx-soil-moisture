@@ -1,0 +1,1170 @@
+\documentclass[12pt]{article}
+\usepackage{booktabs}
+\usepackage{caption}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{siunitx}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{float}
+\usepackage{graphicx} % Required for inserting images
+\usepackage{amssymb}
+\usepackage{listings}
+\usepackage{xcolor}
+
+\definecolor{shellbg}{RGB}{240,240,240}
+\definecolor{shellcmd}{RGB}{0,0,0}
+\definecolor{shellcomment}{RGB}{100,100,100}
+
+\lstdefinestyle{shellstyle}{
+    backgroundcolor=\color{shellbg},
+    basicstyle=\ttfamily\small\color{shellcmd},
+    commentstyle=\color{shellcomment},
+    breaklines=true,
+    frame=single,
+    rulecolor=\color{black},
+    numbers=none,
+    language=bash, % Highlight as bash commands
+    alsoletter={-}, % Allow hyphens in keywords
+    morekeywords={rm, wget, -q} % Custom keywords
+}
+
+\usepackage{tikz}
+\usepackage{amsmath,amsthm}
+\usepackage{minted}
+\setminted{
+    breaklines=true,
+    breaksymbolleft=\raisebox{0.8ex}{\small\ensuremath{\hookrightarrow}},
+    fontsize=\small, % Smaller font
+    baselinestretch=0.8 % Tighter line spacing
+}
+\usepackage[a4paper,
+            bindingoffset=0.2in,
+            left=0.6in,
+            right=0.6in,
+            top=0.5in,
+            bottom=0.5in,
+            footskip=.25in]{geometry}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{problem}[theorem]{Problem}
+\newtheorem{conjecture}[theorem]{Conjecture}
+\theoremstyle{definition}
+\newtheorem{question}[theorem]{Question}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{notation}[theorem]{Notation}
+\newtheorem{construction}[theorem]{Construction}
+\newtheorem{example}[theorem]{Example}
+\newtheorem*{remark}{Remark}
+\newtheorem{hypothesis}[theorem]{Hypothesis}
+\newtheorem{claim}[theorem]{Claim}
+\title{CS Project on Rainfall}
+\author{Evan Nguyen, Selim Gurkas, Leo Wang, Tiffany Nguyen, Abi Vijayan}
+% \date{16th December, 2024}
+
+\begin{document}
+
+\maketitle
+
+% Add the students names to top of the report 
+% Add reference to the Python Code of each part. 
+% Add 
+
+\section{Introduction}
+In this project, we investigate the soil moisture data collected from different stations and make various observations and statistical inferences. We begin with some data clean-up and summarizing the monthly rainfall data in all six stations.
+
+
+\section{Tables for Monthly Rainfall}
+The following tables were produced after a series of data clean-up and organization:
+\begin{table}[ht]
+  \centering
+  \caption{Monthly Rainfall for Station one for Years 2015-2020}
+  \label{tab:station1}
+  \begin{tabular}{l *{6}{S[table-format=3.2]}}
+    \toprule
+    \textbf{Month} & \textbf{2015} & \textbf{2016} & \textbf{2017} & \textbf{2018} & \textbf{2019} & \textbf{2020} \\
+    \midrule
+    January  & 53.48 &  0.00 & 25.88 &  1.76 & 40.81 & 55.57 \\
+    February &  4.29 &  0.00 & 78.72 & 56.79 &  8.59 & 35.76 \\
+    March    & 57.82 &  0.00 & 25.37 & 19.54 & 18.26 & 78.43 \\
+    April    & 58.92 &  0.00 & 33.50 & 40.94 & 77.97 & 82.27 \\
+    May      &219.44 &  0.00 & 66.26 & 96.78 & 83.27 &156.21 \\
+    June     & 56.63 &  0.00 &105.41 & 18.28 &120.60 & 14.71 \\
+    July     & 28.19 &  0.00 & 13.96 & 29.19 &  7.36 &  9.40 \\
+    August   &  1.01 &128.75 &125.99 & 62.98 &  5.33 &  6.85 \\
+    September&  8.62 & 82.27 & 59.94 &221.92 & 25.90 &142.67 \\
+    October  &  0.00 &  1.77 &  9.14 &239.08 & 48.70 &  8.08 \\
+    November &  0.00 &156.16 &  7.61 & 13.42 & 36.56 & 13.70 \\
+    December &  0.00 &107.92 & 52.27 & 90.87 &  7.36 & 39.61 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+\\
+\begin{table}[ht]
+  \centering
+  \caption{monthly rainfall for station two for years 2015-2020}
+  \label{tab:station2}
+  \begin{tabular}{l *{6}{S[table-format=3.2]}}
+    \toprule
+    \textbf{Month} & \textbf{2015} & \textbf{2016} & \textbf{2017} & \textbf{2018} & \textbf{2019} & \textbf{2020} \\
+    \midrule
+    January  & 76.89 &  9.36 & 34.53 &  1.26 & 52.78 & 64.43 \\
+    February &  5.05 & 25.15 & 56.39 & 57.59 & 17.98 & 51.02 \\
+    March    & 48.13 & 94.19 & 24.84 & 28.69 &  8.61 & 71.09 \\
+    April    & 64.74 & 87.84 & 24.36 & 17.77 & 54.58 & 61.45 \\
+    May      &245.06 &194.02 & 60.91 & 74.40 &149.02 &160.23 \\
+    June     & 50.79 & 55.38 & 45.71 &  8.87 & 69.81 & 11.66 \\
+    July     &  2.03 & 18.53 & 31.99 & 45.97 & 31.48 &  7.60 \\
+    August   &  4.06 &144.22 &139.93 & 43.43 & 28.18 &  4.05 \\
+    September& 16.00 & 80.80 & 28.14 &187.13 & 17.77 &133.81 \\
+    October  &187.12 &  0.25 & 17.00 &133.96 & 50.19 &  4.30 \\
+    November & 70.82 & 90.63 &  6.82 & 15.48 & 14.69 & 11.16 \\
+    December & 29.69 & 64.25 & 58.14 & 78.15 &  6.82 & 32.50 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+\\
+\begin{table}[ht]
+  \centering
+  \caption{monthly rainfall for station three for years 2015-2020}
+  \label{tab:station3}
+  \begin{tabular}{l *{6}{S[table-format=3.2]}}
+    \toprule
+    \textbf{Month} & \textbf{2015} & \textbf{2016} & \textbf{2017} & \textbf{2018} & \textbf{2019} & \textbf{2020} \\
+    \midrule
+    January  & 75.15 & 12.94 & 41.13 &  0.75 & 45.62 & 76.89 \\
+    February &  5.33 & 35.31 &110.48 & 51.74 & 12.89 & 46.44 \\
+    March    & 53.26 & 73.62 & 29.67 & 24.36 & 11.64 & 66.75 \\
+    April    & 74.66 & 89.33 & 34.00 & 17.27 & 65.49 & 65.27 \\
+    May      &264.86 &222.46 & 49.75 &114.02 &199.32 &190.22 \\
+    June     & 89.64 & 53.07 & 67.30 &  6.32 & 87.35 & 17.51 \\
+    July     & 17.27 & 29.21 & 27.70 & 47.71 & 43.19 &  4.55 \\
+    August   & 15.74 &127.96 &147.56 & 50.29 &  7.36 & 17.27 \\
+    September& 14.48 & 97.02 & 70.52 &172.57 & 21.32 &127.97 \\
+    October  &193.47 &  0.76 &  8.62 &146.15 & 43.88 &  5.57 \\
+    November & 97.98 & 82.22 &  7.34 & 22.57 & 14.94 & 12.42 \\
+    December & 40.87 & 66.51 & 55.31 & 87.05 &  5.57 & 34.02 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+\\
+\begin{table}[ht]
+  \centering
+  \caption{monthly rainfall for station  four for years 2015-2020}
+  \label{tab:station4}
+  \begin{tabular}{l *{6}{S[table-format=3.2]}}
+    \toprule
+    \textbf{Month} & \textbf{2015} & \textbf{2016} & \textbf{2017} & \textbf{2018} & \textbf{2019} & \textbf{2020} \\
+    \midrule
+    January  & 56.00 & 11.93 & 33.48 &  2.78 & 14.46 & 80.20 \\
+    February &  4.79 & 31.49 & 70.33 & 40.80 &  4.53 & 29.37 \\
+    March    & 60.07 &119.08 & 24.11 & 41.38 & 16.50 &143.47 \\
+    April    & 65.52 & 96.72 & 32.50 & 13.72 & 61.95 & 43.13 \\
+    May      &208.24 &106.65 & 38.80 & 80.50 &105.57 &106.40 \\
+    June     & 73.63 & 76.93 &111.49 &  7.08 &146.54 & 33.26 \\
+    July     &  0.00 & 41.65 & 41.94 & 15.23 & 27.43 & 17.77 \\
+    August   & 20.32 &117.05 &139.42 & 35.81 & 25.13 & 10.15 \\
+    September&  5.82 & 78.96 & 74.12 &160.46 &  3.80 & 98.45 \\
+    October  &130.45 & 10.40 &  8.62 &234.05 & 46.65 &  9.55 \\
+    November &104.83 &178.04 & 13.68 &  0.00 & 26.61 & 14.21 \\
+    December & 25.91 & 57.86 & 41.32 & 27.93 &  5.83 & 44.90 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+\\
+\begin{table}[ht]
+  \centering
+  \caption{monthly rainfall for station five for years 2015-2020}
+  \label{tab:station5}
+  \begin{tabular}{l *{6}{S[table-format=3.2]}}
+    \toprule
+    \textbf{Month} & \textbf{2015} & \textbf{2016} & \textbf{2017} & \textbf{2018} & \textbf{2019} & \textbf{2020} \\
+    \midrule
+    January  & 71.56 & 12.18 & 46.96 &  1.26 & 51.77 & 52.26 \\
+    February &  3.30 & 28.45 & 63.49 & 64.71 & 13.93 & 49.71 \\
+    March    & 61.65 & 88.12 & 23.06 & 28.43 & 10.64 & 68.04 \\
+    April    & 99.30 &109.65 & 43.94 &  2.54 & 58.89 & 63.95 \\
+    May      &230.35 &168.10 & 53.03 & 13.19 &138.12 &122.90 \\
+    June     & 26.89 & 44.43 & 31.99 & 12.69 & 60.65 & 16.76 \\
+    July     &  0.00 &  6.60 & 56.90 & 15.23 &  4.07 &  5.32 \\
+    August   & 10.16 &106.89 &124.69 & 66.54 &  4.31 &  9.14 \\
+    September& 10.41 & 77.72 & 67.52 &177.68 & 12.46 &125.14 \\
+    October  &179.31 &  0.00 & 32.75 &165.69 & 42.35 &  5.31 \\
+    November & 89.08 &114.53 &  7.61 & 19.76 & 39.34 & 12.69 \\
+    December & 28.70 & 58.14 & 68.49 & 86.28 &  5.06 & 40.09 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+\\
+\begin{table}[ht]
+  \centering
+  \caption{monthly rainfall for station (mm) six for years 2015-2020}
+  \label{tab:station6}
+  \begin{tabular}{l *{6}{S[table-format=3.2]}}
+    \toprule
+    \textbf{Month} & \textbf{2015} & \textbf{2016} & \textbf{2017} & \textbf{2018} & \textbf{2019} & \textbf{2020} \\
+    \midrule
+    January  & 42.87 & 12.42 &  0.00 &  3.03 & 30.15 & 71.32 \\
+    February &  3.04 & 25.66 &  0.00 & 35.75 &  3.51 & 29.67 \\
+    March    & 49.46 &110.96 &  0.00 & 22.06 & 16.98 & 99.29 \\
+    April    & 55.11 & 98.48 & 26.14 & 15.25 & 74.91 & 74.17 \\
+    May      &243.82 & 94.45 & 62.23 & 96.26 & 76.91 &128.26 \\
+    June     & 41.14 & 23.10 &122.14 &  6.58 &133.32 & 20.04 \\
+    July     &  5.58 & 31.49 &  6.10 & 30.97 & 13.70 & 20.31 \\
+    August   & 18.79 &141.95 &123.65 & 84.56 & 12.69 & 15.74 \\
+    September&  6.60 & 99.79 & 49.47 &143.16 & 13.20 &123.89 \\
+    October  & 98.22 &  0.00 &  4.31 &257.44 & 48.20 & 12.13 \\
+    November &127.20 &  0.00 &  7.62 & 12.93 & 27.42 & 14.46 \\
+    December & 39.86 &  0.00 & 39.57 & 90.37 &  7.36 & 41.62 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+\clearpage
+Observing the tables, we have the following findings: 
+\begin{itemize}
+    \item May and June consistently have the highest rainfall across all stations and years.
+    \item July and August tend to have low rainfall in most stations, except for some anomalies (e.g. August 2016).
+    \item October sees very high variability (0.76 mm in 2016 vs. 234 mm in 2018).
+    \item Winter months (January–March) generally have lower totals than spring/summer months
+    \item Station 1 has missing data between October 2015 and July 2016. Therefore, we removed Station 1 from our tests.
+\end{itemize}
+
+\begin{section}{Hypothesis Tests on Rainfall}
+We are looking at the variable ppt(rainfall) and analyzing the trends in the data. We are checking to see if there is any seasonaility, and other statistically significant points. Overall, the only statistically significant thing we could find is that the rainfall changed over the years, but everything else failed to reject the null hypothesis.
+\subsection{Two-Sample T-Tests Between Stations}
+This section performs independent two-sample t-tests between each unique pair of weather stations to determine whether their average annual rainfall differs significantly. We used Welch's T-test assuming unequal variances between samples with significance level of $\alpha=0.05$. For each station pair (A) and (B):
+\begin{itemize}
+    \item Null hypothesis: The mean annual rainfall at Station A is equal to the mean annual rainfall at Station B.
+    \item Alternative hypothesis: The mean annual rainfall at Station A is not equal to the mean at Station B.
+\end{itemize}
+The out put of our code, which is included in the appendix, is as follows:
+\begin{table}[H]
+\centering
+\caption{Result of T-Tests Between Every Pair of Stations}
+\label{tab:station_comparison}
+\begin{tabular}{|l|l|r|r|l|}
+\toprule
+\textbf{Station A} & \textbf{Station B} & \textbf{T-statistic} & \textbf{P-value} & \textbf{Significant (p $<$ 0.05)} \\
+\hline
+Station 2 & Station 3 & $-0.872$ & $0.4038$ & No \\ \hline
+Station 2 & Station 4 & $-0.169$ & $0.8693$ & No \\ \hline
+Station 2 & Station 5 & $0.177$ & $0.8632$ & No \\ \hline
+Station 2 & Station 6 & $0.563$ & $0.5859$ & No \\ \hline
+Station 3 & Station 4 & $0.698$ & $0.5011$ & No \\ \hline
+Station 3 & Station 5 & $1.054$ & $0.3169$ & No \\ \hline
+Station 3 & Station 6 & $1.436$ & $0.1816$ & No \\ \hline
+Station 4 & Station 5 & $0.346$ & $0.7368$ & No \\ \hline
+Station 4 & Station 6 & $0.729$ & $0.4830$ & No \\ \hline
+Station 5 & Station 6 & $0.389$ & $0.7053$ & No \\
+\bottomrule
+\end{tabular}
+\end{table}
+The current output suggests that all $p$ values are greater than 0.05, which means we fail to reject the null hypothesis, concluding that there are no statistically significant differences in average rainfall between any pair of stations.
+
+
+\subsection{Mann-Kendall Trend Test: Annual Rainfall at Each Station}
+The Mann-Kendall test is a non-parametric method used to identify monotonic trends (consistently increasing or decreasing) in a time series without assuming any particular distribution. It is ideal for detecting climate trends like changes in rainfall or temperature over time. For each station:
+\begin{itemize}
+    \item Null hypothesis: There exists no monotonic trend in rainfall over time.
+    \item Alternative hypothesis: there is a monotonic trend in rainfall in annual rainfall, whether increasing or decreasing.
+\end{itemize}
+
+The result of our code is as follows. The code used to obtain the result is in the appendix.
+\begin{table}[H]
+\centering
+\caption{Trend Analysis Results}
+\label{tab:trend_analysis}
+\begin{tabular}{|c|l|l|r|l|}
+\hline
+\textbf{\#} & \textbf{Station} & \textbf{Trend} & \textbf{P-value} & \textbf{Significant (p $<$ 0.05)} \\
+\hline
+0 & Station 2 & no trend & 0.2597 & No \\
+\hline
+1 & Station 3 & no trend & 0.1329 & No \\
+\hline
+2 & Station 4 & no trend & 0.2597 & No \\
+\hline
+3 & Station 5 & no trend & 0.1329 & No \\
+\hline
+4 & Station 6 & no trend & 1.0000 & No \\
+\hline
+\end{tabular}
+\end{table}
+Again, we used the significance level of $\alpha=0.05$. since All stations returned "no trend" with p-values $> 0.05$, the analysis did not detect any statistically significant trends in annual rainfall at any station. A possible reason is that there is not enough years of data to detect a slow-moving trend. Below are the codes used and the actual results obtained.
+\subsection{ANOVA – Monthly Rainfall Variation for Each Station}
+The goal of this analysis is to determine whether monthly rainfall varies significantly within each station over time. We use a one-way ANOVA for each station to evaluate whether average rainfall differs by month.\\ \\
+\textbf{Why ANOVA?} ANOVA (Analysis of Variance) is appropriate when comparing the means across three or more independent groups—in this case, the 12 months of the year. A one-way ANOVA tests whether at least one month's mean rainfall differs from the others. It’s more robust and statistically valid than conducting multiple t-tests across months, which would increase the risk of Type I error.\\ \\
+
+We apply a one-way ANOVA to each station’s monthly rainfall totals. This test compares means across multiple groups (months) within a single station. For each individual station:
+\begin{itemize}
+    \item Null hypothesis: Mean monthly rainfall is the same across all months.
+    \item Alternate hypothesis: At least one month has a different mean rainfall.\\
+\end{itemize}
+
+Here are the ANOVA test results for each station:
+\begin{itemize}
+    \item Station 2: F = 2.8991, p = 0.0040 → Statistically significant (p $<$ 0.05)
+    \item Station 3: F = 3.7056, p = 0.0005 → Statistically significant (p $<$ 0.05)
+    \item p = 0.2303 → Not statistically significant (p $>$ 0.05)
+    \item F = 1.9549, p = 0.0497 → Statistically significant (p $<$ 0.05)
+    \item F = 1.8638, p = 0.0628 → Not statistically significant (p $>$ 0.05)
+\end{itemize}
+
+These results indicate that there are statistically significant differences in rainfall across months for Stations 2, 3, and 5. This may reflect seasonality or localized weather patterns (e.g., wet and dry seasons). Other stations show no strong monthly differentiation, suggesting more even rainfall throughout the year. Monthly rainfall patterns differ significantly in half of the stations, indicating that some areas experience stronger seasonality or rainfall clustering in certain months. However, the lack of significant differences in the remaining stations suggests that not all locations follow the same temporal pattern. This mixed behavior could be driven by subtle geographic or atmospheric influences affecting local precipitation cycles.
+
+The codes used for this section is in the appendix:
+
+\subsection{Kruskal-Wallis Test Summary for Rainfall Comparisons}
+The Kruskal-Wallis H-test is a non-parametric alternative to the one-way ANOVA. It assesses whether samples originate from the same distribution, without assuming normality. This is useful when rainfall data is skewed or contains outliers. For each station:
+\begin{itemize}
+    \item Null hypothesis: The distributions of rainfall are the same across all groups being compared.
+    \item Alternate hypothesis: At least one group differs in distribution from the others.
+
+\end{itemize}
+The following results were obtained:
+\begin{table}[H]
+\centering
+\caption{Kruskal-Wallis Test Results}
+\label{tab:kruskal_results}
+\begin{tabular}{|l|l|r|r|l|}
+\hline
+\textbf{Test} & \textbf{H-statistic} & \textbf{P-value} & \textbf{Significant (p $<$ 0.05)} \\
+\hline
+Across Stations (all years) & 2.146 & 0.7089 & No \\
+\hline
+Across Years (all stations) & 23.219 & 0.0003 & Yes \\
+\hline
+\end{tabular}
+\end{table}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\linewidth]{Monthly_Rainfall_by_Station_2.pdf}
+    \caption{Heatmap illustrating the rainfall of every month from 2015-2020 at station 2 }
+    \label{fig:enter-label}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\linewidth]{Monthly_Rainfall_by_Station_3.pdf}
+    \caption{Heatmap illustrating the rainfall of every month from 2015-2020 at station 3}
+    \label{fig:enter-label}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\linewidth]{Monthly_Rainfall_by_Station_4.pdf}
+    \caption{Heatmap illustrating the rainfall of every month from 2015-2020 at station 4}
+    \label{fig:enter-label}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\linewidth]{Monthly_Rainfall_by_Station_5.pdf}
+    \caption{Heatmap illustrating the rainfall of every month from 2015-2020 at station 5}
+    \label{fig:enter-label}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\linewidth]{Monthly_Rainfall_by_Station_6.pdf}
+    \caption{Heatmap illustrating the rainfall of every month from 2015-2020 at station 6}
+    \label{fig:enter-label}
+\end{figure}
+
+The results obtained suggest that there are no statistically significant differences in the distribution between stations. However, the result does suggest statistically significant differences in the distribution across different years. The codes used are in appendix.
+
+
+
+
+
+
+\subsection{Trend Analysis: Monthly Rainfall Over Time (Per Station)}
+
+This section uses ordinary least squares (OLS) regression to analyze whether monthly rainfall is increasing or decreasing over time at each station. OLS (Ordinary Least Squares) regression is a statistical method used to model the relationship between a dependent variable (Y) and one or more independent variables (X). It estimates the coefficients of the linear equation by minimizing the sum of squared differences between observed values and the values predicted by the linear model.\\
+
+
+For each station:
+\begin{itemize}
+    \item Extract the rainfall matrix by month and year using \texttt{.pivot\_table()}
+    \item For each month:
+    \begin{itemize}
+        \item Fit a linear model: $ \text{Rainfall} = \beta_0 + \beta_1 \times \text{Year} $
+        \item Store the slope ($\beta_1$), p-value, and significance indicator
+    \end{itemize}
+    \item Only months with at least 5 years of data are analyzed
+\end{itemize}
+
+\subsection*{Results Interpretation}
+The following result was obtained. The code used to obtain this result is in the appendix.
+\begin{longtable}{|c|l|l|r|r|l|}
+\caption{Statistical Results by Station and Month} \label{tab:results} \\
+\hline
+\textbf{\#} & \textbf{Station} & \textbf{Month} & \textbf{Value} & \textbf{P-value} & \textbf{Significant (p $<$ 0.05)} \\
+\hline
+\endfirsthead
+
+\multicolumn{6}{c}%
+{{\bfseries \tablename\ \thetable{} -- continued from previous page}} \\
+\hline
+\textbf{\#} & \textbf{Station} & \textbf{Month} & \textbf{Value} & \textbf{P-value} & \textbf{Significant (p $<$ 0.05)} \\
+\hline
+\endhead
+
+\hline \multicolumn{6}{|r|}{{Continued on next page}} \\ \hline
+\endfoot
+
+\hline
+\endlastfoot
+
+0 & Station 2 & January & 0.991 & 0.9083 & No \\
+1 & Station 2 & February & 5.987 & 0.3122 & No \\
+2 & Station 2 & March & -3.945 & 0.6596 & No \\
+3 & Station 2 & April & -3.509 & 0.6343 & No \\
+4 & Station 2 & May & -15.59 & 0.4131 & No \\
+5 & Station 2 & June & -5.406 & 0.4198 & No \\
+6 & Station 2 & July & 2.305 & 0.619 & No \\
+7 & Station 2 & August & -12.705 & 0.4748 & No \\
+8 & Station 2 & September & 15.97 & 0.4038 & No \\
+9 & Station 2 & October & -18.495 & 0.3751 & No \\
+10 & Station 2 & November & -14.785 & 0.0763 & No \\
+11 & Station 2 & December & -3.949 & 0.5915 & No \\
+12 & Station 3 & January & 1.896 & 0.8304 & No \\
+13 & Station 3 & February & 2.273 & 0.8306 & No \\
+14 & Station 3 & March & -3.537 & 0.6117 & No \\
+15 & Station 3 & April & -3.863 & 0.6059 & No \\
+16 & Station 3 & May & -10.81 & 0.6205 & No \\
+17 & Station 3 & June & -9.108 & 0.3292 & No \\
+18 & Station 3 & July & -0.047 & 0.9917 & No \\
+19 & Station 3 & August & -12.898 & 0.4419 & No \\
+20 & Station 3 & September & 12.64 & 0.4514 & No \\
+21 & Station 3 & October & -19.217 & 0.3903 & No \\
+22 & Station 3 & November & -17.555 & 0.0427 & Yes \\
+23 & Station 3 & December & -5.295 & 0.4942 & No \\
+24 & Station 4 & January & 2.797 & 0.7398 & No \\
+25 & Station 4 & February & 0.357 & 0.9593 & No \\
+26 & Station 4 & March & 3.615 & 0.8069 & No \\
+27 & Station 4 & April & -6.715 & 0.3909 & No \\
+28 & Station 4 & May & -13.45 & 0.37 & No \\
+29 & Station 4 & June & -2.784 & 0.8462 & No \\
+30 & Station 4 & July & 0.557 & 0.9046 & No \\
+31 & Station 4 & August & -12.292 & 0.414 & No \\
+32 & Station 4 & September & 9.257 & 0.5745 & No \\
+33 & Station 4 & October & -7.723 & 0.7655 & No \\
+34 & Station 4 & November & -26.316 & 0.1224 & No \\
+35 & Station 4 & December & -2.129 & 0.6751 & No \\
+36 & Station 5 & January & -0.669 & 0.9301 & No \\
+37 & Station 5 & February & 5.42 & 0.444 & No \\
+38 & Station 5 & March & -5.575 & 0.5039 & No \\
+39 & Station 5 & April & -10.584 & 0.3011 & No \\
+40 & Station 5 & May & -19.058 & 0.3647 & No \\
+41 & Station 5 & June & -0.608 & 0.9049 & No \\
+42 & Station 5 & July & -0.647 & 0.9147 & No \\
+43 & Station 5 & August & -10.6 & 0.4702 & No \\
+44 & Station 5 & September & 13.944 & 0.4304 & No \\
+45 & Station 5 & October & -17.429 & 0.4252 & No \\
+46 & Station 5 & November & -17.011 & 0.1091 & No \\
+47 & Station 5 & December & -2.414 & 0.7699 & No \\
+48 & Station 6 & January & 5.671 & 0.4474 & No \\
+49 & Station 6 & February & 2.927 & 0.5012 & No \\
+50 & Station 6 & March & -0.307 & 0.9812 & No \\
+51 & Station 6 & April & 0.391 & 0.9654 & No \\
+52 & Station 6 & May & -17.04 & 0.3315 & No \\
+53 & Station 6 & June & 3.131 & 0.8421 & No \\
+54 & Station 6 & July & 1.29 & 0.6918 & No \\
+55 & Station 6 & August & -12.632 & 0.4258 & No \\
+56 & Station 6 & September & 12.011 & 0.4472 & No \\
+57 & Station 6 & October & -0.935 & 0.9735 & No \\
+58 & Station 6 & November & -13.604 & 0.2755 & No \\
+59 & Station 6 & December & 2.334 & 0.7968 & No \\
+\end{longtable}
+\begin{itemize}
+    \item \textbf{Slope}: Direction and rate of change in rainfall (mm/year)
+    \begin{itemize}
+        \item Positive = rainfall is increasing
+        \item Negative = rainfall is decreasing
+    \end{itemize}
+    
+    \item \textbf{P-value}: Probability that the observed trend is due to chance
+    \begin{itemize}
+        \item \textbf{Significant (p $<$ 0.05)}:
+        \begin{itemize}
+            \item Yes: Evidence of a real increasing or decreasing trend
+            \item No: Cannot reject the null — no significant trend
+        \end{itemize}
+    \end{itemize}
+\end{itemize}
+\subsection*{Key Findings}
+\begin{itemize}
+    \item Most month--station combinations showed no statistically significant trends
+    \item Only November at Station 3 had $p < 0.05$, suggesting:
+    \begin{itemize}
+        \item Isolated months with possible long-term shifts
+    \end{itemize}
+    \item Overall patterns indicate:
+    \begin{itemize}
+        \item Rainfall trends by month are not consistently significant across stations
+        \item This may reflect:
+        \begin{itemize}
+            \item High year-to-year variability \textbf{or}
+            \item Stable seasonal patterns
+        \end{itemize}
+    \end{itemize}
+\end{itemize}
+This analysis helps identify subtle patterns in seasonal rainfall change — such as whether certain months are gradually becoming wetter or drier over the study period.\\
+
+Below are the codes and the results obtained for this section.
+
+
+\subsection{Autocorrelation Test for Seasonality (ACF)}
+This section uses the autocorrelation function (ACF) to detect seasonal patterns in monthly rainfall data at each station.\\ \\
+\textbf{Why use ACF? }The ACF helps identify whether rainfall patterns repeat at regular intervals — for example, every 12 months, which would indicate annual seasonality.
+
+The monthly rainfall data were processed as follows:
+
+\subsubsection*{Methods}
+\begin{itemize}
+    \item Monthly rainfall matrices were flattened into one-dimensional time series (month-by-month over years).
+    \item The autocorrelation at lag 12 was extracted to check for annual patterns.
+    \item A correlation at lag 12 greater than the 95\% confidence threshold was marked as ``Seasonal Signal: Yes''.
+\end{itemize}
+
+\subsubsection*{Interpretation}
+\begin{itemize}
+    \item A correlation at lag 12 greater than the 95\% confidence threshold would mean that there is seasonality.
+    \item If the correlations are within the 95\% confidence threshold, there is no seasonality.
+\end{itemize}
+This analysis gives a quick statistical check for seasonal dynamics at each location before deeper modeling.
+\subsubsection{Results}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\linewidth]{Monthly_Rainfall_Autocorrelation_Station_2.pdf}
+    \caption{ACF Plot for Station 2}
+    \label{fig:enter-label}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\linewidth]{Monthly_Rainfall_Autocorrelation_Station_3.pdf}
+    \caption{ACF Plot for Station 3}
+    \label{fig:enter-label}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\linewidth]{Monthly_Rainfall_Autocorrelation_Station_4.pdf}
+    \caption{ACF Plot for Station 4}
+    \label{fig:enter-label}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\linewidth]{Monthly_Rainfall_Autocorrelation_Station_5.pdf}
+    \caption{ACF Plot for Station 5}
+    \label{fig:enter-label}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\linewidth]{Monthly_Rainfall_Autocorrelation_Station_6.pdf}
+    \caption{ACF Plot for Station 6}
+    \label{fig:enter-label}
+\end{figure}
+\subsubsection*{Conclusion}
+Looking at the graphs, we determine that there is no seasonality in any of the stations. All correlations are within the 95\% confidence intervals. While there are some points that touch the 95\% confidence interval, they are not outside the interval, and the pattern does not continue. The codes used to obtain the results is in the appendix.
+
+
+\subsection{Kruskal-Wallis Test: Monthly Rainfall Variation Across Stations}
+
+We want to assess whether the distribution of monthly rainfall differs significantly across stations for each month of the year. For each month:
+\begin{itemize}
+    \item Null hypothesis: The distributions of total rainfall across all stations are the same.
+    \item Alternate hypothesis: At least one station has a different distribution of rainfall for that month.\\
+\end{itemize}
+
+\subsubsection*{Results}
+The codes used to obtain the results is included in the appendix.
+
+
+\begin{table}[H]
+\centering
+\caption{Kruskal-Wallis Test Results by Month}
+\label{tab:monthly_results}
+\begin{tabular}{|l|r|r|l|}
+\hline
+\textbf{Month} & \textbf{H-statistic} & \textbf{P-value} & \textbf{Significant ($p < 0.05$)} \\
+\hline
+January & 1.316 & 0.8587 & No \\
+\hline
+February & 4.249 & 0.3733 & No \\
+\hline
+March & 0.563 & 0.9670 & No \\
+\hline
+April & 0.830 & 0.9344 & No \\
+\hline
+May & 2.920 & 0.5712 & No \\
+\hline
+June & 2.903 & 0.5741 & No \\
+\hline
+July & 3.232 & 0.5199 & No \\
+\hline
+August & 0.629 & 0.9598 & No \\
+\hline
+September & 0.611 & 0.9619 & No \\
+\hline
+October & 0.198 & 0.9954 & No \\
+\hline
+November & 0.853 & 0.9312 & No \\
+\hline
+December & 1.477 & 0.8308 & No \\
+\hline
+\end{tabular}
+\end{table}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\linewidth]{Total_Yearly_Rainfall_by_Station.pdf}
+    \caption{Kruskal Wallis Test Plot Showing total rainfall at each stations for the years 2015-2020}
+    \label{fig:enter-label}
+\end{figure}
+None of the months showed statistically significant differences in rainfall distributions across stations (all p-values $>$ 0.05). This implies that, based on the Kruskal-Wallis test, there is no evidence that monthly rainfall differs across stations for any specific month. This aligns with the earlier findings that rainfall variability is not significantly different across locations, possibly due to regional coherence in weather systems.\\
+
+
+
+
+
+
+\subsection{Spatial Variation in Monthly Rainfall: May Kriging Analysis}
+Kriging is a geostatistical interpolation method used to predict unknown values at unsampled locations based on spatial correlation. Kriging provides optimal, unbiased predictions with minimized variance, making it ideal for environmental mapping, mining, and climate studies. We want to investigate whether rainfall varies depending on where the station is located.
+\begin{itemize}
+    \item $H_0$: There is no spatial variation in rainfall in May (rainfall is spatially uniform).
+    \item $H_1$: Rainfall varies spatially in May, suggesting we can interpolate rainfall at unknown points using Kriging.
+\end{itemize}
+
+\subsubsection*{Results}
+ANOVA F-statistic: 0.855, P-value: 0.5224, No significant spatial variation detected.
+
+
+The following plot was produced:
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\linewidth]{Kriged_May_2020_Rainfall.pdf}
+    \caption{Kriging Plot for May 2020 Rainfall}
+    \label{fig:enter-label}
+\end{figure}
+
+From the kriging map, we found that:
+\begin{itemize}
+    \item Station 4 had the highest rainfall (33.26 m)
+    \item The heatmap showed that northwest areas had more rain, and it dropped off southeast
+    \item Even though ANOVA didn’t say the difference was statistically strong, the map visually showed a pattern
+    \item This means that kriging is useful even when variation is subtle
+\end{itemize}
+
+As a result:
+\begin{itemize}
+    \item The May 2020 rainfall data shows a wider range (11.66 mm to 160.23 mm) across the six stations.
+    \item ANOVA results indicated no statistically significant difference in rainfall across stations (p $>$ 0.05).
+    \item Despite that, spatial interpolation using Kriging revealed a clear spatial gradient, with highest rainfall concentrated in the northwest (near Station 4) and decreasing toward the southeast.
+    \item This highlights how Kriging can uncover meaningful spatial patterns even when statistical tests show no significance, which makes it especially valuable for estimating rainfall in unsampled or sparsely sampled areas.
+\end{itemize}
+
+\subsubsection{Repeating Experiment for May in Multiple Years}
+We now repeat the experiment on different years.\\
+\subsubsection{Results}
+ANOVA across stations using all May data (2015–2020)
+\begin{itemize}
+    \item F-statistic: 0.855
+    \item P-value: 0.5224
+\end{itemize}
+
+Hence, no significant spatial variation in May rainfall.
+We tested spatial variation in rainfall for June across six stations using ANOVA.
+By combining data from 2015 to 2020, it can be ensured each station had enough samples.
+The p-value (0.5224) showed no statistically significant variation across locations, meaning May rainfall was relatively uniform over space.
+
+The following plot was produced to show the Kriged average rainfall in May during the years 2015-2020:
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\linewidth]{Kriged_May_2015-2020_Rainfall.pdf}
+    \caption{Kriging Plot for Average Rainfall 2015-2020}
+    \label{fig:enter-label}
+\end{figure}
+
+This spatial interpolation map shows the average May rainfall across the six stations from 2015 to 2020 using Kriging. The visualization reveals a spatial pattern: the northwest region (near Station 3) received lower rainfall, while slightly higher rainfall appears in the southeast region. However, the ANOVA test indicated no statistically significant difference in rainfall between stations over the six-year period (p = 0.5913). This suggests that although average May rainfall exhibits mild spatial patterns, the variation is not large enough to be considered statistically significant. Kriging still provides useful spatial insights, especially when estimating rainfall in unsampled regions.
+
+
+\end{section}
+\section{Summary}
+Overall, the hypothesis tests conducted involving trend analysis, seasonality analysis, and rainfall variation at each station failed to reject the null hypothesis. The only hypothesis that rejected the null, informed us that rainfall varies across each year significantly. Improvements for future projects can include kriging analysis for every month of the year to see if the patterns agree with our current analysis (which only uses the data from May). Additionally, we could have run more tests to double-check our results. Further projects could also consider using models that are more sophisticated than ordinary least squares to determine whether or not there is a trend in monthly rainfall at each station. We went into this project hoping to find some patterns in rain precipitation and variances between stations after visualizing the data, but the tests showed that there is no statistical significance. Although our data was cleaned, there were some issues with the data. Station 1 still had some missing data, so we decided to exclude it from our tests. This could indicate that the other stations data were also not properly cleaned, leading to these results.
+
+
+\section{Appendix: Code}
+\subsection{Importation and data clean-up}
+\begin{minted}{python}
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+import numpy as np
+
+\end{minted}
+\begin{lstlisting}[style=shellstyle]
+!rm *.csv
+!wget -q https://www.cs.utexas.edu/~kiat/datasets/Revised_Final_Data/Station1_Revised_Final_Data.csv
+!wget -q https://www.cs.utexas.edu/~kiat/datasets/Revised_Final_Data/Station2_Revised_Final_Data.csv
+!wget -q https://www.cs.utexas.edu/~kiat/datasets/Revised_Final_Data/Station3_Revised_Final_Data.csv
+!wget -q https://www.cs.utexas.edu/~kiat/datasets/Revised_Final_Data/Station4_Revised_Final_Data.csv
+!wget -q https://www.cs.utexas.edu/~kiat/datasets/Revised_Final_Data/Station5_Revised_Final_Data.csv
+!wget -q https://www.cs.utexas.edu/~kiat/datasets/Revised_Final_Data/Station6_Revised_Final_Data.csv
+stations = {
+    'Station1_Revised_Final_Data.csv': 'Station 1',
+    'Station2_Revised_Final_Data.csv': 'Station 2',
+    'Station3_Revised_Final_Data.csv': 'Station 3',
+    'Station4_Revised_Final_Data.csv': 'Station 4',
+    'Station5_Revised_Final_Data.csv': 'Station 5',
+    'Station6_Revised_Final_Data.csv': 'Station 6'
+}
+\end{lstlisting}
+\subsection{summarizing monthly rainfall in the six stations}
+\begin{minted}{python}
+    def load_rainfall_data(file, station_name, time = 'year', pivot = False):
+    df = pd.read_csv(file, index_col=0, parse_dates=True)
+    df.reset_index(inplace=True)
+    df.rename(columns={'index': 'Date'}, inplace=True)
+    
+    if time == 'year':
+        df['Group'] = df['Date'].dt.year
+    elif time == 'month':
+        df['Group'] = df['Date'].dt.to_period('M').astype(str)
+    elif time == 'month_matrix':
+        df['Year'] = df['Date'].dt.year
+        df['Month'] = df['Date'].dt.month_name()
+        df['Month_num'] = df['Date'].dt.month
+        monthly_totals = df.groupby(['Year', 'Month', 'Month_num'])['Ppt'].sum().reset_index()
+        matrix = monthly_totals.pivot_table(index='Month', columns='Year', values='Ppt')
+        ordered_months = ['January', 'February', 'March', 'April', 'May', 'June',
+                          'July', 'August', 'September', 'October', 'November', 'December']
+        return matrix.reindex(ordered_months)
+    else:
+        raise ValueError("`by` must be 'year', 'month', or 'month_matrix'")
+
+    totals = df.groupby('Group')['Ppt'].sum().reset_index()
+    totals.columns = [time.title(), station_name]
+
+    if pivot:
+        return totals.set_index(time.title())
+    return totals
+
+
+rain_year_df = None
+for file, name in stations.items():
+    df = load_rainfall_data(file, name, time = 'year')
+    rain_year_df = df if rain_year_df is None else pd.merge(rain_year_df, df, on = 'Year', how = 'outer')
+rain_year_df.set_index('Year', inplace=True)
+\end{minted}
+\begin{minted}{python}
+    monthly_matrices = {}
+
+# Loop through each station and build the monthly matrix
+for file, name in stations.items():
+    matrix = load_rainfall_data(file, name, time='month_matrix')
+    monthly_matrices[name] = matrix
+    print(f"\n Monthly Rainfall for {name} \n")
+    print(matrix)
+\end{minted}
+\subsection{Code and results for the two-sample T-test}
+Below are the codes used for this section and the results obtained.
+\begin{minted}{python}
+from scipy.stats import ttest_ind
+import itertools
+
+results = []
+for s1, s2 in itertools.combinations(rain_year_df.columns, 2):
+    x = rain_year_df[s1].dropna()
+    y = rain_year_df[s2].dropna()
+    common = x.index.intersection(y.index)
+    x_common = x.loc[common]
+    y_common = y.loc[common]
+    
+    t_stat, p_val = ttest_ind(x_common, y_common, equal_var=False)
+    
+    results.append({
+        "Station A": s1,
+        "Station B": s2,
+        "T-statistic": round(t_stat, 3),
+        "P-value": round(p_val, 4),
+        "Significant (p < 0.05)": "Yes" if p_val < 0.05 else "No"
+    })
+
+pd.DataFrame(results)
+
+\end{minted}
+\subsection{Codes for the Mann-Kendall Trend Test}
+\begin{minted}{python}
+    import pymannkendall as mk
+
+trend_results = []
+
+for station in rain_year_df.columns:
+    series = rain_year_df[station].dropna()
+    
+    # Perform Mann-Kendall test
+    result = mk.original_test(series)
+    
+    trend_results.append({
+        'Station': station,
+        'Trend': result.trend,
+        'P-value': round(result.p, 4),
+        'Significant (p < 0.05)': 'Yes' if result.p < 0.05 else 'No'
+    })
+
+# Display as DataFrame
+trend_df = pd.DataFrame(trend_results)
+pd.DataFrame(trend_df)
+\end{minted}
+\subsection{Codes for the Kruskal-Wallis test}
+\begin{minted}{python}
+from scipy.stats import kruskal
+
+# 1. Kruskal-Wallis test across stations (all years)
+station_groups = [rain_year_df[station].dropna().values for station in rain_year_df.columns]
+kruskal_stations_stat, kruskal_stations_p = kruskal(*station_groups)
+
+# 2. Kruskal-Wallis test across years (all stations)
+year_groups = [rain_year_df.loc[year].dropna().values for year in rain_year_df.index]
+kruskal_years_stat, kruskal_years_p = kruskal(*year_groups)
+
+# Display results
+kruskal_results = pd.DataFrame({
+    'Test': ['Across Stations (all years)', 'Across Years (all stations)'],
+    'H-statistic': [round(kruskal_stations_stat, 3), round(kruskal_years_stat, 3)],
+    'P-value': [round(kruskal_stations_p, 4), round(kruskal_years_p, 4)],
+    'Significant (p < 0.05)': ['Yes' if p < 0.05 else 'No' for p in [kruskal_stations_p, kruskal_years_p]]
+})
+
+print(kruskal_results)
+   
+\end{minted}
+\begin{minted}{python}
+# Plot the heatmap for each station by month
+for file, name in stations.items():
+    matrix = load_rainfall_data(file, name, time = 'month_matrix')
+    plt.figure(figsize = (10, 6))
+    sns.heatmap(matrix, cmap = 'YlGnBu', annot = True, fmt = ".1f", cbar_kws = {'label': 'Rainfall (mm)'})
+    plt.title(f'Monthly Rainfall Heatmap for {name}')
+    plt.xlabel('Year')
+    plt.ylabel('Month')
+    plt.tight_layout()
+    filename = f"Monthly_Rainfall_by_{name.replace(' ', '_')}.pdf"
+    plt.savefig(filename, format="pdf")
+    plt.show()
+\end{minted}
+\subsection{Codes used for rainfall trend analysis}
+\begin{minted}{python}
+import statsmodels.api as sm
+# Initialize container for results
+monthly_trends = []
+
+# Loop over each station
+for file, name in stations.items():
+    month_matrix = load_rainfall_data(file=file, station_name=name, time='month_matrix')
+
+    for month in month_matrix.index:
+        month_data = month_matrix.loc[month].dropna()
+
+        if len(month_data) < 5:
+            continue  # not enough years for trend analysis
+
+        X = month_data.index.values.astype(int)
+        X = sm.add_constant(X)
+        y = month_data.values
+
+        model = sm.OLS(y, X).fit()
+
+        monthly_trends.append({
+            'Station': name,
+            'Month': month,
+            'Slope': round(model.params[1], 3),
+            'P-value': round(model.pvalues[1], 4),
+            'Significant (p < 0.05)': 'Yes' if model.pvalues[1] < 0.05 else 'No'
+        })
+
+# Convert to DataFrame
+monthly_trends_df = pd.DataFrame(monthly_trends)
+significant_trends_df = monthly_trends_df[monthly_trends_df["Significant (p < 0.05)"] == "Yes"]
+
+# Display or export
+pd.DataFrame(monthly_trends_df)    
+\end{minted}
+\subsection{Codes used for autocorrelation test for seasonality}
+\begin{minted}{python}
+from statsmodels.graphics.tsaplots import plot_acf
+import matplotlib.pyplot as plt
+
+# Loop through each station and generate ACF plot for monthly rainfall
+for file, station_name in stations.items():
+    # Load monthly rainfall matrix (rows = months, cols = years)
+    month_matrix = load_rainfall_data(file=file, station_name=station_name, time='month_matrix')
+    
+    # Skip if not enough data
+    if month_matrix.empty or month_matrix.shape[1] < 3:
+        print(f"Skipping {station_name} — insufficient data.")
+        continue
+
+    # Convert matrix into a 1D time series (month-by-month across years)
+    monthly_series = month_matrix.T.values.flatten()
+    monthly_series = pd.Series(monthly_series).dropna()
+
+    # Plot ACF
+    plt.figure(figsize=(10, 4))
+    plot_acf(monthly_series, lags=36)  # Lags = months (3 years)
+    plt.title(f"Monthly Rainfall Autocorrelation — {station_name}")
+    plt.xlabel("Lag (months)")
+    plt.ylabel("Autocorrelation")
+    plt.grid(True)
+    plt.tight_layout()
+    filename = f"Monthly_Rainfall_Autocorrelation_{station_name.replace(' ', '_')}.pdf"
+    plt.savefig(filename, format="pdf")
+    plt.show()
+\end{minted}
+\subsection{Codes used for Kruskal-Wallis H test}
+\begin{minted}{python}
+from scipy.stats import kruskal
+import pandas as pd
+
+# Container for results
+kruskal_results = []
+
+# Ordered list of months
+months_ordered = ['January', 'February', 'March', 'April', 'May', 'June',
+                  'July', 'August', 'September', 'October', 'November', 'December']
+
+# Loop through each month
+for month in months_ordered:
+    month_values = []
+
+    # Collect rainfall data for this month from each station
+    for file, name in stations.items():
+        matrix = load_rainfall_data(file=file, station_name=name, time='month_matrix')
+
+        if month in matrix.index:
+            data = matrix.loc[month].dropna()
+            if not data.empty:
+                month_values.append(data.values)
+
+    # Only run test if we have 2+ groups
+    if len(month_values) > 1:
+        h_stat, p_val = kruskal(*month_values)
+        kruskal_results.append({
+            "Month": month,
+            "H-statistic": round(h_stat, 3),
+            "P-value": round(p_val, 4),
+            "Significant (p < 0.05)": "Yes" if p_val < 0.05 else "No"
+        })
+
+# Convert to DataFrame
+kruskal_df = pd.DataFrame(kruskal_results)
+
+print(kruskal_df)
+
+# Plotting variables
+bar_width = 0.13
+years = rain_year_df.index
+x = np.arange(len(years))  # base x locations for groups
+plt.figure(figsize=(14, 6))
+
+# Loop through each station and plot its bars offset
+for i, station in enumerate(rain_year_df.columns):
+    plt.bar(x + i * bar_width, rain_year_df[station], width=bar_width, label=station)
+
+# Labeling
+plt.xlabel('Year')
+plt.ylabel('Total Rainfall (Ppt)')
+plt.title('Total Yearly Rainfall by Station')
+plt.xticks(x + bar_width * 2.5, years, rotation=45)  # center ticks
+plt.legend(fontsize = 7.8)
+plt.tight_layout()
+plt.savefig("Total_Yearly_Rainfall_by_Station.pdf", format='pdf')
+plt.show()
+\end{minted}
+\subsection{Codes used for ANOVA-Monthly rainfall variation for each section}
+\begin{minted}{python}
+from scipy.stats import f_oneway
+
+# Load monthly totals in matrix format for Station 2
+jan_matrix = load_rainfall_data("Station2_Revised_Final_Data.csv", "Station 2", time='month_matrix')
+
+# Drop any months with missing data
+jan_matrix_clean = jan_matrix.dropna()
+
+# Perform one-way ANOVA across all months (each row is a month, columns are years)
+anova_result = f_oneway(*[jan_matrix_clean.loc[month].dropna().values for month in jan_matrix_clean.index])
+
+print("=== ANOVA: Monthly Rainfall Variation for Each Station ===")
+for file, name in stations.items():
+    df = load_rainfall_data(file, name, time='month')
+    df['Month'] = pd.to_datetime(df['Month']).dt.month  # Extract numeric month
+    grouped = df.groupby('Month')[name].apply(list)  # List of rainfall values per month
+    anova_input = [group for group in grouped if len(group) > 1]
+    
+    if len(anova_input) < 2:
+        print(f"{name}: Not enough data for ANOVA.")
+        continue
+
+    f_stat, p_val = f_oneway(*anova_input)
+    result = "Significant difference (Reject H₀)" if p_val < 0.05 else "No significant difference (Fail to reject H₀)"
+    print(f"{name}: F = {f_stat:.4f}, p = {p_val:.4f} → {result}")
+\end{minted}
+\subsection{Codes used for Kriging Analysis}
+\begin{minted}{python}
+    may_rainfall = []
+
+coords = {
+    'Station 1': (30.3989, -98.6105),
+    'Station 2': (30.4193, -98.8046),
+    'Station 3': (30.4421, -98.8427),
+    'Station 4': (30.4600, -98.9407),
+    'Station 5': (30.2454, -98.7059),
+    'Station 6': (30.2758, -98.7242)
+}
+
+for file, name in stations.items():
+    df = load_rainfall_data(file, name, time='month')
+    df['Month'] = pd.to_datetime(df['Month'])
+    df['month_num'] = df['Month'].dt.month
+    df['Year'] = df['Month'].dt.year
+    df = df[df['month_num'] == 5][[name, 'Year']]  # filter May
+    df.rename(columns={name: 'Ppt'}, inplace=True)
+    df['Station'] = name
+    df['Latitude'] = coords[name][0]
+    df['Longitude'] = coords[name][1]
+    may_rainfall.append(df)
+
+may_all = pd.concat(may_rainfall, ignore_index=True)
+
+
+from scipy.stats import f_oneway
+
+grouped = may_all.groupby('Station')['Ppt']
+groups = [group for _, group in grouped]
+
+f_stat, p_val = f_oneway(*groups)
+
+print(f"ANOVA F-statistic: {f_stat:.3f}")
+print(f"P-value: {p_val:.4f}")
+if p_val < 0.05:
+    print("Significant spatial variation in May rainfall across stations.")
+else:
+    print("No significant spatial variation detected.")
+\end{minted}
+\begin{minted}{python}
+from pykrige.ok import OrdinaryKriging
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Filter for 2020 data
+krig_data = may_all[may_all['Year'] == 2020]
+
+# Safety check
+print(krig_data[['Station', 'Ppt']])
+
+# Extract data
+lons = krig_data['Longitude'].values
+lats = krig_data['Latitude'].values
+values = krig_data['Ppt'].values
+
+# Fit Kriging model
+OK = OrdinaryKriging(lons, lats, values, variogram_model='linear')
+
+grid_lon = np.linspace(min(lons)-0.05, max(lons)+0.05, 100)
+grid_lat = np.linspace(min(lats)-0.05, max(lats)+0.05, 100)
+gridx, gridy = np.meshgrid(grid_lon, grid_lat)
+
+z, ss = OK.execute('grid', grid_lon, grid_lat)
+
+# Plot
+plt.figure(figsize=(8,6))
+plt.contourf(gridx, gridy, z, cmap='YlGnBu')
+plt.scatter(lons, lats, c='red', label='Stations')
+plt.colorbar(label='Interpolated Rainfall (mm)')
+plt.title('Kriged May 2020 Rainfall')
+plt.xlabel('Longitude')
+plt.ylabel('Latitude')
+plt.legend()
+plt.tight_layout()
+plt.savefig("Kriged_May_2020_Rainfall.pdf", format='pdf')
+plt.show()
+\end{minted}
+subsection{Result of Kriging Analysis repeated for different years}
+\begin{minted}{python}
+    from scipy.stats import f_oneway
+
+# Use all May data across years
+station_groups = [group['Ppt'].values for _, group in may_all.groupby('Station')]
+
+f_stat, p_val = f_oneway(*station_groups)
+
+print("ANOVA across stations using all May data (2015–2020)")
+print(f"F-statistic: {f_stat:.3f}")
+print(f"P-value: {p_val:.4f}")
+
+if p_val < 0.05:
+    print("Significant spatial variation in May rainfall.")
+else:
+    print("No significant spatial variation in May rainfall.")
+\end{minted}
+
+\subsection{Codes used for when Kriging analysis was repeated in May in multiple years}
+\begin{minted}{python}
+    # Get average May rainfall (2015–2020) per station
+krig_avg = may_all.groupby('Station').agg({
+    'Ppt': 'mean',
+    'Latitude': 'first',
+    'Longitude': 'first'
+}).reset_index()
+from pykrige.ok import OrdinaryKriging
+import numpy as np
+import matplotlib.pyplot as plt
+
+lons = krig_avg['Longitude'].values
+lats = krig_avg['Latitude'].values
+values = krig_avg['Ppt'].values
+stations = krig_avg['Station'].values
+
+# Fit Kriging model
+OK = OrdinaryKriging(lons, lats, values, variogram_model='linear')
+
+grid_lon = np.linspace(min(lons)-0.05, max(lons)+0.05, 100)
+grid_lat = np.linspace(min(lats)-0.05, max(lats)+0.05, 100)
+gridx, gridy = np.meshgrid(grid_lon, grid_lat)
+
+z, ss = OK.execute('grid', grid_lon, grid_lat)
+
+# Plot
+plt.figure(figsize=(8,6))
+plt.contourf(gridx, gridy, z, cmap='YlGnBu')
+plt.scatter(lons, lats, c='red', label='Stations')
+
+# Label each station
+for i in range(len(lons)):
+    plt.text(lons[i] + 0.005, lats[i] + 0.002, stations[i], fontsize=9, color='black')
+
+plt.colorbar(label='Avg May Rainfall (mm)')
+plt.title('Kriged Avg May Rainfall (2015–2020)')
+plt.xlabel('Longitude')
+plt.ylabel('Latitude')
+plt.legend()
+plt.tight_layout()
+plt.savefig("Kriged_May_2015-2020_Rainfall.pdf", format='pdf')
+plt.show()
+
+
+\end{minted}
+\section{Conclusion}
+To complete this project, we carried out a comprehensive statistical computation on rainfall data from 2015 to 2020 from a total of six weather stations. Using a wide array of hypothesis tests—from two-sample t-tests to ANOVA, Mann-Kendall trend tests, to Kruskal-Wallis tests—we attempted to find rainfall variability patterns across space and time. Importantly, a vast majority of tests did not reject the null hypothesis, pointing to a remarkable consistency within rainfall distributions and trends across stations and years.
+
+Though no significant station-to-station variability was found for average annual rainfall, and only one statistically significant pattern by month–station resulted during analysis (November at Station 3), our analysis by analysis of variance (ANOVA) did establish that several stations, namely Stations 2, 3, and 5, did have significant monthly change. This indicates some degree of seasonality or localized pattern, even though our autocorrelation analysis did not confirm strong annual seasonal patterns. In addition, our Kriging analysis, though numerically nonsignificant by ANOVA standards, visually indicated subtle spatial trends during the month of May rainfall, specifically to the northwest.
+
+Overall, the results suggest that while rainfall within the region does not have predominant trends or inequalities within a large number of stations, there remain region-specific patterns to be explored further. Later research could benefit from a longer data span, seasonal modeling techniques, and wider spatial analysis (e.g., monthly kriging across a complete calendar year) to better recognize nuances within regional rainfall patterns. This project also highlights the need to strike a balance between classical statistical methods and spatial visualization to gain important insights from data related to the climate.
+
+\end{document}
