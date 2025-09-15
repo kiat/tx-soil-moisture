@@ -113,13 +113,93 @@ def normalize_features(df, features):
 
 
 # Convert data to X and y windows with offset
-def data_to_X_y(data, window_size, offset):
-    # Calculate the number of rows for X and y
-    rows = len(data) - window_size - offset
-    # Now, use sliding_window_view to create the X array
+def data_to_X_y(data, window_size, offset, label_type="point", agg_hours=24, offset_hours=0, samples_per_hour=1):
+    """
+    Generate windowed data with flexible label generation.
+    
+    Args:
+        data: Input data array (time_steps, features)
+        window_size: Size of input window
+        offset: Original offset parameter (kept for backward compatibility)
+        label_type: Type of label generation ('point', 'rolling_mean', 'daily_mean')
+        agg_hours: Hours to aggregate for rolling_mean (ignored for point and daily_mean)
+        offset_hours: Forecast offset in hours (predict average ending at t + offset_hours)
+        samples_per_hour: Number of samples per hour in the data
+        
+    Returns:
+        X: Input windows (n_samples, window_size, n_features)
+        y: Target labels (n_samples,)
+    """
+    
+    # Convert hours to sample indices
+    agg_samples = agg_hours * samples_per_hour
+    offset_samples = offset_hours * samples_per_hour
+    
+    # For backward compatibility, if label_type is "point", use original logic
+    if label_type == "point":
+        rows = len(data) - window_size - offset
+        X = np.lib.stride_tricks.sliding_window_view(data, (window_size, data.shape[1]))[:rows, 0]
+        y = data[window_size + offset - 1: window_size + offset - 1 + rows, 0]
+        return X, y
+    
+    # Calculate the total offset from window end to target end
+    total_offset = offset + offset_samples
+    
+    # For rolling_mean and daily_mean, we need to ensure we have enough history
+    if label_type == "rolling_mean":
+        # Need agg_samples of history for the target
+        # target_end_idx will be at window_size + total_offset, so we need data up to that point
+        min_required_length = window_size + total_offset + agg_samples
+    elif label_type == "daily_mean":
+        # For daily_mean, we need at least 24 hours of data (or samples_per_hour * 24)
+        min_required_length = window_size + total_offset + (24 * samples_per_hour)
+    else:
+        raise ValueError(f"Unknown label_type: {label_type}")
+    
+    if len(data) < min_required_length:
+        print(f"Warning: Data length {len(data)} is less than required {min_required_length} for label_type={label_type}")
+        return np.array([]), np.array([])
+    
+    # Calculate number of valid windows
+    rows = len(data) - min_required_length + 1
+    if rows <= 0:
+        return np.array([]), np.array([])
+    
+    # Generate input windows
     X = np.lib.stride_tricks.sliding_window_view(data, (window_size, data.shape[1]))[:rows, 0]
-    # Then we slice the y array accordingly
-    y = data[window_size + offset - 1: window_size + offset - 1 + rows, 0]
+    
+    # Generate labels based on type
+    y = []
+    
+    for i in range(rows):
+        # Target end point: end of window + original offset + offset_hours
+        # Note: window ends at i + window_size - 1, so target starts at i + window_size
+        target_end_idx = i + window_size + total_offset
+        
+        if label_type == "rolling_mean":
+            # Take the mean of the last agg_samples before target_end_idx
+            target_start_idx = target_end_idx - agg_samples + 1
+            if target_start_idx < 0:
+                # Skip this window if insufficient history
+                continue
+            target_values = data[target_start_idx:target_end_idx + 1, 0]
+            y.append(np.mean(target_values))
+            
+        elif label_type == "daily_mean":
+            # For daily_mean, we need to compute calendar day average
+            # This is a simplified version - in practice, you might want to use actual timestamps
+            # For now, we'll use a 24-hour rolling window (24 * samples_per_hour samples)
+            daily_samples = 24 * samples_per_hour
+            target_start_idx = target_end_idx - daily_samples + 1
+            if target_start_idx < 0:
+                continue
+            target_values = data[target_start_idx:target_end_idx + 1, 0]
+            y.append(np.mean(target_values))
+    
+    # Trim X to match y length (in case some windows were skipped)
+    X = X[:len(y)]
+    y = np.array(y)
+    
     return X, y
 
 

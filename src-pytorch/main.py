@@ -106,14 +106,20 @@ def main(args):
     # Input validation
     if args.window_size <= 0:
         raise ValueError(f"window_size must be positive, got {args.window_size}")
-    if args.offset <= 0:
-        raise ValueError(f"offset must be positive, got {args.offset}")
+    if args.offset < 0:
+        raise ValueError(f"offset must be non-negative, got {args.offset}")
     if args.epochs <= 0:
         raise ValueError(f"epochs must be positive, got {args.epochs}")
     if args.batch_size <= 0:
         raise ValueError(f"batch_size must be positive, got {args.batch_size}")
     if args.patience <= 0:
         raise ValueError(f"patience must be positive, got {args.patience}")
+    if args.agg_hours <= 0:
+        raise ValueError(f"agg_hours must be positive, got {args.agg_hours}")
+    if args.offset_hours < 0:
+        raise ValueError(f"offset_hours must be non-negative, got {args.offset_hours}")
+    if args.samples_per_hour <= 0:
+        raise ValueError(f"samples_per_hour must be positive, got {args.samples_per_hour}")
     
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Using device: {device}")
@@ -128,7 +134,7 @@ def main(args):
         def engineer_features(dfs): return dfs
         def split_and_stack_data(dfs, test_station_name): return dfs, dfs[test_station_name], dfs[test_station_name]
         def normalize_features(df, features): return df, None
-        def data_to_X_y(df, window, offset): return np.random.rand(50, window, len(df.columns)), np.random.rand(50)
+        def data_to_X_y(df, window, offset, **kwargs): return np.random.rand(50, window, len(df.columns)), np.random.rand(50)
         def write_loss_history_to_csv(*args): pass
         # This dummy function will now receive the correct keys
         def write_model_results_to_csv(station, model_name, ws, offset, perf, features):
@@ -144,18 +150,42 @@ def main(args):
     all_features = args.features.split(',') if args.features else ['SWC_20', 'T_20', 'Ppt', 'Tair', 'Wx', 'Wy']
 
     # --- Prepare data and convert to PyTorch Tensors ---
-    scaled_val, _ = normalize_features(val_df, all_features)
-    X_val, y_val = data_to_X_y(scaled_val, args.window_size, args.offset)
+    # Process validation data (list of DataFrames)
+    val_data_x, val_data_y = [], []
+    for df in val_df:
+        scaled_val, _ = normalize_features(df, all_features)
+        X_val_part, y_val_part = data_to_X_y(scaled_val, args.window_size, args.offset, 
+                                             label_type=args.label_type, agg_hours=args.agg_hours, 
+                                             offset_hours=args.offset_hours, samples_per_hour=args.samples_per_hour)
+        if len(X_val_part) > 0:  # Only add if we have valid data
+            val_data_x.append(X_val_part)
+            val_data_y.append(y_val_part)
+    
+    # Process test data (single DataFrame)
     scaled_test, _ = normalize_features(test_df, all_features)
-    X_test, y_test = data_to_X_y(scaled_test, args.window_size, args.offset)
+    X_test, y_test = data_to_X_y(scaled_test, args.window_size, args.offset,
+                                 label_type=args.label_type, agg_hours=args.agg_hours,
+                                 offset_hours=args.offset_hours, samples_per_hour=args.samples_per_hour)
+    
+    # Process training data (list of DataFrames)  
     train_data_x, train_data_y = [], []
-    for train_station in [s for s in stations if s != target_station]:
-        scaled_train, _ = normalize_features(engineered_dfs[train_station], all_features)
-        X_train_part, y_train_part = data_to_X_y(scaled_train, args.window_size, args.offset)
-        train_data_x.append(X_train_part)
-        train_data_y.append(y_train_part)
-    X_train = np.concatenate(train_data_x, axis=0)
-    y_train = np.concatenate(train_data_y, axis=0).reshape(-1, 1)
+    for df in engineered_dfs:
+        scaled_train, _ = normalize_features(df, all_features)
+        X_train_part, y_train_part = data_to_X_y(scaled_train, args.window_size, args.offset,
+                                                 label_type=args.label_type, agg_hours=args.agg_hours,
+                                                 offset_hours=args.offset_hours, samples_per_hour=args.samples_per_hour)
+        if len(X_train_part) > 0:  # Only add if we have valid data
+            train_data_x.append(X_train_part)
+            train_data_y.append(y_train_part)
+    # Concatenate training data
+    X_train = np.concatenate(train_data_x, axis=0) if train_data_x else np.array([])
+    y_train = np.concatenate(train_data_y, axis=0).reshape(-1, 1) if train_data_y else np.array([])
+    
+    # Concatenate validation data
+    X_val = np.concatenate(val_data_x, axis=0) if val_data_x else np.array([])
+    y_val = np.concatenate(val_data_y, axis=0) if val_data_y else np.array([])
+    
+    # Convert to tensors
     X_train_t = torch.tensor(X_train, dtype=torch.float32)
     y_train_t = torch.tensor(y_train, dtype=torch.float32)
     X_val_t = torch.tensor(X_val, dtype=torch.float32)
@@ -182,6 +212,8 @@ def main(args):
     print(f"Models to be processed: {list(process_queue.keys())}")
     
     # --- Training and Evaluation Loop ---
+    feature_str = '_'.join(all_features)  # Calculate once outside the loop
+    
     for model_name, model_class in process_queue.items():
         print(f"\n===== Processing {model_name.upper()} =====")
         input_dim = X_train_t.shape[2]
@@ -220,7 +252,6 @@ def main(args):
             
             print("\nFinal Evaluation on Test Set...")
             performance = evaluate_model(model, test_loader, criterion, device)
-            feature_str = '_'.join(all_features)
             main_name = f"model_{model_name}_ws{args.window_size}_offset{args.offset}_{feature_str}"
             model_path = os.path.join(model_dir, f"{main_name}.pth")
             torch.save(model.state_dict(), model_path)
@@ -231,7 +262,6 @@ def main(args):
         for key, value in performance.items():
             print(f"{key}: {value:.6f}")
         
-        # feature_str already calculated above - no need to recalculate
         write_model_results_to_csv(target_station, model_name, args.window_size, args.offset, performance, feature_str)
         print("-------------------------------------\n")
 
@@ -246,6 +276,16 @@ if __name__ == "__main__":
     parser.add_argument('--batch_size', type=int, default=32, help='Batch size for training and evaluation.')
     parser.add_argument("--features", type=str, default="SWC_20,T_20,Ppt,Tair,Wx,Wy", help="Comma-separated list of features to use.")
     parser.add_argument("--model_names", type=str, default="LSTM,CNN,BiLSTM,RNN,AttentionLSTM,AR,Baseline", help="Comma-separated list of model names to run.")
+    
+    # New label generation parameters
+    parser.add_argument('--label_type', type=str, choices=['point', 'rolling_mean', 'daily_mean'], 
+                       default='rolling_mean', help='Type of label generation: point (single value), rolling_mean (average over last K hours), daily_mean (calendar day average).')
+    parser.add_argument('--agg_hours', type=int, default=24, 
+                       help='Number of hours to aggregate for rolling_mean (ignored for point and daily_mean).')
+    parser.add_argument('--offset_hours', type=int, default=0, 
+                       help='Forecast offset in hours: predict average ending at t + offset_hours.')
+    parser.add_argument('--samples_per_hour', type=int, default=1, 
+                       help='Number of samples per hour in the data (for non-hourly data).')
     
     args = parser.parse_args()
     main(args)
