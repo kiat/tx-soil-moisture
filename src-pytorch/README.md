@@ -55,15 +55,67 @@ Parameters:
 
 ### Available Arguments
 
-| Argument        | Description                                 | Default                                                       |
-| --------------- | ------------------------------------------- | ------------------------------------------------------------- |
-| `--window_size` | Size of input window (in time steps)        | `168`                                                         |
-| `--offset`      | Forecasting horizon (in time steps)         | `24`                                                          |
-| `--epochs`      | Number of training epochs                   | `10`                                                          |
-| `--patience`    | Early stopping patience                     | `3`                                                           |
-| `--features`    | Comma-separated list of input features      | `"SWC_20,T_20,Ppt,Tair,Wx,Wy"`                                |
-| `--model_names` | Comma-separated model names to train        | `"LSTM,BiLSTM,RNN,CNN,AttentionLSTM,Autoregressive,Baseline"` |
-| `--visualize`   | Plot data splits instead of training models | *(optional flag)*                                             |
+| Argument            | Description                                 | Default                                                       |
+| ------------------- | ------------------------------------------- | ------------------------------------------------------------- |
+| `--window_size`     | Size of input window (in time steps)        | `168`                                                         |
+| `--offset`          | Forecasting horizon (in time steps)         | `24`                                                          |
+| `--epochs`          | Number of training epochs                   | `10`                                                          |
+| `--patience`        | Early stopping patience                     | `3`                                                           |
+| `--features`        | Comma-separated list of input features      | `"SWC_20,T_20,Ppt,Tair,Wx,Wy"`                                |
+| `--model_names`     | Comma-separated model names to train        | `"LSTM,BiLSTM,RNN,CNN,AttentionLSTM,Autoregressive,Baseline"` |
+| `--visualize`       | Plot data splits instead of training models | *(optional flag)*                                             |
+| `--label_type`      | Type of label generation (see below)        | `"rolling_mean"`                                              |
+| `--agg_hours`       | Hours to aggregate for rolling_mean         | `24`                                                          |
+| `--offset_hours`    | Forecast offset in hours                     | `0`                                                           |
+| `--samples_per_hour`| Samples per hour in data                     | `1`                                                           |
+
+## Label Generation Types
+
+This project supports flexible label generation for different forecasting scenarios:
+
+### Label Types
+
+1. **`point`** (Original behavior): Single value at time t
+   - Maintains exact backward compatibility
+   - Use for traditional single-point forecasting
+
+2. **`rolling_mean`** (Default): Mean over the last K hours up to t + offset_hours
+   - Smooths out noise and provides more stable targets
+   - Configurable aggregation window via `--agg_hours`
+   - Supports forecast offset via `--offset_hours`
+
+3. **`daily_mean`**: Calendar-day average (24-hour rolling window)
+   - Useful for agricultural applications requiring daily patterns
+   - Automatically uses 24-hour aggregation window
+
+### Usage Examples
+
+#### Basic Rolling Mean (24-hour average, no forecast offset)
+```bash
+python main.py --label_type rolling_mean --agg_hours 24 --offset_hours 0
+```
+
+#### Forecast with Offset (12-hour average, 24 hours in the future)
+```bash
+python main.py --label_type rolling_mean --agg_hours 12 --offset_hours 24
+```
+
+#### Daily Mean for Agricultural Applications
+```bash
+python main.py --label_type daily_mean
+```
+
+#### Backward Compatibility (original point labels)
+```bash
+python main.py --label_type point
+```
+
+### Technical Details
+
+- **No Data Leakage**: Targets always come after input windows
+- **Insufficient History Handling**: Automatically skips windows when not enough data is available
+- **Shape Consistency**: Input/target shapes remain unchanged from caller's perspective
+- **Non-hourly Data Support**: Use `--samples_per_hour` for sub-hourly or multi-hourly data
 
 ---
 
