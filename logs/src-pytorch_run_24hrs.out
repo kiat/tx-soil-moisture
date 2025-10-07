@@ -1,0 +1,208 @@
+nohup: ignoring input
+Using device: cpu
+Reading CSV: Revised_Final_Data/Station1_Revised_Final_Data.csv
+Reading CSV: Revised_Final_Data/Station2_Revised_Final_Data.csv
+Reading CSV: Revised_Final_Data/Station3_Revised_Final_Data.csv
+Reading CSV: Revised_Final_Data/Station4_Revised_Final_Data.csv
+Reading CSV: Revised_Final_Data/Station5_Revised_Final_Data.csv
+Reading CSV: Revised_Final_Data/Station6_Revised_Final_Data.csv
+Engineering features for Station1
+/home/aditya/tx-soil-moisture/.venv/lib/python3.13/site-packages/pandas/core/arraylike.py:399: RuntimeWarning: invalid value encountered in log1p
+  result = getattr(ufunc, method)(*inputs, **kwargs)
+Engineering features for Station2
+Engineering features for Station3
+Engineering features for Station4
+Engineering features for Station5
+Engineering features for Station6
+TEST DF: 2020-01-01 00:00:00 to 2020-12-31 23:00:00
+Models to be processed: ['ar', 'lstm', 'bilstm', 'rnn', 'cnn', 'attentionlstm', 'attentiononly', 'transformer', 'multiheadlstm', 'baseline', 'movingaverage']
+
+===== Processing AR =====
+Training AR...
+Epoch 1/5 | Train Loss: 0.006982 | Val Loss: 0.007375
+Epoch 2/5 | Train Loss: 0.006542 | Val Loss: 0.007306
+Epoch 3/5 | Train Loss: 0.006530 | Val Loss: 0.007458
+Epoch 4/5 | Train Loss: 0.006523 | Val Loss: 0.007282
+Epoch 5/5 | Train Loss: 0.006523 | Val Loss: 0.007456
+
+Final Evaluation on Test Set...
+AR model saved at saved_models_pytorch/model_ar_ws48_offset24_SWC_10.pth
+Saved loss history for ar (ws=48, offset=24, features=SWC_10) on Station6 to results/loss_history_ws48_offset24_SWC_10.csv
+
+--- AR Final Test Metrics ---
+MSE: 0.012181
+MAE: 0.070829
+MAPE: 179.718826
+SMAPE: 31.089106
+RSE: 0.346722
+CORR: 0.816152
+Saved model results for ar on Station6 with 2 features to results/results_ws48_offset24_SWC_10.csv
+-------------------------------------
+
+
+===== Processing LSTM =====
+Training LSTM...
+Epoch 1/5 | Train Loss: 0.004991 | Val Loss: 0.005034
+Epoch 2/5 | Train Loss: 0.004268 | Val Loss: 0.005157
+Epoch 3/5 | Train Loss: 0.004126 | Val Loss: 0.005093
+Epoch 4/5 | Train Loss: 0.004075 | Val Loss: 0.005230
+--- Early stopping triggered ---
+Restoring best model weights.
+
+Final Evaluation on Test Set...
+LSTM model saved at saved_models_pytorch/model_lstm_ws48_offset24_SWC_10.pth
+Saved loss history for lstm (ws=48, offset=24, features=SWC_10) on Station6 to results/loss_history_ws48_offset24_SWC_10.csv
+
+--- LSTM Final Test Metrics ---
+MSE: 0.008761
+MAE: 0.045756
+MAPE: 129.735703
+SMAPE: 18.202019
+RSE: 0.249374
+CORR: 0.873126
+Saved model results for lstm on Station6 with 2 features to results/results_ws48_offset24_SWC_10.csv
+-------------------------------------
+
+
+===== Processing BILSTM =====
+Training BILSTM...
+Epoch 1/5 | Train Loss: 0.007813 | Val Loss: 0.005050
+Epoch 2/5 | Train Loss: 0.005683 | Val Loss: 0.005784
+Epoch 3/5 | Train Loss: 0.005311 | Val Loss: 0.005082
+Epoch 4/5 | Train Loss: 0.005097 | Val Loss: 0.005029
+Epoch 5/5 | Train Loss: 0.005014 | Val Loss: 0.004973
+
+Final Evaluation on Test Set...
+BILSTM model saved at saved_models_pytorch/model_bilstm_ws48_offset24_SWC_10.pth
+Saved loss history for bilstm (ws=48, offset=24, features=SWC_10) on Station6 to results/loss_history_ws48_offset24_SWC_10.csv
+
+--- BILSTM Final Test Metrics ---
+MSE: 0.008668
+MAE: 0.040429
+MAPE: 45.199139
+SMAPE: 14.794832
+RSE: 0.246716
+CORR: 0.874177
+Saved model results for bilstm on Station6 with 2 features to results/results_ws48_offset24_SWC_10.csv
+-------------------------------------
+
+
+===== Processing RNN =====
+Training RNN...
+Epoch 1/5 | Train Loss: 0.004404 | Val Loss: 0.005313
+Epoch 2/5 | Train Loss: 0.004198 | Val Loss: 0.004980
+Epoch 3/5 | Train Loss: 0.004151 | Val Loss: 0.004964
+Epoch 4/5 | Train Loss: 0.004127 | Val Loss: 0.005054
+Epoch 5/5 | Train Loss: 0.004124 | Val Loss: 0.005078
+
+Final Evaluation on Test Set...
+RNN model saved at saved_models_pytorch/model_rnn_ws48_offset24_SWC_10.pth
+Saved loss history for rnn (ws=48, offset=24, features=SWC_10) on Station6 to results/loss_history_ws48_offset24_SWC_10.csv
+
+--- RNN Final Test Metrics ---
+MSE: 0.008667
+MAE: 0.051506
+MAPE: 181.896622
+SMAPE: 24.764275
+RSE: 0.246689
+CORR: 0.871379
+Saved model results for rnn on Station6 with 2 features to results/results_ws48_offset24_SWC_10.csv
+-------------------------------------
+
+
+===== Processing CNN =====
+Training CNN...
+Epoch 1/5 | Train Loss: 0.006568 | Val Loss: 0.006586
+Epoch 2/5 | Train Loss: 0.005624 | Val Loss: 0.007173
+Epoch 3/5 | Train Loss: 0.005335 | Val Loss: 0.006133
+Epoch 4/5 | Train Loss: 0.005149 | Val Loss: 0.006129
+Epoch 5/5 | Train Loss: 0.005032 | Val Loss: 0.005885
+
+Final Evaluation on Test Set...
+CNN model saved at saved_models_pytorch/model_cnn_ws48_offset24_SWC_10.pth
+Saved loss history for cnn (ws=48, offset=24, features=SWC_10) on Station6 to results/loss_history_ws48_offset24_SWC_10.csv
+
+--- CNN Final Test Metrics ---
+MSE: 0.010559
+MAE: 0.059631
+MAPE: 168.267975
+SMAPE: 26.037111
+RSE: 0.300538
+CORR: 0.851488
+Saved model results for cnn on Station6 with 2 features to results/results_ws48_offset24_SWC_10.csv
+-------------------------------------
+
+
+===== Processing ATTENTIONLSTM =====
+Training ATTENTIONLSTM...
+Epoch 1/5 | Train Loss: 0.006281 | Val Loss: 0.004994
+Epoch 2/5 | Train Loss: 0.004138 | Val Loss: 0.005259
+Epoch 3/5 | Train Loss: 0.004078 | Val Loss: 0.005238
+Epoch 4/5 | Train Loss: 0.004041 | Val Loss: 0.004925
+Epoch 5/5 | Train Loss: 0.004024 | Val Loss: 0.005309
+
+Final Evaluation on Test Set...
+ATTENTIONLSTM model saved at saved_models_pytorch/model_attentionlstm_ws48_offset24_SWC_10.pth
+Saved loss history for attentionlstm (ws=48, offset=24, features=SWC_10) on Station6 to results/loss_history_ws48_offset24_SWC_10.csv
+
+--- ATTENTIONLSTM Final Test Metrics ---
+MSE: 0.008516
+MAE: 0.054186
+MAPE: 227.650772
+SMAPE: 27.763489
+RSE: 0.242384
+CORR: 0.874300
+Saved model results for attentionlstm on Station6 with 2 features to results/results_ws48_offset24_SWC_10.csv
+-------------------------------------
+
+
+===== Processing ATTENTIONONLY =====
+Training ATTENTIONONLY...
+Epoch 1/5 | Train Loss: 0.044900 | Val Loss: 0.070996
+Epoch 2/5 | Train Loss: 0.044638 | Val Loss: 0.065750
+Epoch 3/5 | Train Loss: 0.044596 | Val Loss: 0.066796
+Epoch 4/5 | Train Loss: 0.044585 | Val Loss: 0.062513
+Epoch 5/5 | Train Loss: 0.044569 | Val Loss: 0.065123
+
+Final Evaluation on Test Set...
+ATTENTIONONLY model saved at saved_models_pytorch/model_attentiononly_ws48_offset24_SWC_10.pth
+Saved loss history for attentiononly (ws=48, offset=24, features=SWC_10) on Station6 to results/loss_history_ws48_offset24_SWC_10.csv
+
+--- ATTENTIONONLY Final Test Metrics ---
+MSE: 0.053545
+MAE: 0.192199
+MAPE: 1683.963501
+SMAPE: 66.367165
+RSE: 1.524080
+CORR: -0.000000
+Saved model results for attentiononly on Station6 with 2 features to results/results_ws48_offset24_SWC_10.csv
+-------------------------------------
+
+
+===== Processing TRANSFORMER =====
+Training TRANSFORMER...
+/home/aditya/tx-soil-moisture/.venv/lib/python3.13/site-packages/torch/nn/modules/transformer.py:392: UserWarning: enable_nested_tensor is True, but self.use_nested_tensor is False because encoder_layer.self_attn.num_heads is odd
+  warnings.warn(
+Traceback (most recent call last):
+  File "/home/aditya/tx-soil-moisture/src-pytorch/main.py", line 291, in <module>
+    main(args)
+    ~~~~^^^^^^
+  File "/home/aditya/tx-soil-moisture/src-pytorch/main.py", line 238, in main
+    y_pred = model(X_batch)
+  File "/home/aditya/tx-soil-moisture/.venv/lib/python3.13/site-packages/torch/nn/modules/module.py", line 1773, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/home/aditya/tx-soil-moisture/.venv/lib/python3.13/site-packages/torch/nn/modules/module.py", line 1784, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/home/aditya/tx-soil-moisture/src-pytorch/models.py", line 376, in forward
+    x = self.relu(self.fc1(x))
+                  ~~~~~~~~^^^
+  File "/home/aditya/tx-soil-moisture/.venv/lib/python3.13/site-packages/torch/nn/modules/module.py", line 1773, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/home/aditya/tx-soil-moisture/.venv/lib/python3.13/site-packages/torch/nn/modules/module.py", line 1784, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/home/aditya/tx-soil-moisture/.venv/lib/python3.13/site-packages/torch/nn/modules/linear.py", line 125, in forward
+    return F.linear(input, self.weight, self.bias)
+           ~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: mat1 and mat2 shapes cannot be multiplied (32x64 and 1x32)

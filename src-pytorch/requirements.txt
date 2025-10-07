@@ -1,9 +1,9 @@
 pandas
 numpy
-tensorflow
 scikit-learn
 fastparquet
 argparse
 keras-attention
 keras_self_attention
 matplotlib
+torch>=1.13
