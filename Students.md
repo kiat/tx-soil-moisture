@@ -1,6 +1,18 @@
 
 # Students
 
+# Fall 2025
+
+* Zun Cao zc6222@utexas.edu 
+* Abhinav R Kolli abhinav.kolli@utexas.edu 
+* Chris Ho chris.ho@utexas.edu 
+
+## Summer 2025 
+
+* Zun Cao zc6222@utexas.edu 
+* Abhinav R Kolli abhinav.kolli@utexas.edu 
+* Chris Ho chris.ho@utexas.edu 
+
 ## Spring 2025 
 
 * Shree-Nethra Middela nmiddela@utexas.edu 
