@@ -1,11 +1,6 @@
 # Soil Moisture Sensor Data Analysis - Texas soil moisture dataset
 
 
-TODOs: 
-
-* Use rain prediction values as parameters 
-* Run transfer learning to model to train the model on one station and use this to train the model for other stations. 
-
  
 # Satelite Data CYGNSS
 
