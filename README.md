@@ -20,6 +20,21 @@ TODOs:
 
 # Students
 
+## Spring 2025 
+
+* Shree-Nethra Middela nmiddela@utexas.edu 
+* Manaf Asif manaf@utexas.edu
+* Abijith Chandrasekar Vij abicv0306@utexas.edu 
+* Mohammad Nabhan Kashif mohammadnkashif@utexas.edu 
+* Saivenkata V Gogineni svg498@utexas.edu
+* Abhinav R Kolli abhinav.kolli@utexas.edu 
+* Ramya Kappaganthula ramyakappaganthula@utexas.edu 
+* Ethan Chandra etmch5341@gmail.com
+* Rishab Maheshwari rishabmah@utexas.edu
+* Zun Cao zc6222@utexas.edu 
+* Chris Ho chris.ho@utexas.edu 
+
+
 ## Fall 2024
 
 * Ayaan Nazir <nazir@utexas.edu> (Using Satelite dataset)
