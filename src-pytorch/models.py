@@ -217,25 +217,38 @@ class AttentionOnly(nn.Module):
         super().__init__()
         if input_dim <= 0:
             raise ValueError(f"input_dim must be positive, got {input_dim}")
-        # Ensure num_heads divides input_dim evenly
-        num_heads = min(4, input_dim) if input_dim < 4 else 4
-        while input_dim % num_heads != 0:
+        # Project to a stronger embedding dimension for attention
+        d_model = 64
+        # Ensure num_heads divides d_model evenly (standard transformer requirement)
+        num_heads = 4
+        while d_model % num_heads != 0 and num_heads > 1:
             num_heads -= 1
-        if num_heads == 0:
-            num_heads = 1
+        self.proj_inp = nn.Linear(input_dim, d_model)
 
         self.attention = nn.MultiheadAttention(
-            embed_dim=input_dim, num_heads=num_heads, batch_first=True
+            embed_dim=d_model, num_heads=num_heads, batch_first=True
         )
-        self.norm = nn.LayerNorm(input_dim)
+        self.norm1 = nn.LayerNorm(d_model)
+        # Simple position-wise feed-forward network with residual
+        self.ffn = nn.Sequential(
+            nn.Linear(d_model, 128),
+            nn.ReLU(),
+            nn.Dropout(0.1),
+            nn.Linear(128, d_model),
+        )
+        self.norm2 = nn.LayerNorm(d_model)
         self.pool = nn.AdaptiveAvgPool1d(1)
-        self.fc1 = nn.Linear(input_dim, 64)
+        self.fc1 = nn.Linear(d_model, 64)
         self.fc2 = nn.Linear(64, 1)
         self.relu = nn.ReLU()
 
     def forward(self, x):
+        # Project raw features to model dimension
+        x = self.proj_inp(x)
         attn_output, _ = self.attention(x, x, x)
-        x = self.norm(attn_output + x)  # Added residual connection, common practice
+        x = self.norm1(attn_output + x)  # Residual + norm
+        ffn_output = self.ffn(x)
+        x = self.norm2(ffn_output + x)  # Residual + norm
         x = x.permute(0, 2, 1)
         x = self.pool(x)
         x = x.squeeze(-1)
@@ -347,24 +360,21 @@ class TransformerModel(nn.Module):
         if input_dim <= 0:
             raise ValueError(f"input_dim must be positive, got {input_dim}")
 
-        # Ensure num_heads divides input_dim evenly
-        if input_dim % num_heads != 0:
-            # Find largest valid num_heads
-            num_heads = min(num_heads, input_dim)
-            while input_dim % num_heads != 0 and num_heads > 1:
+        # Use fixed model dimension and ensure heads divide d_model
+        d_model = 64
+        if d_model % num_heads != 0:
+            # Reduce heads until it divides d_model
+            while num_heads > 1 and d_model % num_heads != 0:
                 num_heads -= 1
-            if num_heads == 0:
-                num_heads = 1
-
-        # Using a standard Transformer Encoder Layer is cleaner
+        # Using a standard Transformer Encoder Layer
         encoder_layer = nn.TransformerEncoderLayer(
-            d_model=64, nhead=num_heads, dim_feedforward=64, batch_first=True
+            d_model=d_model, nhead=num_heads, dim_feedforward=128, batch_first=True
         )
-        self.proj_inp = nn.Linear(input_dim, 64)
+        self.proj_inp = nn.Linear(input_dim, d_model)
         self.transformer_encoder = nn.TransformerEncoder(encoder_layer, num_layers=1)
 
         self.pool = nn.AdaptiveAvgPool1d(1)
-        self.fc1 = nn.Linear(input_dim, 32)
+        self.fc1 = nn.Linear(d_model, 32)
         self.fc2 = nn.Linear(32, 1)
         self.relu = nn.ReLU()
 

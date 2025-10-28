@@ -1,0 +1,254 @@
+nohup: ignoring input
+Using device: cpu
+Reading CSV: Revised_Final_Data/Station1_Revised_Final_Data.csv
+Reading CSV: Revised_Final_Data/Station2_Revised_Final_Data.csv
+Reading CSV: Revised_Final_Data/Station3_Revised_Final_Data.csv
+Reading CSV: Revised_Final_Data/Station4_Revised_Final_Data.csv
+Reading CSV: Revised_Final_Data/Station5_Revised_Final_Data.csv
+Reading CSV: Revised_Final_Data/Station6_Revised_Final_Data.csv
+Engineering features for Station1
+/home/aditya/tx-soil-moisture/.venv/lib/python3.13/site-packages/pandas/core/arraylike.py:399: RuntimeWarning: invalid value encountered in log1p
+  result = getattr(ufunc, method)(*inputs, **kwargs)
+Engineering features for Station2
+Engineering features for Station3
+Engineering features for Station4
+Engineering features for Station5
+Engineering features for Station6
+TEST DF: 2020-01-01 00:00:00 to 2020-12-31 23:00:00
+Models to be processed: ['ar', 'lstm', 'bilstm', 'rnn', 'cnn', 'attentionlstm', 'attentiononly', 'transformer', 'multiheadlstm', 'baseline', 'movingaverage']
+
+===== Processing AR =====
+Training AR...
+Epoch 1/5 | Train Loss: 0.004824 | Val Loss: 0.004563
+Epoch 2/5 | Train Loss: 0.004193 | Val Loss: 0.004541
+Epoch 3/5 | Train Loss: 0.004188 | Val Loss: 0.004544
+Epoch 4/5 | Train Loss: 0.004177 | Val Loss: 0.004562
+Epoch 5/5 | Train Loss: 0.004178 | Val Loss: 0.004813
+
+Final Evaluation on Test Set...
+AR model saved at saved_models_pytorch/model_ar_ws48_offset0_SWC_10.pth
+Saved loss history for ar (ws=48, offset=0, features=SWC_10) on Station6 to results/loss_history_ws48_offset0_SWC_10.csv
+
+--- AR Final Test Metrics ---
+MSE: 0.007706
+MAE: 0.058463
+MAPE: 0.003097
+SMAPE: 24.686701
+RSE: 0.232637
+CORR: 0.884559
+Saved model results for ar on Station6 with 2 features to results/results_ws48_offset0_SWC_10.csv
+-------------------------------------
+
+
+===== Processing LSTM =====
+Training LSTM...
+Epoch 1/5 | Train Loss: 0.002829 | Val Loss: 0.002589
+Epoch 2/5 | Train Loss: 0.001822 | Val Loss: 0.002108
+Epoch 3/5 | Train Loss: 0.001741 | Val Loss: 0.002010
+Epoch 4/5 | Train Loss: 0.001695 | Val Loss: 0.002335
+Epoch 5/5 | Train Loss: 0.001678 | Val Loss: 0.002160
+
+Final Evaluation on Test Set...
+LSTM model saved at saved_models_pytorch/model_lstm_ws48_offset0_SWC_10.pth
+Saved loss history for lstm (ws=48, offset=0, features=SWC_10) on Station6 to results/loss_history_ws48_offset0_SWC_10.csv
+
+--- LSTM Final Test Metrics ---
+MSE: 0.003435
+MAE: 0.030180
+MAPE: 0.002911
+SMAPE: 18.854177
+RSE: 0.103695
+CORR: 0.947370
+Saved model results for lstm on Station6 with 2 features to results/results_ws48_offset0_SWC_10.csv
+-------------------------------------
+
+
+===== Processing BILSTM =====
+Training BILSTM...
+Epoch 1/5 | Train Loss: 0.004680 | Val Loss: 0.003007
+Epoch 2/5 | Train Loss: 0.003238 | Val Loss: 0.002044
+Epoch 3/5 | Train Loss: 0.002857 | Val Loss: 0.002203
+Epoch 4/5 | Train Loss: 0.002718 | Val Loss: 0.002313
+Epoch 5/5 | Train Loss: 0.002647 | Val Loss: 0.002032
+
+Final Evaluation on Test Set...
+BILSTM model saved at saved_models_pytorch/model_bilstm_ws48_offset0_SWC_10.pth
+Saved loss history for bilstm (ws=48, offset=0, features=SWC_10) on Station6 to results/loss_history_ws48_offset0_SWC_10.csv
+
+--- BILSTM Final Test Metrics ---
+MSE: 0.003426
+MAE: 0.025972
+MAPE: 0.001970
+SMAPE: 14.549668
+RSE: 0.103418
+CORR: 0.947037
+Saved model results for bilstm on Station6 with 2 features to results/results_ws48_offset0_SWC_10.csv
+-------------------------------------
+
+
+===== Processing RNN =====
+Training RNN...
+Epoch 1/5 | Train Loss: 0.002486 | Val Loss: 0.001962
+Epoch 2/5 | Train Loss: 0.001724 | Val Loss: 0.001976
+Epoch 3/5 | Train Loss: 0.001699 | Val Loss: 0.001965
+Epoch 4/5 | Train Loss: 0.001687 | Val Loss: 0.001972
+Epoch 5/5 | Train Loss: 0.001675 | Val Loss: 0.001957
+
+Final Evaluation on Test Set...
+RNN model saved at saved_models_pytorch/model_rnn_ws48_offset0_SWC_10.pth
+Saved loss history for rnn (ws=48, offset=0, features=SWC_10) on Station6 to results/loss_history_ws48_offset0_SWC_10.csv
+
+--- RNN Final Test Metrics ---
+MSE: 0.003380
+MAE: 0.029165
+MAPE: 0.002051
+SMAPE: 15.002370
+RSE: 0.102042
+CORR: 0.948550
+Saved model results for rnn on Station6 with 2 features to results/results_ws48_offset0_SWC_10.csv
+-------------------------------------
+
+
+===== Processing CNN =====
+Training CNN...
+Epoch 1/5 | Train Loss: 0.004137 | Val Loss: 0.004732
+Epoch 2/5 | Train Loss: 0.003049 | Val Loss: 0.003250
+Epoch 3/5 | Train Loss: 0.002670 | Val Loss: 0.003244
+Epoch 4/5 | Train Loss: 0.002464 | Val Loss: 0.002672
+Epoch 5/5 | Train Loss: 0.002312 | Val Loss: 0.002526
+
+Final Evaluation on Test Set...
+CNN model saved at saved_models_pytorch/model_cnn_ws48_offset0_SWC_10.pth
+Saved loss history for cnn (ws=48, offset=0, features=SWC_10) on Station6 to results/loss_history_ws48_offset0_SWC_10.csv
+
+--- CNN Final Test Metrics ---
+MSE: 0.004847
+MAE: 0.038990
+MAPE: 0.002112
+SMAPE: 17.252392
+RSE: 0.146325
+CORR: 0.932194
+Saved model results for cnn on Station6 with 2 features to results/results_ws48_offset0_SWC_10.csv
+-------------------------------------
+
+
+===== Processing ATTENTIONLSTM =====
+Training ATTENTIONLSTM...
+Epoch 1/5 | Train Loss: 0.004078 | Val Loss: 0.001988
+Epoch 2/5 | Train Loss: 0.001742 | Val Loss: 0.001998
+Epoch 3/5 | Train Loss: 0.001728 | Val Loss: 0.001972
+Epoch 4/5 | Train Loss: 0.001698 | Val Loss: 0.001927
+Epoch 5/5 | Train Loss: 0.001681 | Val Loss: 0.002027
+
+Final Evaluation on Test Set...
+ATTENTIONLSTM model saved at saved_models_pytorch/model_attentionlstm_ws48_offset0_SWC_10.pth
+Saved loss history for attentionlstm (ws=48, offset=0, features=SWC_10) on Station6 to results/loss_history_ws48_offset0_SWC_10.csv
+
+--- ATTENTIONLSTM Final Test Metrics ---
+MSE: 0.003466
+MAE: 0.022994
+MAPE: 0.001332
+SMAPE: 10.942562
+RSE: 0.104630
+CORR: 0.948186
+Saved model results for attentionlstm on Station6 with 2 features to results/results_ws48_offset0_SWC_10.csv
+-------------------------------------
+
+
+===== Processing ATTENTIONONLY =====
+Training ATTENTIONONLY...
+Epoch 1/5 | Train Loss: 0.002824 | Val Loss: 0.003078
+Epoch 2/5 | Train Loss: 0.002509 | Val Loss: 0.002747
+Epoch 3/5 | Train Loss: 0.002401 | Val Loss: 0.003420
+Epoch 4/5 | Train Loss: 0.002285 | Val Loss: 0.002584
+Epoch 5/5 | Train Loss: 0.002163 | Val Loss: 0.002457
+
+Final Evaluation on Test Set...
+ATTENTIONONLY model saved at saved_models_pytorch/model_attentiononly_ws48_offset0_SWC_10.pth
+Saved loss history for attentiononly (ws=48, offset=0, features=SWC_10) on Station6 to results/loss_history_ws48_offset0_SWC_10.csv
+
+--- ATTENTIONONLY Final Test Metrics ---
+MSE: 0.004685
+MAE: 0.032686
+MAPE: 0.001855
+SMAPE: 13.929683
+RSE: 0.141430
+CORR: 0.932880
+Saved model results for attentiononly on Station6 with 2 features to results/results_ws48_offset0_SWC_10.csv
+-------------------------------------
+
+
+===== Processing TRANSFORMER =====
+Training TRANSFORMER...
+Epoch 1/5 | Train Loss: 0.002834 | Val Loss: 0.003307
+Epoch 2/5 | Train Loss: 0.002507 | Val Loss: 0.002842
+Epoch 3/5 | Train Loss: 0.002394 | Val Loss: 0.003226
+Epoch 4/5 | Train Loss: 0.002279 | Val Loss: 0.002988
+Epoch 5/5 | Train Loss: 0.002210 | Val Loss: 0.002572
+
+Final Evaluation on Test Set...
+TRANSFORMER model saved at saved_models_pytorch/model_transformer_ws48_offset0_SWC_10.pth
+Saved loss history for transformer (ws=48, offset=0, features=SWC_10) on Station6 to results/loss_history_ws48_offset0_SWC_10.csv
+
+--- TRANSFORMER Final Test Metrics ---
+MSE: 0.005379
+MAE: 0.036286
+MAPE: 0.001856
+SMAPE: 14.216386
+RSE: 0.162391
+CORR: 0.929485
+Saved model results for transformer on Station6 with 2 features to results/results_ws48_offset0_SWC_10.csv
+-------------------------------------
+
+
+===== Processing MULTIHEADLSTM =====
+Training MULTIHEADLSTM...
+Epoch 1/5 | Train Loss: 0.002227 | Val Loss: 0.002121
+Epoch 2/5 | Train Loss: 0.001725 | Val Loss: 0.001945
+Epoch 3/5 | Train Loss: 0.001697 | Val Loss: 0.001981
+Epoch 4/5 | Train Loss: 0.001687 | Val Loss: 0.001952
+Epoch 5/5 | Train Loss: 0.001672 | Val Loss: 0.002129
+
+Final Evaluation on Test Set...
+MULTIHEADLSTM model saved at saved_models_pytorch/model_multiheadlstm_ws48_offset0_SWC_10.pth
+Saved loss history for multiheadlstm (ws=48, offset=0, features=SWC_10) on Station6 to results/loss_history_ws48_offset0_SWC_10.csv
+
+--- MULTIHEADLSTM Final Test Metrics ---
+MSE: 0.003457
+MAE: 0.034590
+MAPE: 0.003282
+SMAPE: 20.456623
+RSE: 0.104344
+CORR: 0.948614
+Saved model results for multiheadlstm on Station6 with 2 features to results/results_ws48_offset0_SWC_10.csv
+-------------------------------------
+
+
+===== Processing BASELINE =====
+Evaluating non-trainable baseline model: BASELINE
+
+--- BASELINE Final Test Metrics ---
+MSE: 0.003755
+MAE: 0.026404
+MAPE: 0.001131
+SMAPE: 11.026325
+RSE: 0.113354
+CORR: 0.945085
+Saved model results for baseline on Station6 with 2 features to results/results_ws48_offset0_SWC_10.csv
+-------------------------------------
+
+
+===== Processing MOVINGAVERAGE =====
+Evaluating non-trainable baseline model: MOVINGAVERAGE
+
+--- MOVINGAVERAGE Final Test Metrics ---
+MSE: 0.003939
+MAE: 0.027426
+MAPE: 0.001151
+SMAPE: 11.201385
+RSE: 0.118897
+CORR: 0.942180
+Saved model results for movingaverage on Station6 with 2 features to results/results_ws48_offset0_SWC_10.csv
+-------------------------------------
+
+All runs complete! Results have been saved.

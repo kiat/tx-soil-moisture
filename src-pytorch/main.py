@@ -236,6 +236,9 @@ def main(args):
                     X_batch, y_batch = X_batch.to(device), y_batch.to(device)
                     optimizer.zero_grad()
                     y_pred = model(X_batch)
+                    # Align shapes defensively (e.g., (N,1) vs (N,))
+                    if y_pred.shape != y_batch.shape:
+                        y_pred = y_pred.view_as(y_batch)
                     loss = criterion(y_pred, y_batch)
                     loss.backward()
                     optimizer.step()
