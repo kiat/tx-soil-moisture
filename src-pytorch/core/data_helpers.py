@@ -30,7 +30,7 @@ def read_and_process_csvs():
 
 
 # Feature engineering
-def engineer_features(dfs):
+def engineer_features(dfs, daily_average=False, predict_features=[]):
     """Applies feature engineering and returns new dict of engineered DataFrames"""
     engineered_dfs = {}
     for station_name, df in dfs.items():
@@ -74,8 +74,16 @@ def engineer_features(dfs):
         df['MonthCos'] = np.cos(timestamp_s * (2 * np.pi / month))
 
         df['Date'] = df.index # Keep 'Date' column if needed
+        
+        # Daily mean for soil moisture
+        if daily_average:
+            for pred_feature in predict_features:
+                if pred_feature in df.columns:
+                    daily_mean = df[pred_feature].resample('D').transform('mean')
+                    df[f'{pred_feature}_daily_avg'] = daily_mean
+        print(predict_features)
+        print(df.columns)
         engineered_dfs[station_name] = df
-
     return engineered_dfs
 
 
@@ -103,23 +111,16 @@ def normalize_features(df, features):
 
 # Convert data to X and y windows with offset
 
-# def data_to_X_y(data, window_size, offset):
-#     X, y = [], []
-#     for i in range(len(data) - window_size - offset):
-#         X.append(data[i:i+window_size, :])  
-#         y.append(data[i + window_size + offset, 0])  
-
-#     return  np.array(X),  np.array(y)
-
-
-# Convert data to X and y windows with offset
-def data_to_X_y(data, window_size, offset):
+def data_to_X_y(data, window_size, offset, label_width, label_columns):
     # Calculate the number of rows for X and y
-    rows = len(data) - window_size - offset
+    rows = len(data) - window_size - (offset - 1) - label_width + 1
+
     # Now, use sliding_window_view to create the X array
     X = np.lib.stride_tricks.sliding_window_view(data, (window_size, data.shape[1]))[:rows, 0]
     # Then we slice the y array accordingly
-    y = data[window_size + offset - 1: window_size + offset - 1 + rows, 0]
+    y = np.lib.stride_tricks.sliding_window_view(data[window_size + offset - 1:], (label_width, data.shape[1]))[:, 0, :]
+    y = y[:, :, label_columns]
+    # y = data[window_size + offset - 1: window_size + offset - 1 + rows, label_column]
     return X, y
 
 
