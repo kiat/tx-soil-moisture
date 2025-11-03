@@ -97,9 +97,9 @@ def main(args):
                 model = model_class(input_dim=input_dim)
 
             trainer = Trainer(
-                model, criterion, device, lr=0.001, patience=args.patience
+                model, criterion, device, model_name=model_name, log_dir="logs", lr=0.001, patience=args.patience
             )
-            history = trainer.fit(train_loader, val_loader, args.epochs)
+            history = trainer.fit(train_loader, val_loader, epochs=args.epochs)
 
             print("\nFinal Evaluation on Test Set...")
             performance = trainer.evaluator.evaluate(trainer.model, test_loader)

@@ -53,7 +53,7 @@ def prepare_dataloaders(
         def split_and_stack_data(dfs, test_station_name):
             return dfs, dfs[test_station_name], dfs[test_station_name]
 
-        def normalize_features(df, features):
+        def normalize_features(df, features, scaler):
             return df, None
 
         def data_to_X_y(df, window, offset, ):
@@ -82,14 +82,10 @@ def prepare_dataloaders(
         engineered_dfs, test_station_name=target_station
     )
 
-    # Prepare test set
-    scaled_test, _ = normalize_features(test_df, all_features)
-    X_test, y_test = data_to_X_y(scaled_test, window_size, offset, label_width, indices)
-    train_data_x, train_data_y = [], []
-
     # Prepare training set (all stations except target)
+    train_data_x, train_data_y = [], []
     for df in train_dfs:
-        scaled_train, _ = normalize_features(df, all_features)
+        scaled_train, data_scaler = normalize_features(df, all_features)
         X_train_part, y_train_part = data_to_X_y(scaled_train, window_size, offset, label_width, indices)
         
         X_train_part = X_train_part[::training_stride]
@@ -99,11 +95,11 @@ def prepare_dataloaders(
         train_data_y.append(y_train_part)
     X_train = np.concatenate(train_data_x, axis=0)
     y_train = np.concatenate(train_data_y, axis=0)
-
+    
     # Prepare validation set
     val_data_x, val_data_y = [], []
     for df in val_dfs:
-        scaled, _ = normalize_features(df, all_features)
+        scaled, _ = normalize_features(df, all_features, scaler=data_scaler)
         X_part, y_part = data_to_X_y(scaled, window_size, offset, label_width, indices)
         X_part = X_part[::validation_stride]
         y_part = y_part[::validation_stride]
@@ -111,6 +107,11 @@ def prepare_dataloaders(
         val_data_y.append(y_part)
     X_val = np.concatenate(val_data_x, axis=0)
     y_val = np.concatenate(val_data_y, axis=0)
+    
+    # Prepare test set
+    scaled_test, _ = normalize_features(test_df, all_features, scaler=data_scaler)
+    X_test, y_test = data_to_X_y(scaled_test, window_size, offset, label_width, indices)
+
 
     # Convert to tensors
     X_train_t = torch.tensor(X_train, dtype=torch.float32)

@@ -81,15 +81,15 @@ def engineer_features(dfs, daily_average=False, predict_features=[]):
                 if pred_feature in df.columns:
                     daily_mean = df[pred_feature].resample('D').transform('mean')
                     df[f'{pred_feature}_daily_avg'] = daily_mean
-        print(predict_features)
-        print(df.columns)
+
         engineered_dfs[station_name] = df
     return engineered_dfs
 
 
 # Normalize features
-def normalize_features(df, features):
-    scaler = MinMaxScaler()
+def normalize_features(df, features, scaler=None):
+    if scaler is None:
+        scaler = MinMaxScaler()
     # Identify features to scale and not to scale
     no_scale_features = [feat for feat in features if 'sin' in feat or 'cos' in feat]
     scale_features = [feat for feat in features if feat not in no_scale_features]
@@ -120,7 +120,6 @@ def data_to_X_y(data, window_size, offset, label_width, label_columns):
     # Then we slice the y array accordingly
     y = np.lib.stride_tricks.sliding_window_view(data[window_size + offset - 1:], (label_width, data.shape[1]))[:, 0, :]
     y = y[:, :, label_columns]
-    # y = data[window_size + offset - 1: window_size + offset - 1 + rows, label_column]
     return X, y
 
 
