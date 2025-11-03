@@ -50,7 +50,7 @@ def evaluate_model(model, X_test, y_test):
 
 
 
-def write_loss_history_to_csv(station, model_name, window_size, offset, history, feature_str):
+def write_loss_history_to_csv(station, model_name, window_size, offset, history, feature_str, label_str):
     """Saves loss history to a unique CSV file including offset and feature set."""
     
      # Ensure the results directory exists
@@ -58,13 +58,13 @@ def write_loss_history_to_csv(station, model_name, window_size, offset, history,
     os.makedirs(results_dir, exist_ok=True)
  
     # Define loss history file path inside the results folder
-    loss_file = os.path.join(results_dir, f"loss_history_ws{window_size}_offset{offset}_{feature_str}.csv")
+    loss_file = os.path.join(results_dir, f"loss_history_ws{window_size}_offset{offset}_{feature_str}-{label_str}.csv")
     
     # Check if the file already exists
     file_exists = os.path.isfile(loss_file)
     
     # Define CSV headers
-    headers = ["Station", "Model", "Features", "Offset", "Epoch", "Loss", "Validation Loss"]
+    headers = ["Station", "Model", "Features", "Labels", "Offset", "Epoch", "Loss", "Validation Loss"]
 
     # Open in write mode if file exists (reset each run)
     mode = "a" if file_exists else "w"
@@ -78,9 +78,9 @@ def write_loss_history_to_csv(station, model_name, window_size, offset, history,
 
         # Write training history
         for epoch, (loss, val_loss) in enumerate(zip(history["loss"], history["val_loss"])):
-            writer.writerow([station, model_name, feature_str, offset, epoch + 1, loss, val_loss])
+            writer.writerow([station, model_name, feature_str, label_str, offset, epoch + 1, loss, val_loss])
 
-    print(f"Saved loss history for {model_name} (ws={window_size}, offset={offset}, features={feature_str}) on {station} to {loss_file}")
+    print(f"Saved loss history for {model_name} (ws={window_size}, offset={offset}, features={feature_str}, labels={label_str}) on {station} to {loss_file}")
 
 ###############################################################################
 ###############################################################################
