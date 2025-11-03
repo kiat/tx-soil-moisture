@@ -11,19 +11,42 @@ from sklearn.preprocessing import MinMaxScaler
 def read_and_process_csvs():
     """Reads and processes CSVs, returns dict of cleaned DataFrames"""
     dfs = {}
+    # Resolve dataset directory robustly (works whether run from repo root or src-pytorch)
+    current_dir = os.path.dirname(__file__)
+    repo_root = os.path.abspath(os.path.join(current_dir, '..', '..'))
+    candidate_dirs = [
+        os.path.join(repo_root, 'datasets', 'New_Revised_Final_Data'),
+        os.path.join(os.getcwd(), 'datasets', 'New_Revised_Final_Data')
+    ]
+    base_dir = next((d for d in candidate_dirs if os.path.isdir(d)), candidate_dirs[0])
     for index in range(6):
         station_name = f'Station{index + 1}'
-        csv_path = f'Revised_Final_Data/{station_name}_Revised_Final_Data.csv'
-        
+        # New dataset filenames are StationN_SWCfilled_Data.csv
+        csv_path = os.path.join(base_dir, f'{station_name}_SWCfilled_Data.csv')
+
         print(f"Reading CSV: {csv_path}")
+        # New files have the timestamp as the first unnamed column; set it as index
         df = pd.read_csv(csv_path)
-        df.columns = df.columns.str.replace(' ', '')  # Clean column names
-        df['Date'] = pd.to_datetime(df['Date'], errors='coerce')  # Parse Date column
+        # The first column is the datetime index without a header name
+        if df.columns[0] == '':
+            df.rename(columns={df.columns[0]: 'Date'}, inplace=True)
+        # Ensure we have a 'Date' column (rename the very first column if unnamed)
+        if 'Date' not in df.columns:
+            first_col = df.columns[0]
+            df.rename(columns={first_col: 'Date'}, inplace=True)
+
+        # Clean column names: remove spaces
+        df.columns = df.columns.str.replace(' ', '')
+
+        # Parse and set index
+        df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
         df.set_index('Date', inplace=True)
 
-        for col in ['SWC_5', 'SWC_10', 'SWC_20', 'SWC_50', 'T_5', 'T_10', 'T_20', 'T_50', 'Ppt']:
+        # Standardize expected numeric columns (coerce strings to numbers)
+        for col in ['SWC_5', 'SWC_10', 'SWC_20', 'SWC_50', 'T_5', 'T_10', 'T_20', 'T_50',
+                    'Ppt', 'Tair', 'RH', 'Windspeed', 'Winddirection', 'Srad', 'Flag']:
             if col in df.columns:
-                df[col] = df[col].astype(float)
+                df[col] = pd.to_numeric(df[col], errors='coerce')
 
         dfs[station_name] = df
     return dfs
@@ -36,9 +59,25 @@ def engineer_features(dfs):
     for station_name, df in dfs.items():
         print(f"Engineering features for {station_name}")
 
+        # Ensure chronological order and numeric dtypes
+        df = df.sort_index()
+        for col in df.columns:
+            df[col] = pd.to_numeric(df[col], errors='coerce') if col != 'Date' else df[col]
+
+        # General interpolation/fill to remove NaNs before feature ops
+        num_cols = df.select_dtypes(include=[np.number]).columns
+        df[num_cols] = df[num_cols].replace([np.inf, -np.inf], np.nan)
+        # Prefer time interpolation if index is datetime-like
+        try:
+            df[num_cols] = df[num_cols].interpolate(method='time', limit_direction='both')
+        except Exception:
+            df[num_cols] = df[num_cols].interpolate(limit_direction='both')
+        df[num_cols] = df[num_cols].fillna(method='bfill').fillna(method='ffill')
+
         #precipitation
         # --- precipitation fixes ---
-        df['Ppt'] = df['Ppt'].fillna(0.0)
+        if 'Ppt' in df.columns:
+            df['Ppt'] = df['Ppt'].fillna(0.0)
         df['Ppt_RainFlag'] = (df['Ppt'] > 0).astype(int)
         df['Ppt_log'] = np.log1p(df['Ppt'])
         df['Ppt_3h_sum'] = df['Ppt'].rolling(3, min_periods=1).sum()
@@ -52,9 +91,10 @@ def engineer_features(dfs):
         df['HoursSinceRain'] = hours_since
 
         # Wind features
-        if 'Windspeed' in df and 'Winddirection' in df:
-            wv = df.pop('Windspeed')
-            wd_rad = df.pop('Winddirection') * np.pi / 180
+        if 'Windspeed' in df.columns and 'Winddirection' in df.columns:
+            wv = df['Windspeed'].fillna(0.0)
+            wd = df['Winddirection'].interpolate(limit_direction='both').fillna(method='bfill').fillna(method='ffill')
+            wd_rad = wd * np.pi / 180
             max_wv = np.max(wv)
             df['Wx'] = wv * np.cos(wd_rad)
             df['Wy'] = wv * np.sin(wd_rad)
@@ -83,17 +123,23 @@ def engineer_features(dfs):
 def normalize_features(df, features):
     scaler = MinMaxScaler()
     # Identify features to scale and not to scale
-    no_scale_features = [feat for feat in features if 'sin' in feat or 'cos' in feat]
+    no_scale_features = [feat for feat in features if 'sin' in feat.lower() or 'cos' in feat.lower()]
     scale_features = [feat for feat in features if feat not in no_scale_features]
 
     # Reset index to avoid issues with scaling
     df = df.reset_index(drop=True)
 
-    # Scale the features
-    scaled_data = scaler.fit_transform(df[scale_features])
-    scaled_df = pd.DataFrame(scaled_data, columns=scale_features)
+    # Prepare data and fill NaNs/Infs before scaling
+    scaled_df = pd.DataFrame()
+    if scale_features:
+        safe_data = df[scale_features].replace([np.inf, -np.inf], np.nan)
+        medians = safe_data.median()
+        safe_data = safe_data.fillna(medians)
+        scaled_data = scaler.fit_transform(safe_data)
+        scaled_df = pd.DataFrame(scaled_data, columns=scale_features)
 
-    scaled_df = pd.concat([scaled_df, df[no_scale_features]], axis=1)
+    unscaled_df = df[no_scale_features] if no_scale_features else pd.DataFrame(index=df.index)
+    scaled_df = pd.concat([scaled_df, unscaled_df], axis=1)
 
     scaled_df = scaled_df[features]
 
@@ -138,8 +184,14 @@ def data_to_X_y(data, window_size, offset, label_type="point", agg_hours=24, off
     # For backward compatibility, if label_type is "point", use original logic
     if label_type == "point":
         rows = len(data) - window_size - offset
+        if rows <= 0:
+            return np.array([]), np.array([])
         X = np.lib.stride_tricks.sliding_window_view(data, (window_size, data.shape[1]))[:rows, 0]
         y = data[window_size + offset - 1: window_size + offset - 1 + rows, 0]
+        # Filter out windows or targets with NaNs/Infs
+        mask = np.isfinite(X).all(axis=(1,2)) & np.isfinite(y)
+        X = X[mask]
+        y = y[mask]
         return X, y
     
     # Calculate the total offset from window end to target end
@@ -199,6 +251,12 @@ def data_to_X_y(data, window_size, offset, label_type="point", agg_hours=24, off
     # Trim X to match y length (in case some windows were skipped)
     X = X[:len(y)]
     y = np.array(y)
+    # Final NaN/Inf filter across X and y
+    if len(y) == 0:
+        return np.array([]), np.array([])
+    mask = np.isfinite(X).all(axis=(1,2)) & np.isfinite(y)
+    X = X[mask]
+    y = y[mask]
     
     return X, y
 

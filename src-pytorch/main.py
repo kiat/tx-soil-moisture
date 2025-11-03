@@ -58,27 +58,33 @@ def evaluate_model(model, dataloader, criterion, device):
     
     with torch.no_grad():
         for X_batch, y_batch in dataloader:
-            X_batch, y_batch = X_batch.to(device), y_batch.to(device)
+            if X_batch.numel() == 0:
+                continue
+            X_batch, y_batch = X_batch.to(device, non_blocking=True), y_batch.to(device, non_blocking=True)
             y_pred = model(X_batch)
-            
             if y_pred.shape != y_batch.shape:
                 y_pred = y_pred.view_as(y_batch)
-            
+            # Guard against NaNs/Infs in predictions/targets
+            mask = torch.isfinite(y_pred) & torch.isfinite(y_batch)
+            if not mask.all():
+                y_pred = torch.where(torch.isfinite(y_pred), y_pred, torch.zeros_like(y_pred))
+                y_batch = torch.where(torch.isfinite(y_batch), y_batch, torch.zeros_like(y_batch))
             loss = criterion(y_pred, y_batch)
             total_loss += loss.item() * X_batch.size(0)
-            
-            all_preds.append(y_pred.cpu())
-            all_targets.append(y_batch.cpu())
+            all_preds.append(y_pred.detach().cpu())
+            all_targets.append(y_batch.detach().cpu())
             
     all_preds = torch.cat(all_preds, dim=0).squeeze()
     all_targets = torch.cat(all_targets, dim=0).squeeze()
     
     epsilon = 1e-8
     num_samples = len(all_targets)
+    if num_samples == 0:
+        return {'MSE': float('inf'), 'MAE': float('inf'), 'MAPE': float('inf'), 'SMAPE': float('inf'), 'RSE': float('inf'), 'CORR': 0.0}
 
     mse = total_loss / num_samples
     mae = torch.mean(torch.abs(all_targets - all_preds)).item()
-    mape = (torch.mean(torch.abs((all_targets - all_preds) / (all_targets + epsilon))) * 100) / num_samples
+    mape = torch.mean(torch.abs((all_targets - all_preds) / (all_targets + epsilon))) * 100
     smape_numerator = torch.abs(all_preds - all_targets)
     smape_denominator = torch.abs(all_targets) + torch.abs(all_preds) + epsilon
     smape = torch.mean(2 * smape_numerator / smape_denominator) * 100
@@ -185,16 +191,34 @@ def main(args):
     X_val = np.concatenate(val_data_x, axis=0) if val_data_x else np.array([])
     y_val = np.concatenate(val_data_y, axis=0) if val_data_y else np.array([])
     
-    # Convert to tensors
-    X_train_t = torch.tensor(X_train, dtype=torch.float32)
-    y_train_t = torch.tensor(y_train, dtype=torch.float32)
-    X_val_t = torch.tensor(X_val, dtype=torch.float32)
-    y_val_t = torch.tensor(y_val.reshape(-1, 1), dtype=torch.float32)
-    X_test_t = torch.tensor(X_test, dtype=torch.float32)
-    y_test_t = torch.tensor(y_test.reshape(-1, 1), dtype=torch.float32)
+    # Convert to tensors with final NaN/Inf guards
+    def to_tensor_safe(arr, is_target=False):
+        if arr is None or len(arr) == 0:
+            return torch.empty((0, 1), dtype=torch.float32) if is_target else torch.empty((0, args.window_size, len(all_features)), dtype=torch.float32)
+        arr = np.where(np.isfinite(arr), arr, 0.0)
+        if is_target:
+            arr = arr.reshape(-1, 1)
+        return torch.tensor(arr, dtype=torch.float32)
+
+    X_train_t = to_tensor_safe(X_train)
+    y_train_t = to_tensor_safe(y_train, is_target=True)
+    X_val_t = to_tensor_safe(X_val)
+    y_val_t = to_tensor_safe(y_val, is_target=True)
+    X_test_t = to_tensor_safe(X_test)
+    y_test_t = to_tensor_safe(y_test, is_target=True)
+
     train_loader = DataLoader(TensorDataset(X_train_t, y_train_t), batch_size=args.batch_size, shuffle=True)
     val_loader = DataLoader(TensorDataset(X_val_t, y_val_t), batch_size=args.batch_size)
     test_loader = DataLoader(TensorDataset(X_test_t, y_test_t), batch_size=args.batch_size)
+    n_train = len(train_loader.dataset)
+    n_val = len(val_loader.dataset)
+    n_test = len(test_loader.dataset)
+    if n_train == 0:
+        print("Warning: No training samples available after preprocessing. Training will be skipped.")
+    if n_val == 0:
+        print("Warning: No validation samples available after preprocessing. Early stopping will be ineffective.")
+    if n_test == 0:
+        print("Warning: No test samples available after preprocessing. Test evaluation will be skipped.")
     model_dir = "saved_models_pytorch"
     os.makedirs(model_dir, exist_ok=True)
 
@@ -229,20 +253,35 @@ def main(args):
             optimizer = optim.Adam(model.parameters(), lr=0.001)
             early_stopper = EarlyStopping(patience=args.patience, restore_best_weights=True)
             history = {'loss': [], 'val_loss': []}
+            if n_train == 0:
+                print("Skipping training due to empty training set.")
             for epoch in range(args.epochs):
                 model.train()
                 epoch_loss = 0
                 for X_batch, y_batch in train_loader:
-                    X_batch, y_batch = X_batch.to(device), y_batch.to(device)
+                    if X_batch.numel() == 0:
+                        continue
+                    X_batch, y_batch = X_batch.to(device, non_blocking=True), y_batch.to(device, non_blocking=True)
                     optimizer.zero_grad()
                     y_pred = model(X_batch)
+                    # Align shapes defensively (e.g., (N,1) vs (N,))
+                    if y_pred.shape != y_batch.shape:
+                        y_pred = y_pred.view_as(y_batch)
+                    # Guard against NaNs/Infs
+                    if not torch.isfinite(y_pred).all():
+                        y_pred = torch.where(torch.isfinite(y_pred), y_pred, torch.zeros_like(y_pred))
+                    if not torch.isfinite(y_batch).all():
+                        y_batch = torch.where(torch.isfinite(y_batch), y_batch, torch.zeros_like(y_batch))
                     loss = criterion(y_pred, y_batch)
                     loss.backward()
+                    # Gradient clipping to avoid exploding gradients (prevents hangs)
+                    torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
                     optimizer.step()
                     epoch_loss += loss.item() * X_batch.size(0)
                 
                 val_metrics = evaluate_model(model, val_loader, criterion, device)
-                train_loss = epoch_loss / len(train_loader.dataset)
+                denom = max(len(train_loader.dataset), 1)
+                train_loss = epoch_loss / denom
                 val_loss = val_metrics['MSE'] 
                 history['loss'].append(train_loss)
                 history['val_loss'].append(val_loss)
