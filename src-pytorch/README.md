@@ -8,17 +8,12 @@ This project now uses PyTorch. Install dependencies with either Conda (`environm
 
 ```txt
 torch
-torchvision
+tensorboard
 pandas
 numpy
 scikit-learn
 scipy
-fastparquet
 matplotlib
-seaborn
-tensorboard
-tqdm
-jupyter
 ```
 
 Optional GPU: install the CUDA build of PyTorch from pytorch.org per your driver/version.

@@ -33,7 +33,7 @@ def main(args):
     # Prepare data
     stations = ["Station1", "Station2", "Station3", "Station4", "Station5", "Station6"]
     target_station = stations[-1]
-    
+
     train_loader, val_loader, test_loader, all_features, input_dim, data_shape = (
         prepare_dataloaders(
             stations=stations,
@@ -97,7 +97,17 @@ def main(args):
                 model = model_class(input_dim=input_dim)
 
             trainer = Trainer(
-                model, criterion, device, model_name=model_name, log_dir="logs", lr=0.001, patience=args.patience
+                model,
+                criterion,
+                device,
+                model_name=model_name,
+                log_dir="logs",
+                lr=0.001,
+                patience=args.patience,
+                window_size=args.window_size,
+                offset=args.offset,
+                predictors="_".join(predictors_list),
+                predict_features=args.predict_features.replace(",", "_"),
             )
             history = trainer.fit(train_loader, val_loader, epochs=args.epochs)
 
@@ -119,7 +129,7 @@ def main(args):
                 args.offset,
                 history,
                 feature_str,
-                label_str=args.predict_features.replace(",", "_")
+                label_str=args.predict_features.replace(",", "_"),
             )
 
         # Print and save metrics
