@@ -149,7 +149,7 @@ def main(args):
             print(f"  -> MSE: {perf.get('MSE', 'N/A')}, CORR: {perf.get('CORR', 'N/A')}")
 
     stations = ['Station1', 'Station2', 'Station3', 'Station4', 'Station5', 'Station6']
-    target_station = 'Station6'
+    target_station = stations[-1]
     raw_dfs = read_and_process_csvs()
     engineered_dfs = engineer_features(raw_dfs)
     engineered_dfs, val_df, test_df = split_and_stack_data(engineered_dfs, test_station_name=target_station)
