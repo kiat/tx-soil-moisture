@@ -12,8 +12,8 @@ def main(args):
     # Input validation
     if args.window_size <= 0:
         raise ValueError(f"window_size must be positive, got {args.window_size}")
-    if args.offset <= 0:
-        raise ValueError(f"offset must be positive, got {args.offset}")
+    if args.offset < 0:
+        raise ValueError(f"offset must be non-negative, got {args.offset}")
     if args.epochs <= 0:
         raise ValueError(f"epochs must be positive, got {args.epochs}")
     if args.batch_size <= 0:
