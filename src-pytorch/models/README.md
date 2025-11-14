@@ -247,6 +247,83 @@ for name in requested_ids:
         print(f"Warning: Model '{name}' not found")
 ```
 
+## Logging Structure
+
+When training models, TensorBoard logs are automatically organized in a hierarchical directory structure for easy experiment tracking:
+
+```
+logs/
+├── ws48_offset24/              # Window size 48, offset 24
+│   ├── lstm/                   # Model type
+│   │   ├── SWC_20-SWC_20/     # Predictors-Predictions
+│   │   ├── Ppt,Tair-SWC_20/   # Multiple predictors
+│   │   └── ...
+│   ├── bilstm/
+│   │   └── ...
+│   └── ...
+├── ws72_offset24/              # Different window configuration
+│   └── ...
+└── ...
+```
+
+### Directory Hierarchy
+
+**Level 1: Window Configuration** - `ws{window_size}_offset{offset}/`
+
+-   Groups experiments by temporal settings
+-   Example: `ws48_offset24` = 48-hour window, 24-hour prediction offset
+
+**Level 2: Model Architecture** - `{model}/`
+
+-   Organizes by model type (lstm, bilstm, cnn, etc.)
+-   All models registered in the registry
+
+**Level 3: Feature Configuration** - `{predictors}-{predictions}/`
+
+-   Separates experiments by input/output features
+-   Predictors: comma-separated list of input features
+-   Predictions: comma-separated list of target features
+-   Examples:
+    -   `SWC_20-SWC_20`: Autoregressive (predict SWC_20 from itself)
+    -   `Ppt,Tair-SWC_20`: Predict soil moisture from precipitation and air temperature
+    -   `SWC_20,Ppt,Tair-SWC_20,SWC_40`: Multiple predictors and targets
+
+### Usage with TensorBoard
+
+View all experiments:
+
+```bash
+tensorboard --logdir=logs/
+```
+
+View specific window configuration:
+
+```bash
+tensorboard --logdir=logs/ws48_offset24/
+```
+
+Compare models for specific feature set:
+
+```bash
+tensorboard --logdir=logs/ws48_offset24/*/SWC_20-SWC_20/
+```
+
+### Daily Average Outputs
+
+When `daily_average_output=True`, predicted feature names include `_daily_avg` suffix:
+
+-   Input: `predict_features="SWC_20"`
+-   Logged as: `SWC_20_daily_avg-SWC_20_daily_avg`
+-   This indicates the model predicts daily averaged values rather than instantaneous measurements
+
+### Benefits
+
+1. **Organization**: Easy to navigate hundreds of experiments
+2. **Comparison**: TensorBoard can compare runs within same directory
+3. **Reproducibility**: Path clearly indicates configuration
+4. **Filtering**: Use wildcards to view specific subsets
+5. **Scalability**: Structure handles arbitrary feature combinations
+
 ## Adding New Models
 
 ### Step 1: Create the model class

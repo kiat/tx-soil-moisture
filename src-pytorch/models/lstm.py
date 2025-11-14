@@ -199,7 +199,7 @@ class MultiHeadLSTM(BaseModel):
         num_heads will be automatically adjusted to divide 32 evenly.
     """
 
-    def __init__(self, input_dim, num_heads=4):
+    def __init__(self, input_dim, num_heads=4, output_dim=1):
         super().__init__()
         if input_dim <= 0:
             raise ValueError(f"input_dim must be positive, got {input_dim}")
@@ -226,7 +226,7 @@ class MultiHeadLSTM(BaseModel):
         # Pooling and decoder
         self.pool = nn.AdaptiveAvgPool1d(1)
         self.fc1 = nn.Linear(32, 8)
-        self.fc2 = nn.Linear(8, 1)
+        self.fc2 = nn.Linear(8, output_dim)
         self.relu = nn.ReLU()
 
     def forward(self, x):

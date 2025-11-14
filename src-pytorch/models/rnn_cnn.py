@@ -43,7 +43,7 @@ class RNNModel(BaseModel):
         due to vanishing gradient problems. Good for short-term dependencies.
     """
 
-    def __init__(self, input_dim):
+    def __init__(self, input_dim, output_dim=1):
         super().__init__()
         if input_dim <= 0:
             raise ValueError(f"input_dim must be positive, got {input_dim}")
@@ -56,7 +56,7 @@ class RNNModel(BaseModel):
 
         # MLP decoder
         self.fc1 = nn.Linear(32, 8)
-        self.fc2 = nn.Linear(8, 1)
+        self.fc2 = nn.Linear(8, output_dim)
         self.relu = nn.ReLU()
 
     def forward(self, x):
@@ -102,7 +102,7 @@ class CNNModel(BaseModel):
         robust to different sequence lengths.
     """
 
-    def __init__(self, input_dim):
+    def __init__(self, input_dim, output_dim=1):
         super().__init__()
         if input_dim <= 0:
             raise ValueError(f"input_dim must be positive, got {input_dim}")
@@ -120,7 +120,7 @@ class CNNModel(BaseModel):
 
         # MLP decoder
         self.fc1 = nn.Linear(32, 8)
-        self.fc2 = nn.Linear(8, 1)
+        self.fc2 = nn.Linear(8, output_dim)
         self.tanh = nn.Tanh()
         self.flatten = nn.Flatten()
 

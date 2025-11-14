@@ -43,7 +43,7 @@ class Trainer:
         if window_size is not None and offset is not None:
             run_config = f"ws{window_size}_offset{offset}"
             feature_combo = (
-                f"{predictors}_{predict_features}"
+                f"{predictors}-{predict_features}"
                 if predictors and predict_features
                 else "default"
             )

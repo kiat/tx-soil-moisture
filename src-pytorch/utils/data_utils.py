@@ -56,7 +56,11 @@ def prepare_dataloaders(
         def normalize_features(df, features, scaler):
             return df, None
 
-        def data_to_X_y(df, window, offset, ):
+        def data_to_X_y(
+            df,
+            window,
+            offset,
+        ):
             return np.random.rand(50, window, len(df.columns)), np.random.rand(50)
 
     # --- Feature Setup ---
@@ -71,13 +75,23 @@ def prepare_dataloaders(
         else ["SWC_20", "T_20", "Ppt", "Tair", "Wx", "Wy"]
     )
 
-    # Combine all features for Xy data preparation
-    all_features = np.concatenate([predictors, labels_list])
-    indices = [int(np.where(all_features == f)[0][0]) for f in labels_list]
+    # Combine all features for data loading (predictors + labels)
+    # We need both in the dataframe, but X will only use predictors
+    all_features = list(predictors)
+    for label in labels_list:
+        if label not in all_features:
+            all_features.append(label)
+    all_features = np.array(all_features)
+
+    # Find indices for predictors (for X) and labels (for y) in all_features
+    predictor_indices = [int(np.where(all_features == f)[0][0]) for f in predictors]
+    label_indices = [int(np.where(all_features == f)[0][0]) for f in labels_list]
 
     # Load and process data
     raw_dfs = read_and_process_csvs()
-    engineered_dfs = engineer_features(raw_dfs, daily_average=predict_avg, predict_features=predict_features.split(","))
+    engineered_dfs = engineer_features(
+        raw_dfs, daily_average=predict_avg, predict_features=predict_features.split(",")
+    )
     train_dfs, val_dfs, test_df = split_and_stack_data(
         engineered_dfs, test_station_name=target_station
     )
@@ -86,32 +100,48 @@ def prepare_dataloaders(
     train_data_x, train_data_y = [], []
     for df in train_dfs:
         scaled_train, data_scaler = normalize_features(df, all_features)
-        X_train_part, y_train_part = data_to_X_y(scaled_train, window_size, offset, label_width, indices)
-        
+        X_train_part, y_train_part = data_to_X_y(
+            scaled_train,
+            window_size,
+            offset,
+            label_width,
+            label_indices,
+            predictor_indices,
+        )
+
         X_train_part = X_train_part[::training_stride]
         y_train_part = y_train_part[::training_stride]
-        
+
         train_data_x.append(X_train_part)
         train_data_y.append(y_train_part)
     X_train = np.concatenate(train_data_x, axis=0)
     y_train = np.concatenate(train_data_y, axis=0)
-    
+
     # Prepare validation set
     val_data_x, val_data_y = [], []
     for df in val_dfs:
         scaled, _ = normalize_features(df, all_features, scaler=data_scaler)
-        X_part, y_part = data_to_X_y(scaled, window_size, offset, label_width, indices)
+        X_part, y_part = data_to_X_y(
+            scaled, window_size, offset, label_width, label_indices, predictor_indices
+        )
         X_part = X_part[::validation_stride]
         y_part = y_part[::validation_stride]
         val_data_x.append(X_part)
         val_data_y.append(y_part)
     X_val = np.concatenate(val_data_x, axis=0)
     y_val = np.concatenate(val_data_y, axis=0)
-    
+
     # Prepare test set
     scaled_test, _ = normalize_features(test_df, all_features, scaler=data_scaler)
-    X_test, y_test = data_to_X_y(scaled_test, window_size, offset, label_width, indices)
+    X_test, y_test = data_to_X_y(
+        scaled_test, window_size, offset, label_width, label_indices, predictor_indices
+    )
 
+    # Squeeze label_width dimension if it's 1 to get shape (samples, num_labels)
+    if label_width == 1:
+        y_train = y_train.squeeze(1)
+        y_val = y_val.squeeze(1)
+        y_test = y_test.squeeze(1)
 
     # Convert to tensors
     X_train_t = torch.tensor(X_train, dtype=torch.float32)
@@ -128,13 +158,18 @@ def prepare_dataloaders(
     val_loader = DataLoader(TensorDataset(X_val_t, y_val_t), batch_size=batch_size)
     test_loader = DataLoader(TensorDataset(X_test_t, y_test_t), batch_size=batch_size)
 
-    input_dim = len(all_features)
+    # input_dim should be the actual number of features in the input data, not all_features length
+    input_dim = X_train_t.shape[2]
+
+    # Calculate output dimension (number of features to predict)
+    output_dim = y_train_t.shape[1] if len(y_train_t.shape) > 1 else 1
 
     # Data shape info for special models (e.g., ILSTM_Soil)
     data_shape = {
         "batch_size": X_train_t.shape[0],
         "time_steps": X_train_t.shape[1],
         "num_features": X_train_t.shape[2],
+        "output_dim": output_dim,
     }
 
     return train_loader, val_loader, test_loader, all_features, input_dim, data_shape
@@ -154,7 +189,9 @@ def get_output_helpers():
         def write_loss_history_to_csv(*args):
             pass
 
-        def write_model_results_to_csv(station, model_name, ws, offset, perf, features, labels):
+        def write_model_results_to_csv(
+            station, model_name, ws, offset, perf, features, labels
+        ):
             print(f"DUMMY_WRITE: Writing results for {model_name}...")
             print(
                 f"  -> MSE: {perf.get('MSE', 'N/A')}, CORR: {perf.get('CORR', 'N/A')}"

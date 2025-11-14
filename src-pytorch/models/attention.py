@@ -46,7 +46,7 @@ class AttentionLSTM(BaseModel):
         (batch_size, 1)
     """
 
-    def __init__(self, input_dim):
+    def __init__(self, input_dim, output_dim=1):
         super().__init__()
         if input_dim <= 0:
             raise ValueError(f"input_dim must be positive, got {input_dim}")
@@ -67,7 +67,7 @@ class AttentionLSTM(BaseModel):
 
         # MLP decoder
         self.fc1 = nn.Linear(32, 8)
-        self.fc2 = nn.Linear(8, 1)
+        self.fc2 = nn.Linear(8, output_dim)
         self.relu = nn.ReLU()
 
     def forward(self, x):
@@ -114,7 +114,7 @@ class AttentionOnly(BaseModel):
         divide input_dim for proper multi-head attention operation.
     """
 
-    def __init__(self, input_dim):
+    def __init__(self, input_dim, output_dim=1):
         super().__init__()
         if input_dim <= 0:
             raise ValueError(f"input_dim must be positive, got {input_dim}")
@@ -137,7 +137,7 @@ class AttentionOnly(BaseModel):
         # Pooling and decoder
         self.pool = nn.AdaptiveAvgPool1d(1)
         self.fc1 = nn.Linear(input_dim, 64)
-        self.fc2 = nn.Linear(64, 1)
+        self.fc2 = nn.Linear(64, output_dim)
         self.relu = nn.ReLU()
 
     def forward(self, x):

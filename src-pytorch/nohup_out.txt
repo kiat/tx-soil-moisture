@@ -1,6 +1,0 @@
-/home/vincent/miniconda3/envs/tx-soil-pytorch/lib/python3.9/site-packages/pandas/core/arraylike.py:399: RuntimeWarning: invalid value encountered in log1p
-  result = getattr(ufunc, method)(*inputs, **kwargs)
-/home/vincent/miniconda3/envs/tx-soil-pytorch/lib/python3.9/site-packages/torch/nn/modules/loss.py:616: UserWarning: Using a target size (torch.Size([32, 1, 1])) that is different to the input size (torch.Size([32, 1])). This will likely lead to incorrect results due to broadcasting. Please ensure they have the same size.
-  return F.mse_loss(input, target, reduction=self.reduction)
-/home/vincent/miniconda3/envs/tx-soil-pytorch/lib/python3.9/site-packages/torch/nn/modules/loss.py:616: UserWarning: Using a target size (torch.Size([4, 1, 1])) that is different to the input size (torch.Size([4, 1])). This will likely lead to incorrect results due to broadcasting. Please ensure they have the same size.
-  return F.mse_loss(input, target, reduction=self.reduction)
