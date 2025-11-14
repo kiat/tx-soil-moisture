@@ -44,7 +44,7 @@ class AR(BaseModel):
         for stationary time series with strong autoregressive properties.
     """
 
-    def __init__(self, input_dim):
+    def __init__(self, input_dim, output_dim=1):
         super().__init__()
         if input_dim <= 0:
             raise ValueError(f"input_dim must be positive, got {input_dim}")
@@ -54,7 +54,7 @@ class AR(BaseModel):
 
         # Two-layer MLP
         self.fc1 = nn.Linear(input_dim, 64)
-        self.fc2 = nn.Linear(64, 1)
+        self.fc2 = nn.Linear(64, output_dim)
         self.relu = nn.ReLU()
 
     def forward(self, x):
@@ -103,7 +103,7 @@ class TransformerModel(BaseModel):
         data than RNNs to train effectively.
     """
 
-    def __init__(self, input_dim, num_heads=4):
+    def __init__(self, input_dim, num_heads=4, output_dim=1):
         super().__init__()
         if input_dim <= 0:
             raise ValueError(f"input_dim must be positive, got {input_dim}")
@@ -135,7 +135,7 @@ class TransformerModel(BaseModel):
         # Pooling and decoder
         self.pool = nn.AdaptiveAvgPool1d(1)
         self.fc1 = nn.Linear(d_model, 32)
-        self.fc2 = nn.Linear(32, 1)
+        self.fc2 = nn.Linear(32, output_dim)
         self.relu = nn.ReLU()
 
     def forward(self, x):

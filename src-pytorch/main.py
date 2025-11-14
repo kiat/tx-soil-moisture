@@ -32,7 +32,30 @@ def main(args):
 
     # Prepare data
     stations = ["Station1", "Station2", "Station3", "Station4", "Station5", "Station6"]
-    target_station = stations[-1]
+
+    # Set target station based on argument (1-6 maps to Station1-Station6)
+    if args.target_station < 1 or args.target_station > 6:
+        raise ValueError(
+            f"target_station must be between 1 and 6, got {args.target_station}"
+        )
+    target_station = stations[args.target_station - 1]
+    print(f"Target station: {target_station}")
+
+    # Prepare prediction feature names (with _daily_avg suffix if needed)
+    # When daily_average_output=True:
+    #   - User specifies: --predict_features "SWC_20,Ppt"
+    #   - engineer_features creates: SWC_20_daily_avg, Ppt_daily_avg columns
+    #   - Models predict: SWC_20_daily_avg, Ppt_daily_avg (daily means)
+    #   - Logs/files saved with: "SWC_20_daily_avg_Ppt_daily_avg" suffix
+    predict_features_list = (
+        args.predict_features.split(",") if args.predict_features else ["SWC_20"]
+    )
+    if args.daily_average_output:
+        predict_features_display = [f"{f}_daily_avg" for f in predict_features_list]
+    else:
+        predict_features_display = predict_features_list
+
+    predict_features_str = "_".join(predict_features_display)
 
     train_loader, val_loader, test_loader, all_features, input_dim, data_shape = (
         prepare_dataloaders(
@@ -91,10 +114,14 @@ def main(args):
             if model_name == "ilstmsoil":
                 T = data_shape["time_steps"]
                 N = data_shape["num_features"]
-                print(f"Input shape for ILSTM_Soil: T={T}, N={N}")
-                model = model_class(time_steps=T, num_features=N)
+                output_dim = data_shape["output_dim"]
+                print(
+                    f"Input shape for ILSTM_Soil: T={T}, N={N}, output_dim={output_dim}"
+                )
+                model = model_class(time_steps=T, num_features=N, output_dim=output_dim)
             else:
-                model = model_class(input_dim=input_dim)
+                output_dim = data_shape["output_dim"]
+                model = model_class(input_dim=input_dim, output_dim=output_dim)
 
             trainer = Trainer(
                 model,
@@ -107,7 +134,7 @@ def main(args):
                 window_size=args.window_size,
                 offset=args.offset,
                 predictors="_".join(predictors_list),
-                predict_features=args.predict_features.replace(",", "_"),
+                predict_features=predict_features_str,
             )
             history = trainer.fit(train_loader, val_loader, epochs=args.epochs)
 
@@ -129,7 +156,7 @@ def main(args):
                 args.offset,
                 history,
                 feature_str,
-                label_str=args.predict_features.replace(",", "_"),
+                label_str=predict_features_str,
             )
 
         # Print and save metrics
@@ -220,6 +247,12 @@ if __name__ == "__main__":
         type=str,
         default="bilstm",
         help="Comma-separated list of model names to run.",
+    )
+    parser.add_argument(
+        "--target_station",
+        type=int,
+        default=6,
+        help="Target station number (1-6, corresponding to Station1-Station6).",
     )
 
     args = parser.parse_args()

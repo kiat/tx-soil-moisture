@@ -98,6 +98,7 @@ Parameters:
 | `--predict_features`     | Targets to predict                     | `SWC_20`                                                     |
 | `--daily_average_output` | Output daily averages (flag)           | `False`                                                      |
 | `--model_names`          | Comma-separated model names (registry) | `bilstm`                                                     |
+| `--target_station`       | Target Station Number                  |`6`                                                          |
 
 ---
 
