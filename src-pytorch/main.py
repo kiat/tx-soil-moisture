@@ -136,7 +136,7 @@ def main(args):
         from core.evaluation_helpers import write_loss_history_to_csv, write_model_results_to_csv
     except ImportError:
         print("Warning: 'core' module not found. Using placeholder data and dummy output functions.")
-        def read_and_process_csvs(): return {f'Station{i+1}': pd.DataFrame(np.random.rand(100, 6), columns=['SWC_20', 'T_20', 'Ppt', 'Tair', 'Wx', 'Wy']) for i in range(6)}
+        def read_and_process_csvs(): return {f'Station{i+1}': pd.DataFrame(np.random.rand(100, 4), columns=['SWC_20', 'T_20', 'Ppt', 'Tair']) for i in range(6)}
         def engineer_features(dfs): return dfs
         def split_and_stack_data(dfs, test_station_name): return dfs, dfs[test_station_name], dfs[test_station_name]
         def normalize_features(df, features): return df, None
@@ -149,11 +149,11 @@ def main(args):
             print(f"  -> MSE: {perf.get('MSE', 'N/A')}, CORR: {perf.get('CORR', 'N/A')}")
 
     stations = ['Station1', 'Station2', 'Station3', 'Station4', 'Station5', 'Station6']
-    target_station = stations[-1]
+    target_station = 'Station6'
     raw_dfs = read_and_process_csvs()
     engineered_dfs = engineer_features(raw_dfs)
     engineered_dfs, val_df, test_df = split_and_stack_data(engineered_dfs, test_station_name=target_station)
-    all_features = args.features.split(',') if args.features else ['SWC_20', 'T_20', 'Ppt', 'Tair', 'Wx', 'Wy']
+    all_features = args.features.split(',') if args.features else ['SWC_20', 'T_20', 'Ppt', 'Tair']
 
     # --- Prepare data and convert to PyTorch Tensors ---
     # Process validation data (list of DataFrames)
@@ -313,7 +313,7 @@ if __name__ == "__main__":
     parser.add_argument('--epochs', type=int, default=50, help='Maximum number of training epochs.')
     parser.add_argument('--patience', type=int, default=5, help='Patience for early stopping.')
     parser.add_argument('--batch_size', type=int, default=32, help='Batch size for training and evaluation.')
-    parser.add_argument("--features", type=str, default="SWC_20,T_20,Ppt,Tair,Wx,Wy", help="Comma-separated list of features to use.")
+    parser.add_argument("--features", type=str, default="SWC_20,T_20,Ppt,Tair", help="Comma-separated list of features to use.")
     parser.add_argument("--model_names", type=str, default="LSTM,CNN,BiLSTM,RNN,AttentionLSTM,AR,Baseline", help="Comma-separated list of model names to run.")
     
     # New label generation parameters
