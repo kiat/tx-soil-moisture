@@ -25,6 +25,10 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error
 warnings.filterwarnings("ignore")
 OUT_DIR = Path("output")
 OUT_DIR.mkdir(exist_ok=True)
+ALL_PARAMS = [
+    "SWC_5", "SWC_10", "SWC_20", "SWC_50",
+    "T_5", "T_10", "T_20", "T_50",
+]
 
 
 def load_cleaned_data(station_id, directory = "./output"):
@@ -75,25 +79,36 @@ def fill_station(sta, params, donor_ids, win_days=14):
     detail_rows = []
 
     for p in params:
+        if p not in df_tgt.columns:
+            print(f"\n[Param] {p}")
+            print("  • Parameter missing in target station – skip")
+            continue
+
+        available_donors = {sid: df for sid, df in donors.items() if p in df.columns}
+        if not available_donors:
+            print(f"\n[Param] {p}")
+            print("  • No donors with this parameter – skip")
+            continue
+
         print(f"\n[Param] {p}")
         gaps = filter_very_long_gaps(missing, p)
         if gaps.empty:
             print("  • No ≥30-day gaps – skip"); continue
 
         donor_sid, r = choose_best_donor(df_tgt[p],
-                                         {sid: donors[sid][p] for sid in donors})
+                                         {sid: df[p] for sid, df in available_donors.items()})
         if donor_sid is None:
             print("  • No donor with ≥500 h overlap – skip"); continue
         print(f"  • donor S{donor_sid}  |r|={r:.3f}")
 
-        model = fit_linear_map(df_tgt[p], donors[donor_sid][p])
+        model = fit_linear_map(df_tgt[p], available_donors[donor_sid][p])
         a, b  = model.coef_[0], model.intercept_
         print(f"    y ≈ {a:.3f}·x + {b:.3f}")
 
         for _, g in gaps.iterrows():
             start, end = g["Start Timestamp"], g["End Timestamp"]
             idx = pd.date_range(start, end, freq="H")
-            x   = donors[donor_sid].loc[idx, p].dropna()
+            x   = available_donors[donor_sid].loc[idx, p].dropna()
             if x.empty:  # donor also missing
                 continue
             preds = model.predict(x.values.reshape(-1, 1))
@@ -113,14 +128,14 @@ def fill_station(sta, params, donor_ids, win_days=14):
         print(f"    gaps filled, NaN left {nan_left}")
 
         # quick 10 % CV
-        joint = df_tgt[p].notna() & donors[donor_sid][p].notna()
+        joint = df_tgt[p].notna() & available_donors[donor_sid][p].notna()
         if joint.sum() >= 100:
             idx = joint[joint].sample(frac=0.1, random_state=0).index
             mae = mean_absolute_error(df_tgt.loc[idx,p],
-                                      model.predict(donors[donor_sid]
+                                      model.predict(available_donors[donor_sid]
                                                     .loc[idx,p].values.reshape(-1,1)))
             rmse = mean_squared_error(df_tgt.loc[idx,p],
-                                      model.predict(donors[donor_sid]
+                                      model.predict(available_donors[donor_sid]
                                                     .loc[idx,p].values.reshape(-1,1)),
                                       squared=False)
             print(f"    CV  MAE={mae:.4f}  RMSE={rmse:.4f}")
@@ -145,7 +160,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     STATIONS = [1,2,3,4,5,6] if args.station is None else [args.station]
-    PARAMS   = ["SWC_5","SWC_10","SWC_20","SWC_50"] if args.param is None else [args.param]
+    PARAMS   = ALL_PARAMS if args.param is None else [args.param]
     donors_all = [1,2,3,4,5,6]  
 
     for sid in STATIONS:

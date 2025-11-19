@@ -1,15 +1,19 @@
 # -----------------------------------------------------------
 # Shortgaps.py  –  fill every <24‑hour gap via time interpolation
 # -----------------------------------------------------------
-#   python Shortgaps.py                             # ALL stations & ALL SWC columns
-#   python Shortgaps.py --station 2                 # only Station 2
-#   python Shortgaps.py --param SWC_10              # all stations, only SWC_10
-#   python Shortgaps.py --station 3 --param SWC_50  # just that combo
+#   python Shortgaps.py                                     # ALL stations & ALL SWC/T columns
+#   python Shortgaps.py --station 2                         # only Station 2 (SWC + T)
+#   python Shortgaps.py --param SWC_10 T_20                 # all stations, only these columns
+#   python Shortgaps.py --station 3 --param SWC_50 T_10     # just that combo
 #
 # Output files (per station)
 #    output/StationX_filled_shortgaps.csv            – cleaned series after filling
 #    output/StationX_shortgap_fill_detail.csv        – long‑form table of every value written
+# Notes
+#- Soil moisture (SWC_5/10/20/50) uses PCHIP interpolation (existing behavior).
+#- Soil temperature (T_5/10/20/50) uses time-based interpolation for smoother diurnal shape.
 # -----------------------------------------------------------
+
 
 
 # Import libraries
@@ -52,14 +56,14 @@ def time_interpolate(series, start_ts, end_ts, method="pchip"):
     return s.loc[start_ts:end_ts]
 
 # 4. Fill short gaps
-def fill_short_gaps(series, gap_df, gap_log, *, station_id, param):
+def fill_short_gaps(series, gap_df, gap_log, *, station_id, param, interp_method="pchip"):
     filled = series.copy()
     for _, row in gap_df.iterrows():
         start_ts = pd.to_datetime(row["Start Timestamp"])
         end_ts   = pd.to_datetime(row["End Timestamp"])
         idx      = pd.date_range(start_ts, end_ts, freq="H")
 
-        new_vals = time_interpolate(filled, start_ts, end_ts)
+        new_vals = time_interpolate(filled, start_ts, end_ts, method=interp_method)
         filled.loc[idx] = new_vals.values   # write back
 
         # --- log each written value ---
@@ -85,8 +89,19 @@ def process_station(station_id, parameters):
         if sgaps.empty:
             print(f"  {param}: no <24h gaps")
             continue
-        print(f"  {param}: filling {len(sgaps)} gaps")
-        df[param] = fill_short_gaps(df[param], sgaps, gap_log, station_id=station_id, param=param)
+        # Choose interpolation method per parameter family
+        #  - SWC_* -> PCHIP (existing)
+        #  - T_*   -> time-based interpolation
+        if isinstance(param, str) and param.startswith("T_"):
+            interp_method = "time"
+        else:
+            interp_method = "pchip"
+
+        print(f"  {param}: filling {len(sgaps)} gaps (method={interp_method})")
+        df[param] = fill_short_gaps(
+            df[param], sgaps, gap_log,
+            station_id=station_id, param=param, interp_method=interp_method
+        )
         any_filled = True
 
     OUT_DIR.mkdir(exist_ok=True)
@@ -116,7 +131,7 @@ def parse_args():
     p.add_argument("--station", type=int, nargs="*", default=None,
                    help="Station IDs (omit for all discovered).")
     p.add_argument("--param", type=str, nargs="*", default=None,
-                   help="SWC columns (omit for SWC_5 10 20 50).")
+                   help="Columns to fill. Omit for SWC_5/10/20/50 and T_5/10/20/50.")
     return p.parse_args()
 
 
@@ -124,7 +139,12 @@ def parse_args():
 def main():
     args = parse_args()
     stations   = args.station if args.station else discover_stations()
-    parameters = args.param   if args.param else ["SWC_5","SWC_10","SWC_20","SWC_50"]
+    # Default: fill both soil moisture and soil temperature short gaps
+    default_params = [
+        "SWC_5","SWC_10","SWC_20","SWC_50",
+        "T_5","T_10","T_20","T_50",
+    ]
+    parameters = args.param   if args.param else default_params
 
     print("Stations :", stations)
     print("Parameters:", parameters, "\n")

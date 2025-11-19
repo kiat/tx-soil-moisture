@@ -2,7 +2,7 @@
 # Mediumgaps.py  -  Fill 24‑ to 168‑hour gaps via SARIMAX
 # -----------------------------------------------------------
 # usage examples
-#    python Mediumgaps.py                       # all stations & all SWC columns
+#    python Mediumgaps.py                       # all stations & all SWC T columns
 #    python Mediumgaps.py --station 2           # only station 2
 #    python Mediumgaps.py --param SWC_20        # all stations, only SWC_20
 #    python Mediumgaps.py --station 3 --param SWC_50  # specific combo
@@ -137,7 +137,24 @@ def fill_medium_gaps(series, gaps, exog, gap_log, station, param, ctx_days=7):
         e_ts = row["End Timestamp"]
         idx = pd.date_range(s_ts, e_ts, freq="H")
 
-        fc, _ = sarima_forecast(filled, s_ts, e_ts, exog, ctx_days)
+        # For temperature params, prepare a training-ready series by filling NaNs ONLY
+        # in the training window to maintain hourly regularity when dropna() is applied
+        y_for_model = filled
+        if isinstance(param, str) and param.startswith("T_"):
+            train_start = s_ts - timedelta(days=ctx_days)
+            train_end   = s_ts - timedelta(hours=1)
+            y_input = filled.copy()
+            if train_start < y_input.index.min():
+                train_start = y_input.index.min()
+            if train_end > y_input.index.max():
+                train_end = y_input.index.max()
+            if train_start <= train_end:
+                seg = y_input.loc[train_start:train_end]
+                seg_filled = seg.interpolate(limit_direction="both").ffill().bfill()
+                y_input.loc[train_start:train_end] = seg_filled
+            y_for_model = y_input
+
+        fc, _ = sarima_forecast(y_for_model, s_ts, e_ts, exog, ctx_days)
         if fc is None:
             continue
         # Smooth edges between original and predicted values
@@ -164,6 +181,10 @@ def process_station(station, params):
     miss_tbl = load_missing_data(station)
     df_ref = load_cleaned_data(3)  # Ppt fallback
 
+    # Regularize indices to avoid frequency issues
+    df = ensure_hourly_regular_index(df)
+    df_ref = ensure_hourly_regular_index(df_ref)
+
     log = []
     any_fill = False
 
@@ -172,9 +193,15 @@ def process_station(station, params):
         if mgaps.empty:
             print(f"  {p}: no 24–168 h gaps")
             continue
-        print(f"  {p}: filling {len(mgaps)} gaps")
+        # Choose exogenous variables and any pre-processing based on parameter type
+        if isinstance(p, str) and p.startswith("T_"):
+            # Temperature: prefer Tair + Srad as exogenous
+            exog = get_exog(df, ref_df=df_ref, prefer=("Tair", "Srad"))
+        else:
+            # Soil moisture: keep existing Ppt exog behavior
+            exog = df["Ppt"].fillna(df_ref["Ppt"]).fillna(0)
 
-        exog = df["Ppt"].fillna(df_ref["Ppt"]).fillna(0)
+        print(f"  {p}: filling {len(mgaps)} gaps")
         df[p] = fill_medium_gaps(df[p], mgaps, exog, log, station, p)
         any_fill = True
 
@@ -187,6 +214,45 @@ def process_station(station, params):
     print(f"→ saved Station{station}_filled_mediumgaps.csv{status}\n")
 
 
+# --------------- helpers ---------------------------
+
+def ensure_hourly_regular_index(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Ensure the index is an hourly, continuous DateTimeIndex (no duplicates, sorted).
+    Keeps existing values and inserts NaNs for any missing timestamps.
+    """
+    if not isinstance(df.index, pd.DatetimeIndex):
+        df = df.copy()
+        df.index = pd.DatetimeIndex(df.index)
+    df = df[~df.index.duplicated(keep='first')].sort_index()
+    if len(df.index) == 0:
+        return df
+    full_idx = pd.date_range(df.index.min(), df.index.max(), freq='H')
+    return df.reindex(full_idx)
+
+
+def get_exog(df: pd.DataFrame, ref_df: pd.DataFrame | None = None, prefer=("Tair", "Srad")):
+    """
+    Build an exogenous variables DataFrame using preferred columns in order.
+    Returns a DataFrame with any available columns among `prefer`, aligned to df.index
+    and with NaNs filled to 0. Returns None if none found.
+    """
+    exog_series = []
+    for col in prefer:
+        s = None
+        if col in df.columns:
+            s = df[col]
+        elif ref_df is not None and col in ref_df.columns:
+            s = ref_df[col]
+        if s is not None:
+            exog_series.append(s.rename(col))
+    if not exog_series:
+        return None
+    X = pd.concat(exog_series, axis=1).reindex(df.index)
+    X = X.fillna(0.0)
+    return X
+
+
 # --------------- CLI helpers ---------------------------
 
 def discover_stations():
@@ -197,7 +263,7 @@ def discover_stations():
 def parse_args():
     p = argparse.ArgumentParser("Fill 24–168 h gaps via SARIMAX")
     p.add_argument("--station", type=int, nargs="*", help="station IDs")
-    p.add_argument("--param",   type=str, nargs="*", help="SWC columns")
+    p.add_argument("--param",   type=str, nargs="*", help="Columns to fill (SWC_* or T_*).")
     return p.parse_args()
 
 # --------------- main entry ----------------------------
@@ -205,7 +271,12 @@ def parse_args():
 def main():
     args = parse_args()
     stations = args.station if args.station else discover_stations()
-    params   = args.param if args.param else ["SWC_5", "SWC_10", "SWC_20", "SWC_50"]
+    # Default: fill both soil moisture and soil temperature medium gaps
+    default_params = [
+        "SWC_5", "SWC_10", "SWC_20", "SWC_50",
+        "T_5", "T_10", "T_20", "T_50",
+    ]
+    params   = args.param if args.param else default_params
 
     print("Stations :", stations)
     print("Parameters:", params, "\n")
