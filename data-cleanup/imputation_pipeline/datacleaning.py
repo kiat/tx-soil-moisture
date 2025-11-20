@@ -16,6 +16,23 @@ import pandas as pd
 
 warnings.filterwarnings("ignore")
 
+# Manual overrides for stations whose sensors reported bad-but-present readings
+# that we want to treat as contiguous missing intervals.
+MANUAL_GAP_RULES = {
+    5: [
+        {
+            "parameters": ["T_20"],
+            "start": "2015-01-01 00:00:00",
+            "end": "2016-02-20 12:00:00",
+        },
+        {
+            "parameters": ["T_5", "T_10", "T_20", "T_50"],
+            "start": "2018-04-14 20:00:00",
+            "end": "2018-05-15 08:00:00",
+        },
+    ]
+}
+
 def load_soil_data(station_id, base_dir):
     """Load soil station data (.dat) and return a datetime‐indexed DataFrame."""
     file_path = Path(base_dir) / f"SM_{station_id}.dat"
@@ -190,6 +207,38 @@ def create_missing_summary_df(info):
     return pd.DataFrame(rows)
 
 
+def inject_manual_gaps(station_id: int, summary_df: pd.DataFrame) -> pd.DataFrame:
+    """Append known bad stretches that should be treated as missing gaps."""
+    rules = MANUAL_GAP_RULES.get(station_id)
+    if not rules:
+        return summary_df
+
+    manual_rows = []
+    df = summary_df.copy()
+    for rule in rules:
+        start = pd.Timestamp(rule["start"])
+        end = pd.Timestamp(rule["end"])
+        hours = int((end - start) / pd.Timedelta(hours=1)) + 1
+        for param in rule["parameters"]:
+            overlap = (
+                (df["Parameter"] == param)
+                & (df["Start Timestamp"] <= end)
+                & (df["End Timestamp"] >= start)
+            )
+            df = df[~overlap]
+            manual_rows.append({
+                "Parameter": param,
+                "Start Timestamp": start,
+                "End Timestamp": end,
+                "Number Missing": hours,
+            })
+
+    if manual_rows:
+        df = pd.concat([df, pd.DataFrame(manual_rows)], ignore_index=True)
+        df = df.sort_values(["Parameter", "Start Timestamp"]).reset_index(drop=True)
+    return df
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Generate merged, missing/invalid summary, and cleaned full‐timeline CSVs for a soil station."
@@ -216,6 +265,7 @@ def main():
     corrected_df, wrong = find_and_replace_wrong_data(merged_df)
     combined = combine_nan_lists(missing, wrong)
     summary_df = create_missing_summary_df(combined)
+    summary_df = inject_manual_gaps(station_id, summary_df)
 
     miss_out = args.missing_output or f"missing_data/Station{station_id}_missing_data.csv"
     os.makedirs(Path(miss_out).parent, exist_ok=True)

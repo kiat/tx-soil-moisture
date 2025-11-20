@@ -4,7 +4,7 @@
 #   python Longgaps.py                     #   all stations, all SWC
 #   python Longgaps.py --station 2         #   only Station 2
 #   python Longgaps.py --param SWC_20      #   all stations, that param
-#   python Longgaps.py --station 1 --param SWC_50
+#   python Longgaps.py --station 1 --param T_20
 #
 #   Outputs (per station):
 #       output/StationX_filled_longgaps.csv      – full series after filling
@@ -25,14 +25,13 @@ from xgboost import XGBRegressor
 
 warnings.filterwarnings("ignore")
 
-# Path
-BASE_DIR  = Path(__file__).resolve().parent    
-CLEAN_DIR = BASE_DIR / "output"
-MISS_DIR  = BASE_DIR / "missing_data"
+BASE_DIR  = Path(__file__).resolve().parent
 OUT_DIR   = BASE_DIR / "output"
+MISS_DIR  = BASE_DIR / "missing_data"
+DEFAULT_PARAMS = ["SWC_5", "SWC_10", "SWC_20", "SWC_50",
+                  "T_5", "T_10", "T_20", "T_50"]
 
-
-def load_cleaned_data(station_id, directory=CLEAN_DIR):
+def load_cleaned_data(station_id, directory = OUT_DIR):
     filename = Path(directory) / f"Station{station_id}_filled_mediumgaps.csv"
     df = pd.read_csv(filename, parse_dates=[0], index_col=0)
     df.index = pd.DatetimeIndex(df.index, freq="H")
@@ -42,6 +41,29 @@ def load_missing_data(station_id, directory=MISS_DIR):
     filename = Path(directory) / f"Station{station_id}_missing_data.csv"
     df = pd.read_csv(filename, parse_dates=["Start Timestamp", "End Timestamp"])
     return df
+
+
+def ensure_driver_columns(df: pd.DataFrame, df_ref: pd.DataFrame) -> None:
+    """Make sure Ppt and Tair exist and are reasonably filled for modeling."""
+    # Precipitation drives both SWC and temperature context
+    ref_ppt = df_ref.get("Ppt", pd.Series(0, index=df_ref.index)).reindex(df.index)
+    if "Ppt" in df.columns:
+        df["Ppt"] = df["Ppt"].reindex(df.index).fillna(ref_ppt).fillna(0)
+    else:
+        df["Ppt"] = ref_ppt.fillna(0)
+
+    # Air temperature supports soil temperature targets and feature set
+    ref_tair = df_ref.get("Tair", pd.Series(0, index=df_ref.index)).reindex(df.index)
+    if "Tair" in df.columns:
+        df["Tair"] = (df["Tair"].reindex(df.index)
+                               .fillna(ref_tair)
+                               .fillna(method="ffill")
+                               .fillna(method="bfill"))
+    else:
+        df["Tair"] = (ref_tair
+                       .fillna(method="ffill")
+                       .fillna(method="bfill")
+                       .fillna(0))
 
 def filter_long_gaps(df_missing, parameter, min_gap=168, max_gap=720):
     df_missing["Number Missing"] = pd.to_numeric(df_missing["Number Missing"], errors="coerce")
@@ -155,10 +177,13 @@ def process_station(station, params, ref_station = 3):
 
     df   = load_cleaned_data(station)
     df_ref = load_cleaned_data(ref_station)
-    df["Ppt"] = df["Ppt"].fillna(df_ref["Ppt"]).fillna(0)
+    ensure_driver_columns(df, df_ref)
 
     log_all = []
     for p in params:
+        if p not in df.columns:
+            print(f"  {p}: column missing, skip.")
+            continue
         gaps = filter_long_gaps(load_missing_data(station), p)
         if gaps.empty:
             print(f"  {p}: no 7–30 day gap.")
@@ -185,7 +210,7 @@ def process_station(station, params, ref_station = 3):
 # ────────────────────────────────────────────────────────────
 def parse_args():
     ap = argparse.ArgumentParser(
-        description="Fill 7–30 day gaps with XGBoost.",
+        description="Fill 7–30 day gaps with XGBoost (SWC & soil temperature).",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     ap.add_argument("--station", type=int, help="Station number (int)")
     ap.add_argument("--param",   type=str, help="Parameter, e.g. SWC_20")
@@ -196,7 +221,7 @@ def main():
     stations = ([args.station] if args.station is not None
                 else sorted(int(f.stem.replace("Station","").split("_")[0])
                             for f in OUT_DIR.glob("Station*_filled_mediumgaps.csv")))
-    params = ([args.param] if args.param is not None else ["SWC_5", "SWC_10", "SWC_20", "SWC_50"])
+    params = ([args.param] if args.param is not None else DEFAULT_PARAMS)
 
     if not stations:
         print("No station files found in ./output, abort.", file=sys.stderr)

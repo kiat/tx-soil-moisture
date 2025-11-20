@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-run_pipeline.py – master runner for *data‑cleanup* branch
+imputation_pipeline.py – master runner for *data‑cleanup* branch
 =======================================================
 This script assumes **all utilities now live in the folder**
 
@@ -23,13 +23,13 @@ The workflow:
 Usage examples
 --------------
     # Run every station & every stage (default)
-    python run_pipeline.py
+    python imputation_pipeline.py
 
     # Only Station 3 (all stages)
-    python run_pipeline.py --station 3
+    python imputation_pipeline.py --station 3
 
     # Dry‑run: show exact commands without executing
-    python run_pipeline.py --dry
+    python imputation_pipeline.py --dry
 """
 
 import subprocess, sys
