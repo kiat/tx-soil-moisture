@@ -1,92 +1,167 @@
-# Soil Moisture Data Imputation Pipeline
+# Soil Moisture & Temperature Gap-Filling Pipeline
 
-#### Zun
+### Zun Cao
+This folder contains the full imputation workflow we use to rebuild continuous soil **moisture** (SWC) and **temperature** (T):
 
-This project provides a multi-stage pipeline to clean raw soil moisture sensor data and fill in missing values. The pipeline uses a sequence of increasingly sophisticated methods, chosen based on the length of each data gap.
-
-## Pipeline Workflow
-
-The process is orchestrated by `imputation_pipeline.py`, which runs the following scripts in order:
-
-1.  **`datacleaning.py`**:
-    *   **Input**: Raw soil (`.dat`) and meteorological (`.dat`) data files.
-    *   **Action**: Merges datasets, validates data against physical bounds (e.g., SWC 0-0.6), and replaces invalid values with `NaN`.
-    *   **Output**:
-        *   `cleaned_data/Station{id}_cleaned_data.csv`: A clean, hourly-indexed timeseries.
-        *   `missing_data/Station{id}_missing_data.csv`: A log of all identified gaps.
-
-2.  **`Shortgaps.py`**:
-    *   **Input**: `..._cleaned_data.csv`
-    *   **Action**: Fills gaps shorter than **24 hours** using **monotonic cubic interpolation (`pchip`)**. This method is chosen for short gaps because it is computationally fast and creates a smooth, visually plausible curve that honors the data points at the edges of the gap. Unlike standard spline interpolation, `pchip` is shape-preserving, meaning it will not "overshoot" and create artificial peaks or troughs in the data.
-    *   **Output**: `output/Station{id}_filled_shortgaps.csv`
-
-3.  **`Mediumgaps.py`**:
-    *   **Input**: `..._filled_shortgaps.csv`
-    *   **Action**: Fills gaps between **24 and 168 hours** (1-7 days) using a **SARIMAX** (Seasonal Auto-Regressive Integrated Moving Average with eXogenous factors) model. This advanced statistical model is ideal for time series with strong seasonality, such as the 24-hour diurnal cycle seen in soil moisture. It makes predictions based on past values, past errors, and external variables. To improve accuracy, the model uses **precipitation (`Ppt`) as a key external variable**. If a station's own precipitation data is missing, the script intelligently uses data from Station 3 as a reliable fallback. The script then uses `auto_arima` to automatically find the optimal model parameters, ensuring a robust forecast for each specific gap.
-    *   **Output**: `output/Station{id}_filled_mediumgaps.csv`
-
-4.  **`Longgaps.py`**:
-    *   **Input**: `..._filled_mediumgaps.csv`
-    *   **Action**: Fills gaps between **7 and 30 days** using an **XGBoost machine learning model**. For longer gaps where statistical time-series models weaken, this script builds a rich set of predictive features, including lagged values, rolling averages, and time-based indicators (hour of day, day of year). It trains the powerful XGBoost model on these features to learn complex patterns and predict the missing values. A linear "drift correction" is applied to the predictions to ensure a seamless and smooth transition from the real data into and out of the filled gap.
-    *   **Output**: `output/Station{id}_filled_longgaps.csv`
-
-5.  **`VeryLongGaps.py`**:
-    *   **Input**: `..._filled_longgaps.csv`
-    *   **Action**: Fills gaps of **30 days or more** using **cross-station linear regression**. When a station's own data is missing for an extended period, this script looks for help from its neighbors. It systematically finds the most highly correlated "donor" station that has complete data during the gap. It then trains a simple linear regression model based on the historical relationship between the two stations and uses this model to "translate" the donor station's data to fill the gap in the target station.
-    *   **Output**: `output/Station{id}_filled_verylonggaps.csv`
-
-## Requirements
-
-- Python 3.7+
-- Required packages are listed in `requirements.txt`.
-
-Install all dependencies with a single command:
-```bash
-pip install -r requirements.txt
+```text
+data-cleanup/imputation_pipeline/
+    datacleaning.py            # step 0 – build cleaned CSV + gap metadata
+    Shortgaps.py               # step 1 – fill <24h gaps (SWC + T)
+    Mediumgaps.py              # step 2 – fill 1–7 day gaps via SARIMAX
+    Longgaps.py                # step 3 – fill 7–30 day gaps via XGBoost
+    VeryLongGaps.py            # step 4 – fill ≥30 day gaps via cross-station regression
+    imputation_pipeline.py     # orchestrator
+    cleaned_data/              # auto-created outputs from datacleaning
+    missing_data/              # auto-created missing summaries
+    output/                    # staged gap-filling outputs/logs
 ```
 
-## How to Run
+The scripts now include soil-temperature logic everywhere a fill occurs. Manual overrides for persistent bad-but-present sensors (for example, Station 5 T_20 stuck during 2015–2016) are injected automatically during the cleaning step so every downstream stage respects those spans.
 
-It is highly recommended to use the main pipeline script, which handles the entire workflow automatically.
+---
 
-### Automated Pipeline (Recommended)
+## Prerequisites
 
-The `imputation_pipeline.py` script is the master runner. Navigate to the `data-cleanup` directory and run it.
+1. **Python** ≥ 3.10 (matches the repo tooling).  
+2. Install dependencies once:
 
-**Run the entire pipeline for all stations (1-6):**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. Raw inputs live under `datasets/TX-Data/soil_station` (`SM_{id}.dat`) and `datasets/TX-Data/met_station` (`MET_{id}.dat`). Datacleaning reads from there by default; override with `--soil-base-dir`/`--met-base-dir` if needed.
+
+---
+
+## Stage-by-Stage Summary
+
+1. **`datacleaning.py`**  
+   - Merges soil + MET `.dat` files, enforces physical bounds, and replaces invalid values with `NaN`.  
+   - Builds two artifacts per station: `cleaned_data/Station{id}_cleaned_data.csv` (hourly timeline) and `missing_data/Station{id}_missing_data.csv`.  
+   - Injects manual gap rules defined in `MANUAL_GAP_RULES` (currently Station 5 temperature spans) so that “bad but present” readings are treated as proper gaps everywhere else.
+
+2. **`Shortgaps.py`**  
+   - Input: cleaned data CSV. Output: `output/Station{id}_filled_shortgaps.csv` plus optional detail log.  
+   - SWC columns use monotonic cubic interpolation (PCHIP).  
+   - Temperature columns apply time-based interpolation for smoother diurnal signatures.
+
+3. **`Mediumgaps.py`**  
+   - Input: short-gap output. Output: `..._filled_mediumgaps.csv` + detail log.  
+   - Uses SARIMAX with automatic order selection (24 h seasonality).  
+   - Exogenous drivers: `Ppt` by default; for temperature we also attach `Tair`/`Srad` when present.  
+   - Training windows are pre-filled locally so temperature models always see a continuous history.
+
+4. **`Longgaps.py`**  
+   - Input: medium-gap output. Output: `..._filled_longgaps.csv` + detail log.  
+   - XGBoost regression with engineered drivers (lag stats, rolling precipitation, diurnal markers).  
+   - Applies start/end drift correction so predictions blend back into real observations.
+
+5. **`VeryLongGaps.py`**  
+   - Input: long-gap output. Output: `..._filled_verylonggaps.csv` + detail log.  
+   - Chooses the donor station with the highest absolute correlation and ≥1000 overlapping hours, fits a simple linear map, and writes predictions across ≥30-day gaps.  
+   - Reports quick MAE/RMSE diagnostics for each parameter.
+
+All outputs share the `output/` directory; each stage overwrites the previous file for that station.
+
+---
+
+## Running the Pipeline
+
+### Recommended: single command orchestrator
+
+From `data-cleanup/imputation_pipeline/` run:
+
 ```bash
+# all stations, all stages
 python imputation_pipeline.py
-```
 
-**Run for a single station:**
-```bash
-python imputation_pipeline.py --station 3
-```
+# single station (e.g., Station 5)
+python imputation_pipeline.py --station 5
 
-**Perform a "dry run" to see the commands without executing them:**
-```bash
+# dry run to preview commands
 python imputation_pipeline.py --dry
 ```
 
-### Manual Step-by-Step Execution (Advanced)
+`imputation_pipeline.py` simply shells through `datacleaning → Shortgaps → Mediumgaps → Longgaps → VeryLongGaps`, reusing the same Python interpreter. If any stage fails, the runner stops immediately so partial outputs are obvious.
 
-If you need to run a specific part of the pipeline for debugging or analysis, you can execute each script individually. Ensure you run them in the correct order as listed in the "Workflow" section above.
+### Manual execution (debugging / custom slices)
 
-**Example: Manually running the first two steps for Station 1**
+1. Clean + detect gaps:
 
-1.  **Run the initial data cleaning:**
-    ```bash
-    python datacleaning.py --station 1
-    ```
-    *(This creates `cleaned_data/Station1_cleaned_data.csv` and the missing data log)*
+   ```bash
+   python datacleaning.py --station 4
+   ```
 
-2.  **Run the short gap filling:**
-    ```bash
-    python Shortgaps.py --station 1
-    ```
-    *(This reads the file from step 1 and creates `output/Station1_filled_shortgaps.csv`)*
+2. Fill <24 h gaps:
 
-You can continue this pattern for the remaining scripts. Each script includes `--help` for more details on its arguments.
-```bash
-python Mediumgaps.py --help
+   ```bash
+   python Shortgaps.py --station 4 --param SWC_5 SWC_10
+   ```
+
+3. Continue with `Mediumgaps.py`, `Longgaps.py`, `VeryLongGaps.py` as needed. Each script supports `--help` plus `--station` and `--param` overrides (e.g., run temperature parameters alone).
+
+When running by hand, make sure the previous stage’s outputs exist under `output/`; every script reads from there and writes the next suffix.
+
+---
+
+## Outputs & Logs
+
+| Stage | Primary CSV | Detail log |
+|-------|-------------|------------|
+| datacleaning | `cleaned_data/Station{id}_cleaned_data.csv` | `missing_data/Station{id}_missing_data.csv`|
+| Shortgaps | `output/Station{id}_filled_shortgaps.csv` | `output/Station{id}_shortgap_fill_detail.csv` |
+| Mediumgaps | `output/Station{id}_filled_mediumgaps.csv` | `output/Station{id}_mediumgap_fill_detail.csv` |
+| Longgaps | `output/Station{id}_filled_longgaps.csv` | `output/Station{id}_longgap_fill_detail.csv` |
+| VeryLongGaps | `output/Station{id}_filled_verylonggaps.csv` | `output/Station{id}_verylonggap_fill_detail.csv` |
+
+The detail tables list every timestamp that was imputed along with the predicted value and the original gap window. They are useful for auditing and for reintroducing “truth” measurements after model inspection.
+
+---
+
+## Manual Gap Overrides (current)
+
+`datacleaning.py` contains `MANUAL_GAP_RULES`. Today we ship presets for Station 5:
+
+```python
+MANUAL_GAP_RULES = {
+    5: [
+        {"parameters": ["T_20"],
+         "start": "2015-01-01 00:00:00",
+         "end":   "2016-02-20 12:00:00"},
+        {"parameters": ["T_5", "T_10", "T_20", "T_50"],
+         "start": "2018-04-14 20:00:00",
+         "end":   "2018-05-15 08:00:00"}
+    ]
+}
 ```
+
+Why these windows? The visualization notebook flagged two persistent **Station 5** issues:
+
+- **T_20 flatline (2015‑01‑01 → 2016‑02‑20)** – plotted series were locked at ~0 °C for >13 months, so we treat the entire window as missing.
+- **Nightly outage (2018‑04‑14 → 2018‑05‑15)** – all soil temperature depths went dark every night (likely power loss). We manually promote that span to a gap so downstream fills use donor stations instead of retaining the zeroed readings.
+
+Feel free to extend this structure when new persistent anomalies surface. The injection happens *before* we write the missing-summary CSV, so every downstream stage will automatically treat the span as a real gap.
+
+---
+
+## Tips
+
+- **Reinserting real observations**: after VeryLongGaps, reapply any trusted measurements by masking `filled_verylonggaps` with the original cleaned data (keep truth where it exists, keep model output elsewhere).
+- **Visualization notebooks**: Check the notebook: `data_visualization/Dynamic_Data_Visualization.ipynb` 
+- **Storage**: keep an eye on `output/` size; each station/stage writes a full hourly history. It’s safe to prune intermediate stages once you confirm the full run.
+
+## Method Error Matrix
+
+The following matrix summarizes which modeling family we rely on for each gap length category (mirrors the shared Google Sheet).
+
+| Parameters \ Gaps | Short Gaps (1–24 hr) | Med. Gaps (1–7 days) | Long Gaps (1 week–1 month) | Very Long Gaps (≥30 days) |
+|--------------------|----------------------|----------------------|----------------------------|---------------------------|
+| Methods            | Interpolation, kNN   | ARIMA, SARIMA        | Baseline (seasonal-hour mean + slow linear trend), Random Forest, LightGBM, XGBoost | Linear regression donor-station infilling |
+
+Refer to the source sheet (`https://docs.google.com/spreadsheets/d/1OouqvV3Te1l-xHxy8NfNVA0TpEiFaFh0Agav3eePHf8/edit#gid=0`) for additional notes or historical error statistics per parameter. For detailed notebook walkthroughs, switch to branch `zun-cao` and open `Model_2025/Short Gaps.ipynb`, `Model_2025/SARIMA.ipynb`, `Model_2025/Long Gaps.ipynb`, and `Model_2025/Very_Long_Gaps.ipynb`.
+
+### Known unresolved sensors
+
+- **Station 4 SWC_50 / T_50** – every record in the raw files is already `NaN`. No donor-based patch can fix an all-null column, so these stay missing through the pipeline. Any downstream analysis should treat Station 4 depth-50 readings as unavailable.
+
+With these pieces in place you can regenerate Station 1–6 with consistent soil moisture and temperature fills in a single command and audit every value that was touched.
