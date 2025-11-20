@@ -1,108 +1,14 @@
 import argparse
 import os
-import copy
-import pandas as pd
-import numpy as np
 import torch
 import torch.nn as nn
-import torch.optim as optim
-from torch.utils.data import TensorDataset, DataLoader
-import matplotlib.pyplot as plt
 
-# Assuming 'models.py' contains the fully converted PyTorch models.
-import models as model_module
+from models import get_model_class, is_registered, list_models
+from utils import Trainer, Evaluator, prepare_dataloaders, get_output_helpers
 
-# --- Helper for Early Stopping ---
-class EarlyStopping:
-    """
-    Monitors validation loss and stops training when it stops improving.
-    """
-    def __init__(self, patience=3, min_delta=0, restore_best_weights=True):
-        self.patience = patience
-        self.min_delta = min_delta
-        self.restore_best_weights = restore_best_weights
-        self.best_model_state = None
-        self.best_loss = float('inf')
-        self.counter = 0
-
-    def __call__(self, val_loss, model):
-        """
-        Checks if training should be stopped.
-        """
-        if val_loss < self.best_loss - self.min_delta:
-            self.best_loss = val_loss
-            self.counter = 0
-            if self.restore_best_weights:
-                self.best_model_state = copy.deepcopy(model.state_dict())
-        else:
-            self.counter += 1
-
-        if self.counter >= self.patience:
-            print("--- Early stopping triggered ---")
-            if self.restore_best_weights and self.best_model_state is not None:
-                print("Restoring best model weights.")
-                model.load_state_dict(self.best_model_state)
-            return True
-        return False
-
-# --- Comprehensive Evaluation Function (FINAL FIX) ---
-def evaluate_model(model, dataloader, criterion, device):
-    """
-    Evaluates a PyTorch model and returns metrics with keys that EXACTLY match
-    the final CSV headers.
-    """
-    model.eval()
-    total_loss = 0
-    all_preds = []
-    all_targets = []
-    
-    with torch.no_grad():
-        for X_batch, y_batch in dataloader:
-            X_batch, y_batch = X_batch.to(device), y_batch.to(device)
-            y_pred = model(X_batch)
-            
-            if y_pred.shape != y_batch.shape:
-                y_pred = y_pred.view_as(y_batch)
-            
-            loss = criterion(y_pred, y_batch)
-            total_loss += loss.item() * X_batch.size(0)
-            
-            all_preds.append(y_pred.cpu())
-            all_targets.append(y_batch.cpu())
-            
-    all_preds = torch.cat(all_preds, dim=0).squeeze()
-    all_targets = torch.cat(all_targets, dim=0).squeeze()
-    
-    epsilon = 1e-8
-    num_samples = len(all_targets)
-
-    mse = total_loss / num_samples
-    mae = torch.mean(torch.abs(all_targets - all_preds)).item()
-    mape = (torch.mean(torch.abs((all_targets - all_preds) / (all_targets + epsilon))) * 100) / num_samples
-    smape_numerator = torch.abs(all_preds - all_targets)
-    smape_denominator = torch.abs(all_targets) + torch.abs(all_preds) + epsilon
-    smape = torch.mean(2 * smape_numerator / smape_denominator) * 100
-    rse_numerator = torch.sum((all_preds - all_targets) ** 2)
-    rse_denominator = torch.sum((all_targets - torch.mean(all_targets)) ** 2) + epsilon
-    rse = (rse_numerator / rse_denominator).item()
-    vx = all_targets - torch.mean(all_targets)
-    vy = all_preds - torch.mean(all_preds)
-    corr = torch.sum(vx * vy) / (torch.sqrt(torch.sum(vx ** 2)) * torch.sqrt(torch.sum(vy ** 2)) + epsilon)
-
-    # FINAL FIX: The keys now EXACTLY match the CSV header names.
-    return {
-        'MSE': mse,
-        'MAE': mae,
-        'MAPE': mape.item(),
-        'SMAPE': smape.item(),
-        'RSE': rse,
-        'CORR': corr.item()
-    }
 
 def main(args):
-    """
-    Main function to run the data processing, model training, and evaluation pipeline.
-    """
+    """Main training and evaluation pipeline."""
     # Input validation
     if args.window_size <= 0:
         raise ValueError(f"window_size must be positive, got {args.window_size}")
@@ -114,178 +20,240 @@ def main(args):
         raise ValueError(f"batch_size must be positive, got {args.batch_size}")
     if args.patience <= 0:
         raise ValueError(f"patience must be positive, got {args.patience}")
-    if args.agg_hours <= 0:
-        raise ValueError(f"agg_hours must be positive, got {args.agg_hours}")
-    if args.offset_hours < 0:
-        raise ValueError(f"offset_hours must be non-negative, got {args.offset_hours}")
-    if args.samples_per_hour <= 0:
-        raise ValueError(f"samples_per_hour must be positive, got {args.samples_per_hour}")
-    
+
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Using device: {device}")
 
-    # --- Data Loading and Preparation ---
-    try:
-        from core.data_helpers import read_and_process_csvs, engineer_features, split_and_stack_data, normalize_features, data_to_X_y
-        from core.evaluation_helpers import write_loss_history_to_csv, write_model_results_to_csv
-    except ImportError:
-        print("Warning: 'core' module not found. Using placeholder data and dummy output functions.")
-        def read_and_process_csvs(): return {f'Station{i+1}': pd.DataFrame(np.random.rand(100, 6), columns=['SWC_20', 'T_20', 'Ppt', 'Tair', 'Wx', 'Wy']) for i in range(6)}
-        def engineer_features(dfs): return dfs
-        def split_and_stack_data(dfs, test_station_name): return dfs, dfs[test_station_name], dfs[test_station_name]
-        def normalize_features(df, features): return df, None
-        def data_to_X_y(df, window, offset, **kwargs): return np.random.rand(50, window, len(df.columns)), np.random.rand(50)
-        def write_loss_history_to_csv(*args): pass
-        # This dummy function will now receive the correct keys
-        def write_model_results_to_csv(station, model_name, ws, offset, perf, features):
-            print(f"DUMMY_WRITE: Writing results for {model_name}...")
-            # This will now correctly find the keys
-            print(f"  -> MSE: {perf.get('MSE', 'N/A')}, CORR: {perf.get('CORR', 'N/A')}")
+    # Parse features - prefer predictors over features for backward compatibility
+    if args.predictors:
+        predictors_list = args.predictors.split(",")
+    else:
+        predictors_list = ["SWC_20", "T_20", "Ppt", "Tair", "Wx", "Wy"]
 
-    stations = ['Station1', 'Station2', 'Station3', 'Station4', 'Station5', 'Station6']
-    target_station = stations[-1]
-    raw_dfs = read_and_process_csvs()
-    engineered_dfs = engineer_features(raw_dfs)
-    engineered_dfs, val_df, test_df = split_and_stack_data(engineered_dfs, test_station_name=target_station)
-    all_features = args.features.split(',') if args.features else ['SWC_20', 'T_20', 'Ppt', 'Tair', 'Wx', 'Wy']
+    # Prepare data
+    stations = ["Station1", "Station2", "Station3", "Station4", "Station5", "Station6"]
 
-    # --- Prepare data and convert to PyTorch Tensors ---
-    # Process validation data (list of DataFrames)
-    val_data_x, val_data_y = [], []
-    for df in val_df:
-        scaled_val, _ = normalize_features(df, all_features)
-        X_val_part, y_val_part = data_to_X_y(scaled_val, args.window_size, args.offset, 
-                                             label_type=args.label_type, agg_hours=args.agg_hours, 
-                                             offset_hours=args.offset_hours, samples_per_hour=args.samples_per_hour)
-        if len(X_val_part) > 0:  # Only add if we have valid data
-            val_data_x.append(X_val_part)
-            val_data_y.append(y_val_part)
-    
-    # Process test data (single DataFrame)
-    scaled_test, _ = normalize_features(test_df, all_features)
-    X_test, y_test = data_to_X_y(scaled_test, args.window_size, args.offset,
-                                 label_type=args.label_type, agg_hours=args.agg_hours,
-                                 offset_hours=args.offset_hours, samples_per_hour=args.samples_per_hour)
-    
-    # Process training data (list of DataFrames)  
-    train_data_x, train_data_y = [], []
-    for df in engineered_dfs:
-        scaled_train, _ = normalize_features(df, all_features)
-        X_train_part, y_train_part = data_to_X_y(scaled_train, args.window_size, args.offset,
-                                                 label_type=args.label_type, agg_hours=args.agg_hours,
-                                                 offset_hours=args.offset_hours, samples_per_hour=args.samples_per_hour)
-        if len(X_train_part) > 0:  # Only add if we have valid data
-            train_data_x.append(X_train_part)
-            train_data_y.append(y_train_part)
-    # Concatenate training data
-    X_train = np.concatenate(train_data_x, axis=0) if train_data_x else np.array([])
-    y_train = np.concatenate(train_data_y, axis=0).reshape(-1, 1) if train_data_y else np.array([])
-    
-    # Concatenate validation data
-    X_val = np.concatenate(val_data_x, axis=0) if val_data_x else np.array([])
-    y_val = np.concatenate(val_data_y, axis=0) if val_data_y else np.array([])
-    
-    # Convert to tensors
-    X_train_t = torch.tensor(X_train, dtype=torch.float32)
-    y_train_t = torch.tensor(y_train, dtype=torch.float32)
-    X_val_t = torch.tensor(X_val, dtype=torch.float32)
-    y_val_t = torch.tensor(y_val.reshape(-1, 1), dtype=torch.float32)
-    X_test_t = torch.tensor(X_test, dtype=torch.float32)
-    y_test_t = torch.tensor(y_test.reshape(-1, 1), dtype=torch.float32)
-    train_loader = DataLoader(TensorDataset(X_train_t, y_train_t), batch_size=args.batch_size, shuffle=True)
-    val_loader = DataLoader(TensorDataset(X_val_t, y_val_t), batch_size=args.batch_size)
-    test_loader = DataLoader(TensorDataset(X_test_t, y_test_t), batch_size=args.batch_size)
+    # Set target station based on argument (1-6 maps to Station1-Station6)
+    if args.target_station < 1 or args.target_station > 6:
+        raise ValueError(
+            f"target_station must be between 1 and 6, got {args.target_station}"
+        )
+    target_station = stations[args.target_station - 1]
+    print(f"Target station: {target_station}")
+
+    # Prepare prediction feature names (with _daily_avg suffix if needed)
+    # When daily_average_output=True:
+    #   - User specifies: --predict_features "SWC_20,Ppt"
+    #   - engineer_features creates: SWC_20_daily_avg, Ppt_daily_avg columns
+    #   - Models predict: SWC_20_daily_avg, Ppt_daily_avg (daily means)
+    #   - Logs/files saved with: "SWC_20_daily_avg_Ppt_daily_avg" suffix
+    predict_features_list = (
+        args.predict_features.split(",") if args.predict_features else ["SWC_20"]
+    )
+    if args.daily_average_output:
+        predict_features_display = [f"{f}_daily_avg" for f in predict_features_list]
+    else:
+        predict_features_display = predict_features_list
+
+    predict_features_str = "_".join(predict_features_display)
+
+    train_loader, val_loader, test_loader, all_features, input_dim, data_shape = (
+        prepare_dataloaders(
+            stations=stations,
+            target_station=target_station,
+            window_size=args.window_size,
+            offset=args.offset,
+            batch_size=args.batch_size,
+            predictors=args.predictors,
+            predict_features=args.predict_features,
+            predict_avg=args.daily_average_output,
+            label_width=args.label_width,
+            training_stride=args.training_stride,
+            validation_stride=args.validation_stride,
+        )
+    )
+
+    # Get output helpers
+    write_loss_history_to_csv, write_model_results_to_csv = get_output_helpers()
+
+    # Setup directories
     model_dir = "saved_models_pytorch"
     os.makedirs(model_dir, exist_ok=True)
 
-    # --- Model Selection ---
-    def normalize_id(name: str) -> str: return name.lower().replace("_", "").replace("model", "")
-    requested_ids = set(normalize_id(n) for n in args.model_names.split(","))
-    model_map = {
-        'ar': model_module.AR, 'autoregressive': model_module.AR, 'lstm': model_module.LSTMModel, 
-        'bilstm': model_module.BiLSTMModel, 'rnn': model_module.RNNModel, 'cnn': model_module.CNNModel,
-        'attentionlstm': model_module.AttentionLSTM, 'attentiononly': model_module.AttentionOnly,
-        'transformer': model_module.TransformerModel, 'multiheadlstm': model_module.MultiHeadLSTM,
-        'baseline': model_module.Baseline, 'movingaverage': model_module.MovingAverageBaseline,
-    }
-    process_queue = {name: model_class for name, model_class in model_map.items() if name in requested_ids}
+    # Build process queue using registry
+    requested_names = [name.strip() for name in args.model_names.split(",")]
+    process_queue = {}
+    for name in requested_names:
+        if is_registered(name):
+            process_queue[name.lower()] = get_model_class(name)
+        else:
+            print(
+                f"Warning: Model '{name}' not found in registry. Available: {list_models()}"
+            )
+
+    if not process_queue:
+        raise ValueError(f"No valid models found. Available models: {list_models()}")
+
     print(f"Models to be processed: {list(process_queue.keys())}")
-    
-    # --- Training and Evaluation Loop ---
-    feature_str = '_'.join(all_features)  # Calculate once outside the loop
-    
+
+    # Training and evaluation loop
+    criterion = nn.MSELoss()
     for model_name, model_class in process_queue.items():
         print(f"\n===== Processing {model_name.upper()} =====")
-        input_dim = X_train_t.shape[2]
-        criterion = nn.MSELoss()
-        
+
         if model_name in ["baseline", "movingaverage"]:
+            # Non-trainable baseline models
             print(f"Evaluating non-trainable baseline model: {model_name.upper()}")
             model = model_class().to(device)
-            performance = evaluate_model(model, test_loader, criterion, device)
+            evaluator = Evaluator(criterion, device)
+            performance = evaluator.evaluate(model, test_loader)
         else:
+            # Trainable models
             print(f"Training {model_name.upper()}...")
-            model = model_class(input_dim=input_dim).to(device)
-            optimizer = optim.Adam(model.parameters(), lr=0.001)
-            early_stopper = EarlyStopping(patience=args.patience, restore_best_weights=True)
-            history = {'loss': [], 'val_loss': []}
-            for epoch in range(args.epochs):
-                model.train()
-                epoch_loss = 0
-                for X_batch, y_batch in train_loader:
-                    X_batch, y_batch = X_batch.to(device), y_batch.to(device)
-                    optimizer.zero_grad()
-                    y_pred = model(X_batch)
-                    loss = criterion(y_pred, y_batch)
-                    loss.backward()
-                    optimizer.step()
-                    epoch_loss += loss.item() * X_batch.size(0)
-                
-                val_metrics = evaluate_model(model, val_loader, criterion, device)
-                train_loss = epoch_loss / len(train_loader.dataset)
-                val_loss = val_metrics['MSE'] 
-                history['loss'].append(train_loss)
-                history['val_loss'].append(val_loss)
-                print(f"Epoch {epoch+1}/{args.epochs} | Train Loss: {train_loss:.6f} | Val Loss: {val_loss:.6f}")
-                if early_stopper(val_loss, model):
-                    break
-            
+
+            if model_name == "ilstmsoil":
+                T = data_shape["time_steps"]
+                N = data_shape["num_features"]
+                output_dim = data_shape["output_dim"]
+                print(
+                    f"Input shape for ILSTM_Soil: T={T}, N={N}, output_dim={output_dim}"
+                )
+                model = model_class(time_steps=T, num_features=N, output_dim=output_dim)
+            else:
+                output_dim = data_shape["output_dim"]
+                model = model_class(input_dim=input_dim, output_dim=output_dim)
+
+            trainer = Trainer(
+                model,
+                criterion,
+                device,
+                model_name=model_name,
+                log_dir="logs",
+                lr=0.001,
+                patience=args.patience,
+                window_size=args.window_size,
+                offset=args.offset,
+                predictors="_".join(predictors_list),
+                predict_features=predict_features_str,
+            )
+            history = trainer.fit(train_loader, val_loader, epochs=args.epochs)
+
             print("\nFinal Evaluation on Test Set...")
-            performance = evaluate_model(model, test_loader, criterion, device)
+            performance = trainer.evaluator.evaluate(trainer.model, test_loader)
+
+            # Save model
+            feature_str = "_".join(predictors_list)
             main_name = f"model_{model_name}_ws{args.window_size}_offset{args.offset}_{feature_str}"
             model_path = os.path.join(model_dir, f"{main_name}.pth")
-            torch.save(model.state_dict(), model_path)
+            torch.save(trainer.model.state_dict(), model_path)
             print(f"{model_name.upper()} model saved at {model_path}")
-            write_loss_history_to_csv(target_station, model_name, args.window_size, args.offset, history, feature_str)
 
+            # Save training history
+            write_loss_history_to_csv(
+                target_station,
+                model_name,
+                args.window_size,
+                args.offset,
+                history,
+                feature_str,
+                label_str=predict_features_str,
+            )
+
+        # Print and save metrics
         print(f"\n--- {model_name.upper()} Final Test Metrics ---")
         for key, value in performance.items():
             print(f"{key}: {value:.6f}")
-        
-        write_model_results_to_csv(target_station, model_name, args.window_size, args.offset, performance, feature_str)
+
+        feature_str = "_".join(predictors_list)
+        write_model_results_to_csv(
+            target_station,
+            model_name,
+            args.window_size,
+            args.offset,
+            performance,
+            feature_str,
+        )
         print("-------------------------------------\n")
 
     print("All runs complete! Results have been saved.")
 
+
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Train and evaluate time series models using PyTorch.")
-    parser.add_argument('--window_size', type=int, default=168, help='Window size for input data sequences.')
-    parser.add_argument('--offset', type=int, default=24, help='Prediction offset from the end of the window.')
-    parser.add_argument('--epochs', type=int, default=50, help='Maximum number of training epochs.')
-    parser.add_argument('--patience', type=int, default=5, help='Patience for early stopping.')
-    parser.add_argument('--batch_size', type=int, default=32, help='Batch size for training and evaluation.')
-    parser.add_argument("--features", type=str, default="SWC_20,T_20,Ppt,Tair,Wx,Wy", help="Comma-separated list of features to use.")
-    parser.add_argument("--model_names", type=str, default="LSTM,CNN,BiLSTM,RNN,AttentionLSTM,AR,Baseline", help="Comma-separated list of model names to run.")
-    
-    # New label generation parameters
-    parser.add_argument('--label_type', type=str, choices=['point', 'rolling_mean', 'daily_mean'], 
-                       default='rolling_mean', help='Type of label generation: point (single value), rolling_mean (average over last K hours), daily_mean (calendar day average).')
-    parser.add_argument('--agg_hours', type=int, default=24, 
-                       help='Number of hours to aggregate for rolling_mean (ignored for point and daily_mean).')
-    parser.add_argument('--offset_hours', type=int, default=0, 
-                       help='Forecast offset in hours: predict average ending at t + offset_hours.')
-    parser.add_argument('--samples_per_hour', type=int, default=1, 
-                       help='Number of samples per hour in the data (for non-hourly data).')
-    
+    parser = argparse.ArgumentParser(
+        description="Train and evaluate time series models using PyTorch."
+    )
+    parser.add_argument(
+        "--window_size",
+        type=int,
+        default=48,
+        help="Window size for input data sequences.",
+    )
+    parser.add_argument(
+        "--label_width",
+        type=int,
+        default=1,
+        help="Width of the label/output window.",
+    )
+    parser.add_argument(
+        "--training_stride",
+        type=int,
+        default=8,
+        help="Stride for creating training sequences.",
+    )
+    parser.add_argument(
+        "--validation_stride",
+        type=int,
+        default=8,
+        help="Stride for creating validation sequences.",
+    )
+    parser.add_argument(
+        "--offset",
+        type=int,
+        default=48,
+        help="Prediction offset from the end of the window.",
+    )
+    parser.add_argument(
+        "--epochs", type=int, default=30, help="Maximum number of training epochs."
+    )
+    parser.add_argument(
+        "--patience", type=int, default=10, help="Patience for early stopping."
+    )
+    parser.add_argument(
+        "--batch_size",
+        type=int,
+        default=32,
+        help="Batch size for training and evaluation.",
+    )
+    parser.add_argument(
+        "--predictors",
+        type=str,
+        default="SWC_20,T_20,Ppt,Wx,Wy,Srad,DayCos,DaySin,MonthCos,MonthSin",
+        help="Comma-separated list of predictor features to use.",
+    )
+    parser.add_argument(
+        "--predict_features",
+        type=str,
+        default="SWC_20",
+        help="Comma-separated list of features to predict.",
+    )
+    parser.add_argument(
+        "--daily_average_output",
+        action="store_true",
+        default=False,
+        help="Whether to output daily average predictions.",
+    )
+    parser.add_argument(
+        "--model_names",
+        type=str,
+        default="bilstm",
+        help="Comma-separated list of model names to run.",
+    )
+    parser.add_argument(
+        "--target_station",
+        type=int,
+        default=6,
+        help="Target station number (1-6, corresponding to Station1-Station6).",
+    )
+
     args = parser.parse_args()
     main(args)

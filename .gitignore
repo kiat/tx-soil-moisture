@@ -143,3 +143,9 @@ data-cleanup/cleaned_data/
 data-cleanup/feature_engineered/
 data-cleanup/missing_data/
 data-cleanup/raw_merged_data/
+
+# Logs and Results
+src-pytorch/results/*
+src-pytorch/saved_models_pytorch/*
+src-pytorch/logs/
+nohup.out

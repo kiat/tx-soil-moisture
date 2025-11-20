@@ -1,9 +1,14 @@
-pandas
-numpy
-tensorflow
-scikit-learn
-fastparquet
-argparse
-keras-attention
-keras_self_attention
-matplotlib
+# Core dependencies
+torch>=2.0.0
+tensorboard>=2.11.0
+
+# Data processing
+pandas>=1.5.0
+numpy>=1.23.0
+
+# Machine learning
+scikit-learn>=1.2.0
+scipy>=1.10.0
+
+# Visualization
+matplotlib>=3.6.0
