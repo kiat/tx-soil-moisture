@@ -74,11 +74,14 @@ def evaluate_model(model, dataloader, criterion, device):
             all_preds.append(y_pred.detach().cpu())
             all_targets.append(y_batch.detach().cpu())
             
-    all_preds = torch.cat(all_preds, dim=0).squeeze()
-    all_targets = torch.cat(all_targets, dim=0).squeeze()
+    if not all_preds:
+        return {'MSE': float('inf'), 'MAE': float('inf'), 'MAPE': float('inf'), 'SMAPE': float('inf'), 'RSE': float('inf'), 'CORR': 0.0}
+    
+    all_preds = torch.cat(all_preds, dim=0).view(-1)
+    all_targets = torch.cat(all_targets, dim=0).view(-1)
     
     epsilon = 1e-8
-    num_samples = len(all_targets)
+    num_samples = all_targets.numel()
     if num_samples == 0:
         return {'MSE': float('inf'), 'MAE': float('inf'), 'MAPE': float('inf'), 'SMAPE': float('inf'), 'RSE': float('inf'), 'CORR': 0.0}
 
@@ -152,13 +155,37 @@ def main(args):
     target_station = 'Station6'
     raw_dfs = read_and_process_csvs()
     engineered_dfs = engineer_features(raw_dfs)
-    engineered_dfs, val_df, test_df = split_and_stack_data(engineered_dfs, test_station_name=target_station)
-    all_features = args.features.split(',') if args.features else ['SWC_20', 'T_20', 'Ppt', 'Tair']
+    train_dfs, val_dfs, test_df = split_and_stack_data(engineered_dfs, test_station_name=target_station)
+
+    def infer_all_numeric_features(train_parts, val_parts, test_part):
+        """Return numeric columns common to every provided dataset."""
+        combined = []
+        combined.extend(train_parts or [])
+        combined.extend(val_parts or [])
+        if test_part is not None:
+            combined.append(test_part)
+        numeric_cols = None
+        for df in combined:
+            cols = df.select_dtypes(include=[np.number]).columns.tolist()
+            if numeric_cols is None:
+                numeric_cols = cols
+            else:
+                numeric_cols = [c for c in numeric_cols if c in cols]
+        return numeric_cols or []
+
+    if not args.features or args.features.strip().upper() == "ALL":
+        all_features = infer_all_numeric_features(train_dfs, val_dfs, test_df)
+        if not all_features:
+            raise ValueError("Unable to infer numeric feature columns from the datasets.")
+        print(f"Auto-selected {len(all_features)} numeric features from the dataset. "
+              "Use --features to override.")
+    else:
+        all_features = [feat.strip() for feat in args.features.split(',') if feat.strip()]
 
     # --- Prepare data and convert to PyTorch Tensors ---
     # Process validation data (list of DataFrames)
     val_data_x, val_data_y = [], []
-    for df in val_df:
+    for df in val_dfs:
         scaled_val, _ = normalize_features(df, all_features)
         X_val_part, y_val_part = data_to_X_y(scaled_val, args.window_size, args.offset, 
                                              label_type=args.label_type, agg_hours=args.agg_hours, 
@@ -175,7 +202,7 @@ def main(args):
     
     # Process training data (list of DataFrames)  
     train_data_x, train_data_y = [], []
-    for df in engineered_dfs:
+    for df in train_dfs:
         scaled_train, _ = normalize_features(df, all_features)
         X_train_part, y_train_part = data_to_X_y(scaled_train, args.window_size, args.offset,
                                                  label_type=args.label_type, agg_hours=args.agg_hours,
@@ -313,7 +340,7 @@ if __name__ == "__main__":
     parser.add_argument('--epochs', type=int, default=50, help='Maximum number of training epochs.')
     parser.add_argument('--patience', type=int, default=5, help='Patience for early stopping.')
     parser.add_argument('--batch_size', type=int, default=32, help='Batch size for training and evaluation.')
-    parser.add_argument("--features", type=str, default="SWC_20,T_20,Ppt,Tair", help="Comma-separated list of features to use.")
+    parser.add_argument("--features", type=str, default="ALL", help="Comma-separated list of features to use (or 'ALL' for every numeric column).")
     parser.add_argument("--model_names", type=str, default="LSTM,CNN,BiLSTM,RNN,AttentionLSTM,AR,Baseline", help="Comma-separated list of model names to run.")
     
     # New label generation parameters

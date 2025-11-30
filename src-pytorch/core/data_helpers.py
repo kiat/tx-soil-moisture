@@ -186,10 +186,14 @@ def data_to_X_y(data, window_size, offset, label_type="point", agg_hours=24, off
         rows = len(data) - window_size - offset
         if rows <= 0:
             return np.array([]), np.array([])
-        X = np.lib.stride_tricks.sliding_window_view(data, (window_size, data.shape[1]))[:rows, 0]
-        y = data[window_size + offset - 1: window_size + offset - 1 + rows, 0]
+        # Sliding window view returns shape (n_rows, 1, window_size, features)
+        X = np.lib.stride_tricks.sliding_window_view(
+            data, (window_size, data.shape[1])
+        )[:rows, 0]
+        # Match the original implementation: predict the element immediately after the window (+ offset)
+        y = data[window_size + offset: window_size + offset + rows, 0]
         # Filter out windows or targets with NaNs/Infs
-        mask = np.isfinite(X).all(axis=(1,2)) & np.isfinite(y)
+        mask = np.isfinite(X).all(axis=(1, 2)) & np.isfinite(y)
         X = X[mask]
         y = y[mask]
         return X, y
@@ -224,28 +228,23 @@ def data_to_X_y(data, window_size, offset, label_type="point", agg_hours=24, off
     y = []
     
     for i in range(rows):
-        # Target end point: end of window + original offset + offset_hours
-        # Note: window ends at i + window_size - 1, so target starts at i + window_size
-        target_end_idx = i + window_size + total_offset
+        # Target window starts right after the historical window (plus any forecast offset)
+        target_start_idx = i + window_size + total_offset
         
         if label_type == "rolling_mean":
-            # Take the mean of the last agg_samples before target_end_idx
-            target_start_idx = target_end_idx - agg_samples + 1
-            if target_start_idx < 0:
-                # Skip this window if insufficient history
+            target_end_idx = target_start_idx + agg_samples
+            target_values = data[target_start_idx:target_end_idx, 0]
+            if len(target_values) < agg_samples:
+                # Defensive guard — should not happen due to rows calculation
                 continue
-            target_values = data[target_start_idx:target_end_idx + 1, 0]
             y.append(np.mean(target_values))
             
         elif label_type == "daily_mean":
-            # For daily_mean, we need to compute calendar day average
-            # This is a simplified version - in practice, you might want to use actual timestamps
-            # For now, we'll use a 24-hour rolling window (24 * samples_per_hour samples)
             daily_samples = 24 * samples_per_hour
-            target_start_idx = target_end_idx - daily_samples + 1
-            if target_start_idx < 0:
+            target_end_idx = target_start_idx + daily_samples
+            target_values = data[target_start_idx:target_end_idx, 0]
+            if len(target_values) < daily_samples:
                 continue
-            target_values = data[target_start_idx:target_end_idx + 1, 0]
             y.append(np.mean(target_values))
     
     # Trim X to match y length (in case some windows were skipped)

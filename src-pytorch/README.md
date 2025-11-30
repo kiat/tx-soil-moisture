@@ -61,13 +61,15 @@ Parameters:
 | `--offset`          | Forecasting horizon (in time steps)         | `24`                                                          |
 | `--epochs`          | Number of training epochs                   | `10`                                                          |
 | `--patience`        | Early stopping patience                     | `3`                                                           |
-| `--features`        | Comma-separated list of input features      | `"SWC_20,T_20,Ppt,Tair,Wx,Wy"`                                |
+| `--features`        | Comma-separated list of input features (`ALL` uses every numeric column) | `"ALL"` |
 | `--model_names`     | Comma-separated model names to train        | `"LSTM,BiLSTM,RNN,CNN,AttentionLSTM,Autoregressive,Baseline"` |
 | `--visualize`       | Plot data splits instead of training models | *(optional flag)*                                             |
 | `--label_type`      | Type of label generation (see below)        | `"rolling_mean"`                                              |
 | `--agg_hours`       | Hours to aggregate for rolling_mean         | `24`                                                          |
 | `--offset_hours`    | Forecast offset in hours                     | `0`                                                           |
 | `--samples_per_hour`| Samples per hour in data                     | `1`                                                           |
+
+> **Tip:** When `--features` is omitted or set to `ALL`, the training script automatically detects every numeric column that exists across the train/val/test splits and uses them all as model inputs.
 
 ## Label Generation Types
 

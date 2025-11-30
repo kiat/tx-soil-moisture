@@ -27,7 +27,7 @@ def test_backward_compatibility():
     
     # Manual calculation of what the original function should produce
     rows = len(data) - window_size - offset
-    expected_y = data[window_size + offset - 1: window_size + offset - 1 + rows, 0]
+    expected_y = data[window_size + offset: window_size + offset + rows, 0]
     
     assert len(y_point) == len(expected_y), f"Length mismatch: {len(y_point)} vs {len(expected_y)}"
     assert np.allclose(y_point, expected_y), "Point labels don't match original implementation"
@@ -52,12 +52,10 @@ def test_rolling_mean_basic():
                        label_type="rolling_mean", agg_hours=agg_hours, 
                        offset_hours=offset_hours, samples_per_hour=samples_per_hour)
     
-    # For the first window [0,1,2,3,4], with offset=0, offset_hours=0:
-    # target_end_idx = 0 + 5 + 0 = 5
-    # target_start_idx = 5 - 3 + 1 = 3  
-    # target should be mean of [3,4,5] = 4.0
-    expected_first_target = np.mean([3, 4, 5])  # 4.0
-    expected_second_target = np.mean([4, 5, 6])  # 5.0
+    # First target averages the 3 samples immediately after the window:
+    # indices [5, 6, 7] -> mean = 6.0
+    expected_first_target = np.mean([5, 6, 7])
+    expected_second_target = np.mean([6, 7, 8])
     
     assert np.isclose(y[0], expected_first_target), f"First target: {y[0]} vs {expected_first_target}"
     assert np.isclose(y[1], expected_second_target), f"Second target: {y[1]} vs {expected_second_target}"
@@ -80,10 +78,8 @@ def test_rolling_mean_with_offset():
                        label_type="rolling_mean", agg_hours=agg_hours, 
                        offset_hours=offset_hours, samples_per_hour=samples_per_hour)
     
-    # For the first window [0,1,2,3,4], with total offset = 2 + 1 = 3
-    # Target end is at index 5 + 3 = 8
-    # Rolling mean window is [8-3+1:8+1] = [6,7,8], mean = 7.0
-    expected_first_target = np.mean([6, 7, 8])
+    # First aggregation window starts at index 8 (5 + 3) and covers [8, 9, 10]
+    expected_first_target = np.mean([8, 9, 10])
     
     assert len(y) > 0, "No targets generated"
     assert np.isclose(y[0], expected_first_target), f"First target with offset: {y[0]} vs {expected_first_target}"
@@ -106,9 +102,8 @@ def test_daily_mean():
                        label_type="daily_mean", 
                        offset_hours=offset_hours, samples_per_hour=samples_per_hour)
     
-    # For the first window [0-23], target end is at 24 + 0 = 24
-    # Daily mean window is [24-24+1:24+1] = [1:25] = [1-24], mean = 12.5
-    expected_first_target = np.mean(np.arange(1, 25))
+    # First daily mean uses the 24 samples immediately after the window: indices [24-47]
+    expected_first_target = np.mean(np.arange(24, 48))
     
     assert len(y) > 0, "No targets generated for daily mean"
     assert np.isclose(y[0], expected_first_target), f"Daily mean target: {y[0]} vs {expected_first_target}"
@@ -150,10 +145,9 @@ def test_samples_per_hour():
                        label_type="rolling_mean", agg_hours=agg_hours,
                        samples_per_hour=samples_per_hour)
     
-    # agg_hours=12 with samples_per_hour=2 means we need 24 samples for aggregation
-    # First window is [0-47], target_end is at 48 + 0 = 48
-    # Rolling mean window is [48-24+1:48+1] = [25:49] = [25-48], mean = 36.5
-    expected_first_target = np.mean(np.arange(25, 49))
+    # agg_hours=12 with samples_per_hour=2 means we need 24 samples
+    # First target averages indices [48-71]
+    expected_first_target = np.mean(np.arange(48, 72))
     
     assert len(y) > 0, "No targets generated with samples_per_hour"
     assert np.isclose(y[0], expected_first_target), f"Samples per hour target: {y[0]} vs {expected_first_target}"

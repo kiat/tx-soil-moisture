@@ -1,0 +1,284 @@
+/home/aditya/tx-soil-moisture/.venv/lib/python3.13/site-packages/torch/cuda/__init__.py:182: UserWarning: CUDA initialization: The NVIDIA driver on your system is too old (found version 9010). Please update your GPU driver by downloading and installing a new version from the URL: http://www.nvidia.com/Download/index.aspx Alternatively, go to: https://pytorch.org to install a PyTorch version that has been compiled with your version of the CUDA driver. (Triggered internally at /pytorch/c10/cuda/CUDAFunctions.cpp:109.)
+  return torch._C._cuda_getDeviceCount() > 0
+/home/aditya/tx-soil-moisture/src-pytorch/core/data_helpers.py:75: FutureWarning: DataFrame.fillna with 'method' is deprecated and will raise in a future version. Use obj.ffill() or obj.bfill() instead.
+  df[num_cols] = df[num_cols].fillna(method='bfill').fillna(method='ffill')
+/home/aditya/tx-soil-moisture/src-pytorch/core/data_helpers.py:96: FutureWarning: Series.fillna with 'method' is deprecated and will raise in a future version. Use obj.ffill() or obj.bfill() instead.
+  wd = df['Winddirection'].interpolate(limit_direction='both').fillna(method='bfill').fillna(method='ffill')
+/home/aditya/tx-soil-moisture/src-pytorch/core/data_helpers.py:75: FutureWarning: DataFrame.fillna with 'method' is deprecated and will raise in a future version. Use obj.ffill() or obj.bfill() instead.
+  df[num_cols] = df[num_cols].fillna(method='bfill').fillna(method='ffill')
+/home/aditya/tx-soil-moisture/src-pytorch/core/data_helpers.py:96: FutureWarning: Series.fillna with 'method' is deprecated and will raise in a future version. Use obj.ffill() or obj.bfill() instead.
+  wd = df['Winddirection'].interpolate(limit_direction='both').fillna(method='bfill').fillna(method='ffill')
+/home/aditya/tx-soil-moisture/src-pytorch/core/data_helpers.py:75: FutureWarning: DataFrame.fillna with 'method' is deprecated and will raise in a future version. Use obj.ffill() or obj.bfill() instead.
+  df[num_cols] = df[num_cols].fillna(method='bfill').fillna(method='ffill')
+/home/aditya/tx-soil-moisture/src-pytorch/core/data_helpers.py:96: FutureWarning: Series.fillna with 'method' is deprecated and will raise in a future version. Use obj.ffill() or obj.bfill() instead.
+  wd = df['Winddirection'].interpolate(limit_direction='both').fillna(method='bfill').fillna(method='ffill')
+/home/aditya/tx-soil-moisture/src-pytorch/core/data_helpers.py:75: FutureWarning: DataFrame.fillna with 'method' is deprecated and will raise in a future version. Use obj.ffill() or obj.bfill() instead.
+  df[num_cols] = df[num_cols].fillna(method='bfill').fillna(method='ffill')
+/home/aditya/tx-soil-moisture/src-pytorch/core/data_helpers.py:96: FutureWarning: Series.fillna with 'method' is deprecated and will raise in a future version. Use obj.ffill() or obj.bfill() instead.
+  wd = df['Winddirection'].interpolate(limit_direction='both').fillna(method='bfill').fillna(method='ffill')
+/home/aditya/tx-soil-moisture/src-pytorch/core/data_helpers.py:75: FutureWarning: DataFrame.fillna with 'method' is deprecated and will raise in a future version. Use obj.ffill() or obj.bfill() instead.
+  df[num_cols] = df[num_cols].fillna(method='bfill').fillna(method='ffill')
+/home/aditya/tx-soil-moisture/src-pytorch/core/data_helpers.py:96: FutureWarning: Series.fillna with 'method' is deprecated and will raise in a future version. Use obj.ffill() or obj.bfill() instead.
+  wd = df['Winddirection'].interpolate(limit_direction='both').fillna(method='bfill').fillna(method='ffill')
+/home/aditya/tx-soil-moisture/src-pytorch/core/data_helpers.py:75: FutureWarning: DataFrame.fillna with 'method' is deprecated and will raise in a future version. Use obj.ffill() or obj.bfill() instead.
+  df[num_cols] = df[num_cols].fillna(method='bfill').fillna(method='ffill')
+/home/aditya/tx-soil-moisture/src-pytorch/core/data_helpers.py:96: FutureWarning: Series.fillna with 'method' is deprecated and will raise in a future version. Use obj.ffill() or obj.bfill() instead.
+  wd = df['Winddirection'].interpolate(limit_direction='both').fillna(method='bfill').fillna(method='ffill')
+/home/aditya/tx-soil-moisture/.venv/lib/python3.13/site-packages/sklearn/utils/_array_api.py:686: RuntimeWarning: All-NaN slice encountered
+  return xp.asarray(numpy.nanmin(X, axis=axis))
+/home/aditya/tx-soil-moisture/.venv/lib/python3.13/site-packages/sklearn/utils/_array_api.py:706: RuntimeWarning: All-NaN slice encountered
+  return xp.asarray(numpy.nanmax(X, axis=axis))
+/home/aditya/tx-soil-moisture/.venv/lib/python3.13/site-packages/sklearn/utils/_array_api.py:686: RuntimeWarning: All-NaN slice encountered
+  return xp.asarray(numpy.nanmin(X, axis=axis))
+/home/aditya/tx-soil-moisture/.venv/lib/python3.13/site-packages/sklearn/utils/_array_api.py:706: RuntimeWarning: All-NaN slice encountered
+  return xp.asarray(numpy.nanmax(X, axis=axis))
+Using device: cpu
+Reading CSV: /home/aditya/tx-soil-moisture/datasets/New_Revised_Final_Data/Station1_SWCfilled_Data.csv
+Reading CSV: /home/aditya/tx-soil-moisture/datasets/New_Revised_Final_Data/Station2_SWCfilled_Data.csv
+Reading CSV: /home/aditya/tx-soil-moisture/datasets/New_Revised_Final_Data/Station3_SWCfilled_Data.csv
+Reading CSV: /home/aditya/tx-soil-moisture/datasets/New_Revised_Final_Data/Station4_SWCfilled_Data.csv
+Reading CSV: /home/aditya/tx-soil-moisture/datasets/New_Revised_Final_Data/Station5_SWCfilled_Data.csv
+Reading CSV: /home/aditya/tx-soil-moisture/datasets/New_Revised_Final_Data/Station6_SWCfilled_Data.csv
+Engineering features for Station1
+Engineering features for Station2
+Engineering features for Station3
+Engineering features for Station4
+Engineering features for Station5
+Engineering features for Station6
+TEST DF: 2020-01-01 00:00:00 to 2021-09-01 00:00:00
+Models to be processed: ['lstm', 'bilstm', 'rnn', 'cnn', 'attentionlstm', 'attentiononly', 'transformer', 'multiheadlstm']
+
+===== Processing LSTM =====
+Training LSTM...
+Epoch 1/50 | Train Loss: 0.024160 | Val Loss: 0.023843
+Epoch 2/50 | Train Loss: 0.021162 | Val Loss: 0.024144
+Epoch 3/50 | Train Loss: 0.017382 | Val Loss: 0.023081
+Epoch 4/50 | Train Loss: 0.013474 | Val Loss: 0.022763
+Epoch 5/50 | Train Loss: 0.011661 | Val Loss: 0.022814
+Epoch 6/50 | Train Loss: 0.010979 | Val Loss: 0.031504
+Epoch 7/50 | Train Loss: 0.010143 | Val Loss: 0.024709
+Epoch 8/50 | Train Loss: 0.009871 | Val Loss: 0.023955
+Epoch 9/50 | Train Loss: 0.009284 | Val Loss: 0.023163
+--- Early stopping triggered ---
+Restoring best model weights.
+
+Final Evaluation on Test Set...
+LSTM model saved at saved_models_pytorch/model_lstm_ws168_offset72_SWC_5_SWC_10_SWC_20_SWC_50_Ppt_Ppt_24h_sum_Ppt_RainFlag_Tair_RH_Srad_HoursSinceRain_Wx_Wy_Windspeed_Winddirection.pth
+Saved loss history for lstm (ws=168, offset=72, features=SWC_5_SWC_10_SWC_20_SWC_50_Ppt_Ppt_24h_sum_Ppt_RainFlag_Tair_RH_Srad_HoursSinceRain_Wx_Wy_Windspeed_Winddirection) on Station6 to results/loss_history_ws168_offset72_SWC_5_SWC_10_SWC_20_SWC_50_Ppt_Ppt_24h_sum_Ppt_RainFlag_Tair_RH_Srad_HoursSinceRain_Wx_Wy_Windspeed_Winddirection.csv
+
+--- LSTM Final Test Metrics ---
+MSE: 0.025229
+MAE: 0.114897
+MAPE: 84.804764
+SMAPE: 46.272163
+RSE: 0.969196
+CORR: 0.469591
+Saved model results for lstm on Station6 with 22 features to results/results_ws168_offset72_SWC_5_SWC_10_SWC_20_SWC_50_Ppt_Ppt_24h_sum_Ppt_RainFlag_Tair_RH_Srad_HoursSinceRain_Wx_Wy_Windspeed_Winddirection.csv
+-------------------------------------
+
+
+===== Processing BILSTM =====
+Training BILSTM...
+Epoch 1/50 | Train Loss: 0.026734 | Val Loss: 0.022287
+Epoch 2/50 | Train Loss: 0.019897 | Val Loss: 0.025623
+Epoch 3/50 | Train Loss: 0.014850 | Val Loss: 0.029341
+Epoch 4/50 | Train Loss: 0.012682 | Val Loss: 0.024903
+Epoch 5/50 | Train Loss: 0.011455 | Val Loss: 0.025991
+Epoch 6/50 | Train Loss: 0.010659 | Val Loss: 0.022604
+--- Early stopping triggered ---
+Restoring best model weights.
+
+Final Evaluation on Test Set...
+BILSTM model saved at saved_models_pytorch/model_bilstm_ws168_offset72_SWC_5_SWC_10_SWC_20_SWC_50_Ppt_Ppt_24h_sum_Ppt_RainFlag_Tair_RH_Srad_HoursSinceRain_Wx_Wy_Windspeed_Winddirection.pth
+Saved loss history for bilstm (ws=168, offset=72, features=SWC_5_SWC_10_SWC_20_SWC_50_Ppt_Ppt_24h_sum_Ppt_RainFlag_Tair_RH_Srad_HoursSinceRain_Wx_Wy_Windspeed_Winddirection) on Station6 to results/loss_history_ws168_offset72_SWC_5_SWC_10_SWC_20_SWC_50_Ppt_Ppt_24h_sum_Ppt_RainFlag_Tair_RH_Srad_HoursSinceRain_Wx_Wy_Windspeed_Winddirection.csv
+
+--- BILSTM Final Test Metrics ---
+MSE: 0.020996
+MAE: 0.115777
+MAPE: 113.304565
+SMAPE: 49.269199
+RSE: 0.806576
+CORR: 0.489304
+Saved model results for bilstm on Station6 with 22 features to results/results_ws168_offset72_SWC_5_SWC_10_SWC_20_SWC_50_Ppt_Ppt_24h_sum_Ppt_RainFlag_Tair_RH_Srad_HoursSinceRain_Wx_Wy_Windspeed_Winddirection.csv
+-------------------------------------
+
+
+===== Processing RNN =====
+Training RNN...
+Epoch 1/50 | Train Loss: 0.025931 | Val Loss: 0.022149
+Epoch 2/50 | Train Loss: 0.020934 | Val Loss: 0.020810
+Epoch 3/50 | Train Loss: 0.019641 | Val Loss: 0.020508
+Epoch 4/50 | Train Loss: 0.018425 | Val Loss: 0.017085
+Epoch 5/50 | Train Loss: 0.017505 | Val Loss: 0.018039
+Epoch 6/50 | Train Loss: 0.017180 | Val Loss: 0.017962
+Epoch 7/50 | Train Loss: 0.016738 | Val Loss: 0.016910
+Epoch 8/50 | Train Loss: 0.016522 | Val Loss: 0.017593
+Epoch 9/50 | Train Loss: 0.016281 | Val Loss: 0.017074
+Epoch 10/50 | Train Loss: 0.016167 | Val Loss: 0.016625
+Epoch 11/50 | Train Loss: 0.016193 | Val Loss: 0.017505
+Epoch 12/50 | Train Loss: 0.015994 | Val Loss: 0.016444
+Epoch 13/50 | Train Loss: 0.015756 | Val Loss: 0.016734
+Epoch 14/50 | Train Loss: 0.015873 | Val Loss: 0.018240
+Epoch 15/50 | Train Loss: 0.016152 | Val Loss: 0.017009
+Epoch 16/50 | Train Loss: 0.015871 | Val Loss: 0.016681
+Epoch 17/50 | Train Loss: 0.015768 | Val Loss: 0.017255
+--- Early stopping triggered ---
+Restoring best model weights.
+
+Final Evaluation on Test Set...
+RNN model saved at saved_models_pytorch/model_rnn_ws168_offset72_SWC_5_SWC_10_SWC_20_SWC_50_Ppt_Ppt_24h_sum_Ppt_RainFlag_Tair_RH_Srad_HoursSinceRain_Wx_Wy_Windspeed_Winddirection.pth
+Saved loss history for rnn (ws=168, offset=72, features=SWC_5_SWC_10_SWC_20_SWC_50_Ppt_Ppt_24h_sum_Ppt_RainFlag_Tair_RH_Srad_HoursSinceRain_Wx_Wy_Windspeed_Winddirection) on Station6 to results/loss_history_ws168_offset72_SWC_5_SWC_10_SWC_20_SWC_50_Ppt_Ppt_24h_sum_Ppt_RainFlag_Tair_RH_Srad_HoursSinceRain_Wx_Wy_Windspeed_Winddirection.csv
+
+--- RNN Final Test Metrics ---
+MSE: 0.014723
+MAE: 0.090763
+MAPE: 69.535004
+SMAPE: 41.403019
+RSE: 0.565608
+CORR: 0.660989
+Saved model results for rnn on Station6 with 22 features to results/results_ws168_offset72_SWC_5_SWC_10_SWC_20_SWC_50_Ppt_Ppt_24h_sum_Ppt_RainFlag_Tair_RH_Srad_HoursSinceRain_Wx_Wy_Windspeed_Winddirection.csv
+-------------------------------------
+
+
+===== Processing CNN =====
+Training CNN...
+Epoch 1/50 | Train Loss: 0.029093 | Val Loss: 0.020556
+Epoch 2/50 | Train Loss: 0.020066 | Val Loss: 0.020869
+Epoch 3/50 | Train Loss: 0.018474 | Val Loss: 0.021044
+Epoch 4/50 | Train Loss: 0.017470 | Val Loss: 0.020757
+Epoch 5/50 | Train Loss: 0.016535 | Val Loss: 0.020084
+Epoch 6/50 | Train Loss: 0.015802 | Val Loss: 0.022200
+Epoch 7/50 | Train Loss: 0.015192 | Val Loss: 0.025506
+Epoch 8/50 | Train Loss: 0.014982 | Val Loss: 0.023272
+Epoch 9/50 | Train Loss: 0.014569 | Val Loss: 0.022327
+Epoch 10/50 | Train Loss: 0.014302 | Val Loss: 0.022927
+--- Early stopping triggered ---
+Restoring best model weights.
+
+Final Evaluation on Test Set...
+CNN model saved at saved_models_pytorch/model_cnn_ws168_offset72_SWC_5_SWC_10_SWC_20_SWC_50_Ppt_Ppt_24h_sum_Ppt_RainFlag_Tair_RH_Srad_HoursSinceRain_Wx_Wy_Windspeed_Winddirection.pth
+Saved loss history for cnn (ws=168, offset=72, features=SWC_5_SWC_10_SWC_20_SWC_50_Ppt_Ppt_24h_sum_Ppt_RainFlag_Tair_RH_Srad_HoursSinceRain_Wx_Wy_Windspeed_Winddirection) on Station6 to results/loss_history_ws168_offset72_SWC_5_SWC_10_SWC_20_SWC_50_Ppt_Ppt_24h_sum_Ppt_RainFlag_Tair_RH_Srad_HoursSinceRain_Wx_Wy_Windspeed_Winddirection.csv
+
+--- CNN Final Test Metrics ---
+MSE: 0.021464
+MAE: 0.103263
+MAPE: 72.049736
+SMAPE: 46.275993
+RSE: 0.824546
+CORR: 0.514805
+Saved model results for cnn on Station6 with 22 features to results/results_ws168_offset72_SWC_5_SWC_10_SWC_20_SWC_50_Ppt_Ppt_24h_sum_Ppt_RainFlag_Tair_RH_Srad_HoursSinceRain_Wx_Wy_Windspeed_Winddirection.csv
+-------------------------------------
+
+
+===== Processing ATTENTIONLSTM =====
+Training ATTENTIONLSTM...
+Epoch 1/50 | Train Loss: 0.023717 | Val Loss: 0.024105
+Epoch 2/50 | Train Loss: 0.021476 | Val Loss: 0.024579
+Epoch 3/50 | Train Loss: 0.019025 | Val Loss: 0.029567
+Epoch 4/50 | Train Loss: 0.015756 | Val Loss: 0.025926
+Epoch 5/50 | Train Loss: 0.014178 | Val Loss: 0.022859
+Epoch 6/50 | Train Loss: 0.013091 | Val Loss: 0.025792
+Epoch 7/50 | Train Loss: 0.012273 | Val Loss: 0.027125
+Epoch 8/50 | Train Loss: 0.011455 | Val Loss: 0.025172
+Epoch 9/50 | Train Loss: 0.010908 | Val Loss: 0.024332
+Epoch 10/50 | Train Loss: 0.010842 | Val Loss: 0.024337
+--- Early stopping triggered ---
+Restoring best model weights.
+
+Final Evaluation on Test Set...
+ATTENTIONLSTM model saved at saved_models_pytorch/model_attentionlstm_ws168_offset72_SWC_5_SWC_10_SWC_20_SWC_50_Ppt_Ppt_24h_sum_Ppt_RainFlag_Tair_RH_Srad_HoursSinceRain_Wx_Wy_Windspeed_Winddirection.pth
+Saved loss history for attentionlstm (ws=168, offset=72, features=SWC_5_SWC_10_SWC_20_SWC_50_Ppt_Ppt_24h_sum_Ppt_RainFlag_Tair_RH_Srad_HoursSinceRain_Wx_Wy_Windspeed_Winddirection) on Station6 to results/loss_history_ws168_offset72_SWC_5_SWC_10_SWC_20_SWC_50_Ppt_Ppt_24h_sum_Ppt_RainFlag_Tair_RH_Srad_HoursSinceRain_Wx_Wy_Windspeed_Winddirection.csv
+
+--- ATTENTIONLSTM Final Test Metrics ---
+MSE: 0.023133
+MAE: 0.108936
+MAPE: 74.221382
+SMAPE: 45.533310
+RSE: 0.888658
+CORR: 0.487322
+Saved model results for attentionlstm on Station6 with 22 features to results/results_ws168_offset72_SWC_5_SWC_10_SWC_20_SWC_50_Ppt_Ppt_24h_sum_Ppt_RainFlag_Tair_RH_Srad_HoursSinceRain_Wx_Wy_Windspeed_Winddirection.csv
+-------------------------------------
+
+
+===== Processing ATTENTIONONLY =====
+Training ATTENTIONONLY...
+Epoch 1/50 | Train Loss: 0.024138 | Val Loss: 0.020929
+Epoch 2/50 | Train Loss: 0.018957 | Val Loss: 0.023245
+Epoch 3/50 | Train Loss: 0.016584 | Val Loss: 0.020968
+Epoch 4/50 | Train Loss: 0.014481 | Val Loss: 0.022621
+Epoch 5/50 | Train Loss: 0.013236 | Val Loss: 0.024889
+Epoch 6/50 | Train Loss: 0.012267 | Val Loss: 0.025150
+--- Early stopping triggered ---
+Restoring best model weights.
+
+Final Evaluation on Test Set...
+ATTENTIONONLY model saved at saved_models_pytorch/model_attentiononly_ws168_offset72_SWC_5_SWC_10_SWC_20_SWC_50_Ppt_Ppt_24h_sum_Ppt_RainFlag_Tair_RH_Srad_HoursSinceRain_Wx_Wy_Windspeed_Winddirection.pth
+Saved loss history for attentiononly (ws=168, offset=72, features=SWC_5_SWC_10_SWC_20_SWC_50_Ppt_Ppt_24h_sum_Ppt_RainFlag_Tair_RH_Srad_HoursSinceRain_Wx_Wy_Windspeed_Winddirection) on Station6 to results/loss_history_ws168_offset72_SWC_5_SWC_10_SWC_20_SWC_50_Ppt_Ppt_24h_sum_Ppt_RainFlag_Tair_RH_Srad_HoursSinceRain_Wx_Wy_Windspeed_Winddirection.csv
+
+--- ATTENTIONONLY Final Test Metrics ---
+MSE: 0.019319
+MAE: 0.095823
+MAPE: 53.423847
+SMAPE: 41.083668
+RSE: 0.742163
+CORR: 0.574674
+Saved model results for attentiononly on Station6 with 22 features to results/results_ws168_offset72_SWC_5_SWC_10_SWC_20_SWC_50_Ppt_Ppt_24h_sum_Ppt_RainFlag_Tair_RH_Srad_HoursSinceRain_Wx_Wy_Windspeed_Winddirection.csv
+-------------------------------------
+
+
+===== Processing TRANSFORMER =====
+Training TRANSFORMER...
+Epoch 1/50 | Train Loss: 0.024563 | Val Loss: 0.024108
+Epoch 2/50 | Train Loss: 0.019311 | Val Loss: 0.021404
+Epoch 3/50 | Train Loss: 0.017078 | Val Loss: 0.027157
+Epoch 4/50 | Train Loss: 0.014687 | Val Loss: 0.025805
+Epoch 5/50 | Train Loss: 0.013193 | Val Loss: 0.024422
+Epoch 6/50 | Train Loss: 0.012317 | Val Loss: 0.025401
+Epoch 7/50 | Train Loss: 0.011632 | Val Loss: 0.025462
+--- Early stopping triggered ---
+Restoring best model weights.
+
+Final Evaluation on Test Set...
+TRANSFORMER model saved at saved_models_pytorch/model_transformer_ws168_offset72_SWC_5_SWC_10_SWC_20_SWC_50_Ppt_Ppt_24h_sum_Ppt_RainFlag_Tair_RH_Srad_HoursSinceRain_Wx_Wy_Windspeed_Winddirection.pth
+Saved loss history for transformer (ws=168, offset=72, features=SWC_5_SWC_10_SWC_20_SWC_50_Ppt_Ppt_24h_sum_Ppt_RainFlag_Tair_RH_Srad_HoursSinceRain_Wx_Wy_Windspeed_Winddirection) on Station6 to results/loss_history_ws168_offset72_SWC_5_SWC_10_SWC_20_SWC_50_Ppt_Ppt_24h_sum_Ppt_RainFlag_Tair_RH_Srad_HoursSinceRain_Wx_Wy_Windspeed_Winddirection.csv
+
+--- TRANSFORMER Final Test Metrics ---
+MSE: 0.019799
+MAE: 0.101908
+MAPE: 72.869980
+SMAPE: 44.706787
+RSE: 0.760602
+CORR: 0.538984
+Saved model results for transformer on Station6 with 22 features to results/results_ws168_offset72_SWC_5_SWC_10_SWC_20_SWC_50_Ppt_Ppt_24h_sum_Ppt_RainFlag_Tair_RH_Srad_HoursSinceRain_Wx_Wy_Windspeed_Winddirection.csv
+-------------------------------------
+
+
+===== Processing MULTIHEADLSTM =====
+Training MULTIHEADLSTM...
+Epoch 1/50 | Train Loss: 0.023766 | Val Loss: 0.027193
+Epoch 2/50 | Train Loss: 0.021177 | Val Loss: 0.023220
+Epoch 3/50 | Train Loss: 0.018030 | Val Loss: 0.023641
+Epoch 4/50 | Train Loss: 0.014545 | Val Loss: 0.022653
+Epoch 5/50 | Train Loss: 0.012621 | Val Loss: 0.025455
+Epoch 6/50 | Train Loss: 0.011488 | Val Loss: 0.024105
+Epoch 7/50 | Train Loss: 0.010992 | Val Loss: 0.026835
+Epoch 8/50 | Train Loss: 0.010502 | Val Loss: 0.026614
+Epoch 9/50 | Train Loss: 0.010307 | Val Loss: 0.029712
+--- Early stopping triggered ---
+Restoring best model weights.
+
+Final Evaluation on Test Set...
+MULTIHEADLSTM model saved at saved_models_pytorch/model_multiheadlstm_ws168_offset72_SWC_5_SWC_10_SWC_20_SWC_50_Ppt_Ppt_24h_sum_Ppt_RainFlag_Tair_RH_Srad_HoursSinceRain_Wx_Wy_Windspeed_Winddirection.pth
+Saved loss history for multiheadlstm (ws=168, offset=72, features=SWC_5_SWC_10_SWC_20_SWC_50_Ppt_Ppt_24h_sum_Ppt_RainFlag_Tair_RH_Srad_HoursSinceRain_Wx_Wy_Windspeed_Winddirection) on Station6 to results/loss_history_ws168_offset72_SWC_5_SWC_10_SWC_20_SWC_50_Ppt_Ppt_24h_sum_Ppt_RainFlag_Tair_RH_Srad_HoursSinceRain_Wx_Wy_Windspeed_Winddirection.csv
+
+--- MULTIHEADLSTM Final Test Metrics ---
+MSE: 0.022445
+MAE: 0.107564
+MAPE: 76.772186
+SMAPE: 46.785812
+RSE: 0.862251
+CORR: 0.489860
+Saved model results for multiheadlstm on Station6 with 22 features to results/results_ws168_offset72_SWC_5_SWC_10_SWC_20_SWC_50_Ppt_Ppt_24h_sum_Ppt_RainFlag_Tair_RH_Srad_HoursSinceRain_Wx_Wy_Windspeed_Winddirection.csv
+-------------------------------------
+
+All runs complete! Results have been saved.
