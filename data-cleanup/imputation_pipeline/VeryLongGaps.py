@@ -71,6 +71,34 @@ def fit_linear_map(y, x):
     mdl = LinearRegression().fit(x[m].values.reshape(-1,1), y[m])
     return mdl
 
+def fill_from_donor_mean(gaps, donors, parameter, target_df, detail_rows, station_id):
+    """Fallback: average all donor stations for each gap hour."""
+    donors_param = {sid: df[parameter] for sid, df in donors.items() if parameter in df}
+    if not donors_param:
+        return 0
+
+    filled = 0
+    for _, gap in gaps.iterrows():
+        start, end = gap["Start Timestamp"], gap["End Timestamp"]
+        idx = pd.date_range(start, end, freq="H")
+        combined = pd.DataFrame({sid: series.reindex(idx) for sid, series in donors_param.items()})
+        fallback = combined.mean(axis=1, skipna=True)
+        fallback = fallback[target_df.loc[idx, parameter].isna()].dropna()
+        if fallback.empty:
+            continue
+        target_df.loc[fallback.index, parameter] = fallback.values
+        filled += len(fallback)
+        for ts, val in fallback.items():
+            detail_rows.append({
+                "Station": station_id,
+                "Parameter": parameter,
+                "Start": start,
+                "End": end,
+                "Timestamp": ts,
+                "Filled": round(float(val), 6)
+            })
+    return filled
+
 # ---------- main fill routine -------------------------------------------
 def fill_station(sta, params, donor_ids, win_days=14):
     print(f"\n=== Station {sta} | very-long gap filling ===")
@@ -100,7 +128,12 @@ def fill_station(sta, params, donor_ids, win_days=14):
         donor_sid, r = choose_best_donor(df_tgt[p],
                                          {sid: df[p] for sid, df in available_donors.items()})
         if donor_sid is None:
-            print("  • No donor with ≥500 h overlap – skip"); continue
+            fallback = fill_from_donor_mean(gaps, available_donors, p, df_tgt, detail_rows, sta)
+            if fallback:
+                print(f"  • No regression donor available – filled {fallback} hours via donor-mean fallback")
+            else:
+                print("  • No donor with ≥500 h overlap – skip")
+            continue
         print(f"  • donor S{donor_sid}  |r|={r:.3f}")
 
         model = fit_linear_map(df_tgt[p], available_donors[donor_sid][p])

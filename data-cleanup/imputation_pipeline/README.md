@@ -160,8 +160,8 @@ The following matrix summarizes which modeling family we rely on for each gap le
 
 Refer to the source sheet (`https://docs.google.com/spreadsheets/d/1OouqvV3Te1l-xHxy8NfNVA0TpEiFaFh0Agav3eePHf8/edit#gid=0`) for additional notes or historical error statistics per parameter. For detailed notebook walkthroughs, switch to branch `zun-cao` and open `Model_2025/Short Gaps.ipynb`, `Model_2025/SARIMA.ipynb`, `Model_2025/Long Gaps.ipynb`, and `Model_2025/Very_Long_Gaps.ipynb`.
 
-### Known unresolved sensors
+### Known unresolved sensors / fallbacks
 
-- **Station 4 SWC_50 / T_50** – every record in the raw files is already `NaN`. No donor-based patch can fix an all-null column, so these stay missing through the pipeline. Any downstream analysis should treat Station 4 depth-50 readings as unavailable.
+- **Station 4 SWC_50 / T_50** – every record in the raw files is already `NaN`. When VeryLongGaps cannot fit a regression donor (no overlapping truth), it now falls back to the cross-station hourly mean for that parameter. Treat these values as synthetic placeholders; if you prefer to keep them missing, simply drop the columns after the run.
 
 With these pieces in place you can regenerate Station 1–6 with consistent soil moisture and temperature fills in a single command and audit every value that was touched.
