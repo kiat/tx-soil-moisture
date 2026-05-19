@@ -1,0 +1,11 @@
+newSiteCode,logger_ID,logger_filename,logger_status,logger_size_mb,logger_start,logger_end,met_filename,met_status,met_size_mb,met_start,met_end
+L_1,LCRA_1,L_1.dat,NOT FOUND,0.0,N/A,N/A,,N/A,0.0,N/A,N/A
+L_2,LCRA_2,L_2.dat,NOT FOUND,0.0,N/A,N/A,,N/A,0.0,N/A,N/A
+L_3,LCRA_3,L_3.dat,NOT FOUND,0.0,N/A,N/A,,N/A,0.0,N/A,N/A
+L_4,LCRA_4,L_4.dat,NOT FOUND,0.0,N/A,N/A,,N/A,0.0,N/A,N/A
+L_5,LCRA_5,L_5.dat,NOT FOUND,0.0,N/A,N/A,,N/A,0.0,N/A,N/A
+L_6,LCRA_6,L_6.dat,NOT FOUND,0.0,N/A,N/A,,N/A,0.0,N/A,N/A
+L_7,LCRA_7,L_7.dat,NOT FOUND,0.0,N/A,N/A,,N/A,0.0,N/A,N/A
+,,nan.dat,NOT FOUND,0.0,N/A,N/A,,N/A,0.0,N/A,N/A
+,,nan.dat,NOT FOUND,0.0,N/A,N/A,,N/A,0.0,N/A,N/A
+,,nan.dat,NOT FOUND,0.0,N/A,N/A,,N/A,0.0,N/A,N/A
