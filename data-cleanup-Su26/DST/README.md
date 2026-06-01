@@ -9,7 +9,7 @@
 
 # dup_cleaner.py
 
-    - Expects a DataFrame with a timestamp index and a "Flag" column, drop the record column in met data.
+- Expects a DataFrame with a timestamp index and a "Flag" column, drop the record column in met data.
 
     - Treats the following cases of duplicate timestamps:
         1. same timestamp, measurements, and flag -> drop duplicates, keep one of them (default behavior of drop_duplicates)
