@@ -28,13 +28,13 @@ def time_cleaner(df, avg_diff_measurements=False, extend_time=False):
     if df.empty:
         return df
 
-    # warn about non numeric columns that will be ignored when averaging and from measure of distance for extending timestamps
+    # warn about non numeric columns that will be ignored when averaging and from measure of distance when extending timestamps
     if avg_diff_measurements or extend_time:
         non_numeric = df.select_dtypes(exclude="number").columns
         if len(non_numeric):
             print(
                 "Warning: the following non-numeric columns will be ignored when "
-                "averaging colliding rows and measuring distances for extending timestamps: "
+                "averaging colliding rows and measuring distances when extending timestamps: "
                 + ", ".join(non_numeric)
             )
  
