@@ -1,0 +1,19 @@
+Original DataFrame rows:
+85252
+
+DataFrame rows after dropping case one duplicates (keeping first occurrence):
+81185
+
+Difference in rows before and after case one duplicate removal:
+4067
+
+Number of rows in df containing all (keeping all occurrences) case one duplicates :
+6191
+
+Number of unique rows in df containing all (keeping all occurrences) case one duplicates :
+2124
+
+Difference in rows between the df with all duplicates and the df with unique duplicates:
+6191 - 2124 = 4067
+
+The difference above should be equal to the number of duplicate rows removed when keeping first occurrence. 
