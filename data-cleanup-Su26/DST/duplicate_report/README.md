@@ -2,20 +2,19 @@
 
 This document explains the output from running all of the finding_dups notebook.
 
----
 
 ## What the code does
 
 The routine removes duplicates in two passes. **The Timestamps are a column here**.
 
-**Case one — exact duplicates.** `drop_case_one_dups(df)` treats two rows as
+**Case one — full_row_duplicates.** `drop_case_one_dups(df)` treats two rows as
 duplicates only if they are identical across *every* column. It keeps the first
 occurrence of each repeated row and discards the rest. It returns two frames: the
 deduplicated frame, and a frame containing *every* row that belongs to a
 duplicated group — all occurrences — via
 `duplicated(keep=False)`.
 
-**Case two — duplicates ignoring `Flag`.** `drop_case_two_dups(df, ignore_col='Flag')`
+**Case two — full_dup_but_flag `Flag`.** `drop_case_two_dups(df, ignore_col='Flag')`
 treats two rows as duplicates if they are identical across every column *except*
 `Flag`. It is run on the output of case one, i.e. on a frame that already has no
 exact duplicates. It returns the same pair of frames (deduplicated, plus all rows
@@ -28,34 +27,11 @@ columns yet are not identical overall — and the only place left to differ is
 `Flag`. So **case two specifically surfaces records that are identical except for
 a conflicting flag.**
 
-**Case three - only duplicate timestamps**. This is the most troubling case with no clear fix,
+**Case three - only_duplicate_timestamps**. This is the most troubling case with no clear fix,
 since who knows which measurement is correct; therefore, we only report the occurrences. 
-Notably, this case **ONLY occurs in proximity to the end of Daylight Savings Time (DST) at transition time** and
-a duplicate 1 am signature on the day DST ends would indicate the data observes DST; however,
-there is **never an indication of both DST starting and ending in one single file** (investigate in DST_check notebook). Additionally, 
-the vast majority of case three duplicates occur exactly a day after DST ends.
+Notably, this case **ONLY occurs in proximity to the end of Daylight Savings Time (DST)** with the indication of DST ending; however, there is **NEVER an indication of both DST starting and ending in one single file** (shown in DST_check.ipynb). Additionally, the vast majority of case three duplicates occur exactly a day after DST ends.
 
----
 
-## Preconditions
-
-A few things must hold for the numbers to mean what you expect:
-
-- **The index is reset first.** `drop_duplicates` and `duplicated` look only at
-  columns, never the index. The pipeline calls `reset_index()` so the timestamp
-  becomes a column and participates in duplicate detection. This is correct when
-  the index is a meaningful key such as a timestamp with possible repeats. It
-  would be *wrong* if the index were a plain `RangeIndex`, because that injects a
-  unique `0..n-1` column and then no row can ever be a duplicate.
-- **Missing values match each other.** Both functions inherit pandas' rule that
-  `NaN`, `NaT`, `None`, and `pd.NA` are treated as equal to themselves when
-  comparing rows. Two rows that are both missing in the same column (and equal
-  elsewhere) count as duplicates rather than being skipped.
-- **Order matters.** Case two consumes case one's *de-duplicated* output. Running
-  it on the raw frame instead would fold the exact duplicates in with the flag
-  conflicts and inflate the case-two counts.
-
----
 
 ## How to read each printed line
 
@@ -99,8 +75,6 @@ construction, so they double as correctness checks:
 5. **Reconciliation:** rows appearing exactly once number `original − R`; adding
    the `K` distinct repeated records gives the deduplicated total:
    `(original − R) + K = deduplicated`.
-
----
 
 ## Worked example: the CB01 run
 
@@ -148,8 +122,6 @@ pair is identical on every column except `Flag`, with two different `Flag` value
 — i.e. the same underlying record carrying conflicting flags. Collapsing each pair
 to its first occurrence removes 8 rows, leaving 81,177. These 8 pairs are a
 data-quality signal worth inspecting before they are collapsed blindly.
-
----
 
 ## Signs something is wrong
 
