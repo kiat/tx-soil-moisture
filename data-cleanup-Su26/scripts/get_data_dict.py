@@ -3,6 +3,7 @@ from read_data import file_to_indexed_df
 from soil_or_met import SoilOrMet
 from dup_cleaner import dup_cleaner
 from time_cleaner import time_cleaner
+from treat_wrong_data import find_and_replace_wrong_data
 
 class data_ingest:
     """
@@ -85,11 +86,13 @@ class data_ingest:
         for station, df in met_dict.items():
             df = dup_cleaner(df)
             df = time_cleaner(df) # just fills in missing timestamp
+            df = find_and_replace_wrong_data(df)
             met_dict[station] = df
 
         for station, df in soil_dict.items():
             df = dup_cleaner(df)
             df = time_cleaner(df) # just fills in missing timestamp
+            df = find_and_replace_wrong_data(df)
             soil_dict[station] = df
 
         return met_dict, soil_dict
