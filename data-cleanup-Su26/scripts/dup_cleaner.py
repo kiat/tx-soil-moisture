@@ -5,10 +5,9 @@ def dup_cleaner(df):
     Expects a DataFrame with a timestamp index and a "Flag" column, drop the record column in met data.
 
     treats the following cases of duplicate timestamps:
-    1. same timestamp, measurements, and flag -> drop duplicates, keep one of them (default behavior of drop_duplicates)
-    2. same timestamp, measurements, but different flag -> set the flag to NA
-
-    LEAVES SAME TIMESTAMP AND DIFFERENT MEASUREMENTS TO BE RESOLVED IN time_cleaner.py
+    1. same timestamp, measurements, and flag -> keep the first occurance by the original order of the data
+    2. same timestamp, measurements, but different flag -> keep the first occurance by the original order of the data
+    3. same timestamp, different measurements -> keep first occurance by the original order of the data
 
     Returns a DataFrame with duplicate timestamps handled according to the above rules, and the timestamp set as the index.
     """
@@ -22,22 +21,21 @@ def dup_cleaner(df):
 
     # first reset index so that drop duplicates includes the timestamp column
     index_name = df.index.name
+    
     df = df.reset_index().drop_duplicates() # default is keep='first', which is what we want for case 1 (keep one of the duplicates and drop the rest)
 
     
     ### Case 2 ###
 
-    # for this case, make the flag Na if there are duplicates with the same timestamp and measurements but different flags.
+    # for this case, keep the first occurance by the original order of the data
     if "Flag" in df.columns:
+        non_flag_cols = [col for col in df.columns if col != "Flag"] # get all columns except the flag column
+        df = df.drop_duplicates(subset=non_flag_cols, keep='first') # drop duplicates based on non-flag columns, keeping the first occurance (which is the one with the first flag value in the original order)
 
-        # find the measurements column by looking for the column that is not the flag column
-        measurements_col = df.columns.difference(["Flag"])
+    ### Case 3 ###
 
-        subset_cols = [index_name] + list(measurements_col)
-
-        # set the flag to NA for just duplicates with the same timestamp and measurements but different flags
-        conflicts = df.duplicated(subset=subset_cols, keep=False)
-        df.loc[conflicts, "Flag"] = pd.NA
+    # for this case, keep the first occurance by the original order of the data
+    df = df.drop_duplicates(subset=index_name, keep='first') # drop duplicates based
 
     # set the timestamp back as the index
     df = df.set_index(index_name)

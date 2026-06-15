@@ -41,7 +41,7 @@ class SoilOrMet:
     def find_timestamp(self, n_lines):
         """ Given a certain number of lines:
         1. check the lines for a timestamp
-        2. RETURN True if there is a timestamp (YYYY-MM-DD hh:mm:ss), False otherwise
+        2. RETURN True if there is a timestamp, False otherwise
         """
         for line in n_lines:
             entries = line.split(",")
@@ -86,11 +86,14 @@ class SoilOrMet:
             met_features = []
             for entry in entries:
                 if entry:
-                    entry = entry.strip('"\n') # drop parentheses and any \n
+                    entry = entry.strip('"\n') # drop "" and any \n
+                    entry = entry.strip("'\n") # drop '' and any \n
+                    entry = entry.strip() # drop any leading or trailing whitespace
+
                     if entry in self.current_soil_header:
                         soil_features.append(entry)
   
-                    elif entry in self.current_met_header:
+                    if entry in self.current_met_header:
                         met_features.append(entry)
 
             # determine data type
