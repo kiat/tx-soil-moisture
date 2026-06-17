@@ -85,7 +85,7 @@ def file_to_indexed_df(file_path, is_soil_or_met = 'unknown'):
         print("Warning: empty file path provided, skipping...")
         return None
 
-    elif file_path.endswith(".dat") == False:
+    elif not file_path.endswith(".dat"):
         print(f"Warning: {file_path} does not end with .dat, skipping...")
         return None
 
