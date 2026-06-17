@@ -1,8 +1,22 @@
-import pandas as pd
 from datetime import datetime
 
 class SoilOrMet:
     def __init__(self, current_met_header, current_soil_header, min_soil_features = 11, min_met_features = 10):
+        """
+        A object that determines if a given file contains soil or met data
+
+        Attributes:
+        current_met_header: list of expected met features
+        current_soil_header: list of expected soil features
+        min_soil_features: minimum number of expected soil features that must be present in the file to be classified as soil
+        min_met_features: minimum number of expected met features that must be present in the file to
+
+        Methods:
+        get_n_lines(file_name, n)
+        is_valid_date(date_str, format_str)
+        find_timestamp(n_lines)
+        determine_data_file(file_name)
+        """
         self.current_met_header = current_met_header
         self.current_soil_header = current_soil_header
         self.min_soil_features = min_soil_features
@@ -96,7 +110,7 @@ class SoilOrMet:
                     if entry in self.current_met_header:
                         met_features.append(entry)
 
-            # determine data type
+            # determine type
             if len(soil_features) >= self.min_soil_features:
                 return 'soil'
             elif len(met_features) >= self.min_met_features:
