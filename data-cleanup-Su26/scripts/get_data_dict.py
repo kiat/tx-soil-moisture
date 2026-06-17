@@ -7,7 +7,7 @@ from treat_wrong_data import find_and_replace_wrong_data
 
 class data_ingest:
     """
-    A object that handles ingesting data from a folder.
+    A object that handles ingesting (prewash + cleaning) the raw TxSON data from a given folder.
 
     Attributes:
         input_data_folder (str): The path to the folder containing the input data (must be the raw data).
@@ -20,10 +20,10 @@ class data_ingest:
         download (bool): Whether to download the data.
 
     methods:
-        open_data(): Opens the data from the data folder and returns a dictionary of the data.
-        prewash_data(): Prewashes the data and saves it to the prewash folder.
-        clean_data(): Cleans the data and saves it to the clean folder.
-        get_data_dict(): Gets the data dictionary: prewashing, cleaning, and downloading the data if necessary.
+        open_data()
+        prewash_data(met_dict, soil_dict)
+        clean_data(met_dict, soil_dict)
+        get_data_dict()
     """
 
     expected_soil_header = "Date,Ppt,SWC_5,SWC_10,SWC_20,SWC_50,T_5,T_10,T_20,T_50,Flag" 
@@ -50,11 +50,16 @@ class data_ingest:
         # if download is true, check if their respective folder is provided, else make the folder in the working directory
         working_dir = os.getcwd()
         if self.download:
-            if self.prewash and not self.prewash_folder:
-                self.prewash_folder = os.path.join(working_dir, "prewashed_data")
-            if self.clean and not self.clean_folder:
-                self.clean_folder = os.path.join(working_dir, "cleaned_data")
 
+            if self.prewash:
+                if not self.prewash_folder:
+                    self.prewash_folder = os.path.join(working_dir, "prewashed_data")
+                os.makedirs(self.prewash_folder, exist_ok=True)
+
+            if self.clean:
+                if not self.clean_folder:
+                    self.clean_folder = os.path.join(working_dir, "cleaned_data")
+                os.makedirs(self.clean_folder, exist_ok=True)
 
     ####### data methods ########
  
@@ -89,16 +94,24 @@ class data_ingest:
             df = find_and_replace_wrong_data(df)
             met_dict[station] = df
 
+            if self.download:
+                prewash_file_path = os.path.join(self.prewash_folder, f"{station}.csv")
+                df.to_csv(prewash_file_path)
+
         for station, df in soil_dict.items():
             df = dup_cleaner(df)
             df = time_cleaner(df) # just fills in missing timestamp
             df = find_and_replace_wrong_data(df)
             soil_dict[station] = df
 
+            if self.download:
+                prewash_file_path = os.path.join(self.prewash_folder, f"{station}.csv")
+                df.to_csv(prewash_file_path)
+
         return met_dict, soil_dict
     
     def clean_data(self, met_dict, soil_dict):
-        # NOTE: this method will handle the nonsensical values in the data once everyone has their scripts for indetifying and replacing those values with NaN.
+        # NOTE: this method will handle imputing the data.
         raise NotImplementedError("clean_data method not implemented yet")
 
     def get_data_dict(self):
