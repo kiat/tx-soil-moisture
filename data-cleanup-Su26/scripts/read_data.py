@@ -12,25 +12,25 @@ def read_soil(file):
     """
     Read in soil data from a .dat file from the TxSON network, assuming format found in "TxSON_data_2026-02-24" and return a DataFrame with a datetimeindex.
     """
-    df = pd.read_csv(file, header=5, dtype = str)
+    # read measurements as native numerics (fast); keep only "Flag" as a string.
+    # low_memory=False parses each column in one pass (avoids mixed-type warnings).
+    df = pd.read_csv(file, header=5, skipinitialspace=True, dtype={"Flag": str}, low_memory=False)
 
-    
+    df.columns = df.columns.str.strip()
+
     df['Date'] = pd.to_datetime(df['Date'], errors='coerce', format="%Y-%m-%d %H:%M:%S")
 
     df = df.set_index('Date')
 
-    # if there are NaT in the index, warn the user. 
+    # if there are NaT in the index, warn the user.
     check_for_NaT(df)
 
-    # THERE ARE SOME FILES WITH OUT-OF-ORDER DATES. 
+    # THERE ARE SOME FILES WITH OUT-OF-ORDER DATES.
     df = df.sort_index(kind='stable') # Retains original order of duplicate indices.
 
-    # convert all but "Flag" column to numeric, coercing errors to NaN "
-    for col in df.columns:
-        if col != "Flag":
-            df[col] = pd.to_numeric(df[col], errors='coerce')
-
-    df.columns = df.columns.str.strip()
+    # coerce any stray non-numeric measurement values to NaN ("Flag" is left as a string)
+    meas_cols = df.columns.difference(["Flag"])
+    df[meas_cols] = df[meas_cols].apply(pd.to_numeric, errors='coerce')
 
     return df
 
@@ -39,13 +39,12 @@ def read_met(file):
     Read in met data from a .dat file from the TxSON network, assuming format found in "TxSON_data_2026-02-24" and return a DataFrame with a datetimeindex.
     """
     
-    df = pd.read_csv(file, header = 6, dtype = str)
+    # skip the units & measurement-type rows (the 2 rows after the header) so the
+    # measurement columns parse as native numerics; drop RECORD at read time.
+    df = pd.read_csv(file, header=6, skiprows=[7, 8], skipinitialspace=True,
+                     usecols=lambda c: c.strip() != "RECORD", low_memory=False)
 
     df.columns = df.columns.str.strip()
-
-    df = df.drop(df.index[0:2]) # drops units and measurment types
-
-    df = df.drop(columns=['RECORD'])
 
     # standardize the column names.
     rename_dict = {
@@ -68,9 +67,8 @@ def read_met(file):
     # THERE ARE SOME FILES WITH OUT-OF-ORDER DATES. 
     df = df.sort_index(kind='stable') # Retains original order of duplicate indices.
 
-    # convert all columns to numeric.
-    for col in df.columns:
-        df[col] = pd.to_numeric(df[col], errors='coerce')
+    # coerce any stray non-numeric values to NaN.
+    df = df.apply(pd.to_numeric, errors='coerce')
 
     return df
 
@@ -102,5 +100,3 @@ def file_to_indexed_df(file_path, is_soil_or_met = 'unknown'):
 
     else:
         print(f"Error with {file_path}, unknown cause.")
-
-    
