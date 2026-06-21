@@ -4,6 +4,7 @@ from soil_or_met import SoilOrMet
 from dup_cleaner import dup_cleaner
 from time_cleaner import time_cleaner
 from treat_wrong_data import find_and_replace_wrong_data
+from treat_subhourly_data import treat_subhourly_data
 
 class data_ingest:
     """
@@ -11,8 +12,6 @@ class data_ingest:
 
     Attributes:
         input_data_folder (str): The path to the folder containing the input data (must be the raw data).
-        expected_met_header (str): The expected header for the met data files, used for identifying met files.
-        expected_soil_header (str): The expected header for the soil data files, used for identifying soil files.
         prewash_the_data (bool): Whether to prewash the data. Handle duplicates, missing timestamps, and other oddities
         clean_the_data (bool): Whether to clean the data. Handles nonsensical values.
         prewash_folder (str): The path to the folder containing the prewashed data.
@@ -26,13 +25,8 @@ class data_ingest:
         get_data_dict()
     """
 
-    expected_soil_header = "Date,Ppt,SWC_5,SWC_10,SWC_20,SWC_50,T_5,T_10,T_20,T_50,Flag" 
-    expected_met_header = 'TIMESTAMP,RECORD,Rain_mm_Tot,AirTC_Avg,RH,WS_ms_S_WVT,WindDir_D1_WVT,SlrW_Avg,ETos,Rso'
-
-    def __init__(self, input_data_folder , expected_met_header=expected_met_header, expected_soil_header=expected_soil_header, prewash_the_data=False, clean_the_data=False, prewash_folder=None, clean_folder=None, download=False):
+    def __init__(self, input_data_folder, prewash_the_data=False, clean_the_data=False, prewash_folder=None, clean_folder=None, download=False):
         self.data_folder = input_data_folder
-        self.expected_met_header = expected_met_header
-        self.expected_soil_header = expected_soil_header
         self.prewash = prewash_the_data
         self.clean = clean_the_data
         self.prewash_folder = prewash_folder
@@ -66,8 +60,7 @@ class data_ingest:
     def open_df(self):
         """ Open the data into two dictionaries of df, one for met data and one for soil data, handles only raw data."""
 
-        ### NOTE: HARDCODED (06/11/2026) MIN FEATURES FOR SOIL AND MET ###
-        soil_or_met = SoilOrMet(current_met_header = self.expected_met_header, current_soil_header = self.expected_soil_header, min_soil_features = 9, min_met_features = 10) # this config of min features allows all raw files to be identified
+        soil_or_met = SoilOrMet() 
 
         soildata_dict = {}
         metdata_dict = {}
@@ -86,31 +79,19 @@ class data_ingest:
         return metdata_dict, soildata_dict  # keys are station names, values are dataframes with datetime index and columns of features.
 
 
-    def prewash_data(self, met_dict, soil_dict):
+    def prewash_data(self, df, station_name, download):
+        df = dup_cleaner(df)
+        df = treat_subhourly_data(df) # condense the data to hourly
+        df = time_cleaner(df) # just fills in missing timestamp
+        df = find_and_replace_wrong_data(df)
         
-        for station, df in met_dict.items():
-            df = dup_cleaner(df)
-            df = time_cleaner(df) # just fills in missing timestamp
-            df = find_and_replace_wrong_data(df)
-            met_dict[station] = df
-
-            if self.download:
-                prewash_file_path = os.path.join(self.prewash_folder, f"{station}.csv")
-                df.to_csv(prewash_file_path)
-
-        for station, df in soil_dict.items():
-            df = dup_cleaner(df)
-            df = time_cleaner(df) # just fills in missing timestamp
-            df = find_and_replace_wrong_data(df)
-            soil_dict[station] = df
-
-            if self.download:
-                prewash_file_path = os.path.join(self.prewash_folder, f"{station}.csv")
-                df.to_csv(prewash_file_path)
-
-        return met_dict, soil_dict
+        if download:
+            prewash_file_path = os.path.join(self.prewash_folder, f"{station_name}.csv")
+            df.to_csv(prewash_file_path)  # write the prewashed result, NOT the raw df
+        
+        return df
     
-    def clean_data(self, met_dict, soil_dict):
+    def clean_data(self, df, station_name, download):
         # NOTE: this method will handle imputing the data.
         raise NotImplementedError("clean_data method not implemented yet")
 
@@ -120,8 +101,62 @@ class data_ingest:
 
         met_dict, soil_dict = self.open_df()
 
-        if self.prewash:
-            met_dict, soil_dict = self.prewash_data(met_dict, soil_dict)
-        if self.clean:
-            met_dict, soil_dict = self.clean_data(met_dict, soil_dict)
+        for station, df in met_dict.items():
+            if self.prewash:
+                met_dict[station] = self.prewash_data(df, station, self.download)
+
+            if self.clean:
+                met_dict[station] = self.clean_data(df, station, self.download)
+
+        for station, df in soil_dict.items():
+            if self.prewash:
+                soil_dict[station] = self.prewash_data(df, station, self.download)
+
+            if self.clean:
+                soil_dict[station] = self.clean_data(df, station, self.download)
+
         return met_dict, soil_dict
+
+def main():
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        description="Ingest a folder of raw TxSON .dat files (read + optional prewash/clean)."
+    )
+
+    parser.add_argument("input_folder", help="folder of raw .dat files to ingest")
+    parser.add_argument("--prewash", action="store_true",
+                        help="prewash each station: dedup, condense sub-hourly, fill hourly gaps, NA out-of-range values")
+    parser.add_argument("--clean", action="store_true",
+                        help="clean each station, i.e. impute values (not yet implemented)")
+    parser.add_argument("--download", action="store_true",
+                        help="write the processed CSVs to disk")
+    parser.add_argument("--prewash-folder", default=None,
+                        help="where to write prewashed CSVs (default: 'prewashed_data' in the working directory)")
+    parser.add_argument("--clean-folder", default=None,
+                        help="where to write cleaned CSVs (default: 'cleaned_data' in the working directory)")
+
+    args = parser.parse_args()
+
+    ingest = data_ingest(
+        input_data_folder=args.input_folder,
+        prewash_the_data=args.prewash,
+        clean_the_data=args.clean,
+        prewash_folder=args.prewash_folder,
+        clean_folder=args.clean_folder,
+        download=args.download,
+    )
+
+    met_dict, soil_dict = ingest.get_data_dict()
+
+    print(f"\nMet  stations loaded : {len(met_dict)}  — {sorted(met_dict)}")
+    print(f"Soil stations loaded : {len(soil_dict)} — {sorted(soil_dict)}")
+
+    if args.download and args.prewash:
+        print(f"\nprewashed CSVs written to {ingest.prewash_folder}")
+    if args.download and args.clean:
+        print(f"cleaned CSVs written to {ingest.clean_folder}")
+
+
+if __name__ == "__main__":
+    main()
