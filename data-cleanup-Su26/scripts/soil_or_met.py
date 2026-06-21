@@ -1,7 +1,11 @@
 from datetime import datetime
+import os
+
+expected_soil_header = "Date,Ppt,SWC_5,SWC_10,SWC_20,SWC_50,T_5,T_10,T_20,T_50,Flag"
+expected_met_header = 'TIMESTAMP,RECORD,Rain_mm_Tot,AirTC_Avg,RH,WS_ms_S_WVT,WindDir_D1_WVT,SlrW_Avg,ETos,Rso'
 
 class SoilOrMet:
-    def __init__(self, current_met_header, current_soil_header, min_soil_features = 11, min_met_features = 10):
+    def __init__(self, current_met_header = expected_met_header, current_soil_header = expected_soil_header, min_soil_features = 9, min_met_features = 10):
         """
         A object that determines if a given file contains soil or met data
 
@@ -24,22 +28,13 @@ class SoilOrMet:
 
     ### DETERMINING IF FILE IS MET, SOIL, OR UNKNOWN ###
 
-    def get_n_lines(self,file_name, n):
-        """ Given a text file:
-        1. Read the first n lines
-        2. RETURN the lines as a list
-        """
-        in_file = open(file_name, 'r')
-
-        line = in_file.readline()
+    def get_n_lines(self, file_path, n):
         lines = []
-        while line:
-            if len(lines) < n:
+        with open(file_path, 'r') as in_file:
+            for line in in_file:
                 lines.append(line)
-            line = in_file.readline()
-
-        in_file.close()
-
+                if len(lines) >= n:
+                    break
         return lines
 
     def is_valid_date(self, date_str, format_str):
@@ -66,7 +61,7 @@ class SoilOrMet:
                         return True
         return False
 
-    def determine_data_file(self, file_name):
+    def determine_data_file(self, file_path):
         """ Given a file:
         1. read the first 10 lines of the file
         2. check for the presence of a timestamp in the first 10 lines
@@ -75,10 +70,18 @@ class SoilOrMet:
         5. RETURN the data type (soil, met, or unknown) based on the number of specific features found and the presence of a timestamp
         """
 
+        # input validation
+        if file_path.strip() == "":
+            raise ValueError("file_path must be a non-empty string.")
+        if not isinstance(file_path, str):
+            raise TypeError("file_path must be a string.")
+        if not os.path.exists(file_path):
+            raise FileNotFoundError(f"file_path {file_path} does not exist.")
+
         # 1. make sure the file contains measurement data by checking for timestamp within the first 10 rows
 
         # get the first 10 lines
-        lines = self.get_n_lines(file_name, 10)
+        lines = self.get_n_lines(file_path, 10)
 
         # get the lines with commas:
         rows = []
