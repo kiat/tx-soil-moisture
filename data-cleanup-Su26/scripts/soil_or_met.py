@@ -71,12 +71,10 @@ class SoilOrMet:
         """
 
         # input validation
-        if file_path.strip() == "":
-            raise ValueError("file_path must be a non-empty string.")
         if not isinstance(file_path, str):
             raise TypeError("file_path must be a string.")
-        if not os.path.exists(file_path):
-            raise FileNotFoundError(f"file_path {file_path} does not exist.")
+        if file_path.strip() == "":
+            raise ValueError("file_path must be a non-empty string.")
 
         # 1. make sure the file contains measurement data by checking for timestamp within the first 10 rows
 
