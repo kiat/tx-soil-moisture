@@ -1,31 +1,34 @@
 ![pipeline](./images/TxSON-pipeline.png)
 
-# Notebooks
+# TxSON Data Cleanup
 
-### DST-Check
+Scripts and notebooks to ingest (read → prewash → clean) the raw TxSON network `.dat` files.
 
-- This is a notebook that walks you through checking whether the TxSON network observes daylight savings or not and the quirks of the data found.
+## Usage
 
-###  duplicate_check
+Download the **`scripts/`** folder and work inside it — the modules import one another by name (e.g. `from read_data import ...`), so your working directory must be `scripts/`. Put your raw `TxSON_data_2026-02-24` folder of `.dat` files alongside `scripts/`, or pass its path on the command line.
 
-- This notebook walks through the development of tools to find all three cases of duplicate. 
+Run the whole pipeline over a folder of raw files:
 
-- Change the file path at the top to the path of the 'TxSON_data_2026-02-24' folder on your local machine and run all to get the full report.
+```bash
+python get_data_dict.py <raw_data_folder> --prewash --download
+```
 
-    - Reference README.md in the duplicate report folder for in depth explanation of the duplicates.
+Each step also runs standalone on a single file:
 
-# Folders
+```bash
+python <script>.py <input.dat> <output.csv>
+```
 
-### scripts
+for `dup_cleaner`, `treat_subhourly_data`, `time_cleaner`, `treat_wrong_data`, and `gap_report`. See **`scripts/demo.ipynb`** for a walkthrough of every script.
 
-- A folder of scripts that are made to ingest (read + prewash + clean) the raw data files from TxSON
+## Notebooks
 
-### duplicate_report
+- **DST_check** — checks whether the TxSON network observes daylight savings, and the data quirks found.
+- **duplicate_check** — builds the tools that find all three duplicate cases; set the data path at the top and run all to regenerate the report (see `duplicate_report/README.md`).
+- **data_visuals** — interactive Plotly explorer for the prewashed data; overlay variables and spot gaps (shown as red blocks).
 
-- A folder containing all (drop + kept) occurances of three cases of duplicates.
+## Folders
 
-# To-Do
-
-### ensure hourly frequency
-
-- There is a station that has some timestamps with non-zero minutes. 
+- **scripts** — read + prewash + clean the raw TxSON `.dat` files.
+- **duplicate_report** — the dropped + kept rows for each of the three duplicate cases.
