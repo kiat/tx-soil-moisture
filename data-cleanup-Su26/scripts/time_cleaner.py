@@ -14,6 +14,7 @@ def time_cleaner(df):
  
     # --- case 1: insert missing timestamps ---
     full_range = pd.date_range(df.index.min(), df.index.max(), freq='h')
+    full_range.name = df.index.name           # preserve 'Date'
     return df.reindex(full_range)
 
 def main():
