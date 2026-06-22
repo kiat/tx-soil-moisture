@@ -99,23 +99,32 @@ class data_ingest:
 
         self.check_for_folders()
 
-        met_dict, soil_dict = self.open_df()
+        if self.prewash:
+            prewashed_met_dict, prewashed_soil_dict = self.open_df()
+        if self.clean and not self.prewash:
+            raise ValueError("If clean is True, prewash must also be True since we have to prewash before we can clean.")
+        if self.clean:
+            cleaned_met_dict = {}
+            cleaned_soil_dict = {}
 
-        for station, df in met_dict.items():
+        for station, df in prewashed_met_dict.items():
             if self.prewash:
-                met_dict[station] = self.prewash_data(df, station, self.download)
+                prewashed_met_dict[station] = self.prewash_data(df, station, self.download)
+
+            if self.clean and self.prewash: # if we're cleaning, we have to prewash first
+                cleaned_met_dict[station] = self.clean_data(prewashed_met_dict[station], station, self.download)
+
+        for station, df in prewashed_soil_dict.items():
+            if self.prewash:
+                prewashed_soil_dict[station] = self.prewash_data(df, station, self.download)
 
             if self.clean:
-                met_dict[station] = self.clean_data(df, station, self.download)
+                cleaned_soil_dict[station] = self.clean_data(prewashed_soil_dict[station], station, self.download)
 
-        for station, df in soil_dict.items():
-            if self.prewash:
-                soil_dict[station] = self.prewash_data(df, station, self.download)
-
-            if self.clean:
-                soil_dict[station] = self.clean_data(df, station, self.download)
-
-        return met_dict, soil_dict
+        if self.prewash:
+            return prewashed_met_dict, prewashed_soil_dict
+        elif self.clean:
+            return cleaned_met_dict, cleaned_soil_dict
 
 def main():
     import argparse
