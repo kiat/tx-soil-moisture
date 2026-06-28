@@ -48,34 +48,20 @@ def gap_report(df):
     return report
 
 def main():
-    from soil_or_met import SoilOrMet
-    from read_data import file_to_indexed_df
-    from dup_cleaner import dup_cleaner
     import argparse
-
-    classifier = SoilOrMet()
 
     parser = argparse.ArgumentParser(
         description="Report gaps (missing timestamps and consecutive-NaN runs), bucketed by duration, in a TxSON .dat file."
     )
 
-    parser.add_argument("input_file", help="raw .dat file to report on")
+    parser.add_argument("input_file", help="prewashed csv file to report on")
     parser.add_argument("output_file", nargs="?", default=None,
                         help="optional path to write the gap report as a CSV")
 
     args = parser.parse_args()
 
-    data_type = classifier.determine_data_file(args.input_file)
-
-    df = file_to_indexed_df(args.input_file, data_type)
-
-    if df is None:
-        print(f"Failed to read {args.input_file} into a dataframe, but was identified as {data_type} data.")
-        print( "skipping gap report...")
-        return
-
     # drop duplicate timestamps so the sampling interval and index gaps are measured correctly
-    df = dup_cleaner(df)
+    df = pd.read_csv(args.input_file, parse_dates=[0], index_col=0)
 
     report = gap_report(df)
 
