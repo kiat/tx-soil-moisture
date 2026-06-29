@@ -77,9 +77,9 @@ Prewash pipeline order: **dup_cleaner → treat_subhourly_data → time_cleaner 
 ---
 ## 7. gap_report.py
 
-- Tallies data gaps by duration (`<24h`, `1-7d`, `7-30d`, `>30d`) for both the timestamp index (missing hours) and each column (consecutive-`NaN` runs); prints and returns the table.
+- Tallies data gaps by duration (`<24h`, `1-7d`, `7-30d`, `>30d`) for both the timestamp index (missing hours) and each column (consecutive-`NaN` runs); prints and returns the table. Takes in prewashed data.
 
-- **CLI:** `python gap_report.py <input.dat> [output.csv]`  (output CSV optional)
+- **CLI:** `python gap_report.py <input.csv> [output.csv]`  (output CSV optional)
 
 ---
 ## 8. get_data_dict.py

@@ -4,23 +4,11 @@
 
 Scripts and notebooks to ingest (read → prewash → clean) the raw TxSON network `.dat` files.
 
-## Usage
+## Prewash_df.py
+- The full prewash pipeline in one standalone script. Only requires Pandas and datetime to run.
 
-Download the **`scripts/`** folder and work inside it — the modules import one another by name (e.g. `from read_data import ...`), so your working directory must be `scripts/`. Put your raw `TxSON_data_2026-02-24` folder of `.dat` files alongside `scripts/`, or pass its path on the command line.
+- **CLI:** `python prewash_df.py <input.dat> <output.csv>` (output.csv defaults to working directory)
 
-Run the whole pipeline over a folder of raw files:
-
-```bash
-python get_data_dict.py <raw_data_folder> --prewash --download
-```
-
-Each step also runs standalone on a single file:
-
-```bash
-python <script>.py <input.dat> <output.csv>
-```
-
-for `dup_cleaner`, `treat_subhourly_data`, `time_cleaner`, `treat_wrong_data`, and `gap_report`. See **`scripts/demo.ipynb`** for a walkthrough of every script.
 
 ## Notebooks
 
