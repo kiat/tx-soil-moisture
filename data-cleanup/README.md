@@ -7,7 +7,6 @@ The script ```convert_missing_data_to_NaN.py``` inputs the original data folder 
 - ```cleaned_data_station_1.csv```
   - This is a csv file of a cleaned dataset that combines both  MET and SWC datasets, with invalid and missing values removed and marked as NaN.
 
-
 ### How to run convert_missing_data_to_NaN.py:
 
 Add environment variables in terminal first.

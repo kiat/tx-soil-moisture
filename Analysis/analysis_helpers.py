@@ -24,7 +24,7 @@ class Trial:
 
     def get_df(self, trial_name):
 
-        df = pd.read_csv("/Users/benjamincartwright/tx-soil-moisture/Analysis/Results_1_3_5_7/" + trial_name + "/results.csv")
+        df = pd.read_csv("Analysis/Results_1_3_5_7/" + trial_name + "/results.csv")
         cols = df.columns
         if "Unnamed: 0" in cols:
             df.pop('Unnamed: 0')
