@@ -374,6 +374,29 @@ def run_prewash_step(step, df, output_filepath):
     report.to_csv(step_report_path(output_filepath, step.__name__), index=False)
     return after
 
+def prewash_df(file_path, output_filepath=None):
+    """
+    Prewash a TxSON .dat file: parse, sort, de-duplicate, snap to an hourly grid,
+    and replace out-of-range values with NA.
+
+    Returns a DataFrame with a datetime index.
+    """
+
+    data_type = determine_data_file(file_path)
+
+    df = file_to_indexed_df(file_path, data_type)
+
+    if df is None:
+        print(f"Could not read {file_path} as TxSON {data_type} data; no output written.")
+        return None
+
+    # each step writes a CSV report of the rows it changed, named after the step
+    prewash_steps = (dup_cleaner, treat_subhourly_data,
+                     fill_missing_timestamps, find_and_replace_wrong_data)
+    for step in prewash_steps:
+        df = run_prewash_step(step, df, output_filepath)
+
+    return df
 
 def main():
 
