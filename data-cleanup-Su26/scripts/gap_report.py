@@ -24,6 +24,12 @@ def _count(spans):
         counts[bucket(span)] += 1
     return counts
  
+def _na_runs(series):
+    """Yield (start, end) index labels for each run of consecutive NaNs."""
+    na = series.isna()
+    for _, run in na.groupby((na != na.shift()).cumsum()):
+        if run.iloc[0]:
+            yield run.index[0], run.index[-1]
  
 def gap_report(df):
     """
@@ -46,6 +52,30 @@ def gap_report(df):
     report.index.name = "gaps_in"
     print(report)
     return report
+
+def gap_durations(df, group=None, column=None):
+    """List the individual NA-gap lengths in a time-indexed DataFrame.
+ 
+    df     : DataFrame with a DatetimeIndex.
+    group  : one of LABELS ('<24h', '1-7d', '7-30d', '>30d'); None keeps every bucket.
+    column : restrict to a single column; None scans all columns.
+ 
+    Returns a DataFrame with one row per gap: [column, start, end, duration, group],
+    sorted shortest to longest. Take the 'duration' column for just the lengths.
+    """
+    if group is not None and group not in LABELS:
+        raise ValueError(f"group must be one of {LABELS} or None")
+    step = pd.Timedelta(np.median(np.diff(df.index.values)))
+    cols = [column] if column is not None else list(df.columns)
+    rows = []
+    for col in cols:
+        for start, end in _na_runs(df[col]):
+            dur = (end - start) + step
+            g = bucket(dur)
+            if group is None or g == group:
+                rows.append((col, start, end, dur, g))
+    out = pd.DataFrame(rows, columns=["column", "start", "end", "duration", "group"])
+    return out.sort_values("duration").reset_index(drop=True)
 
 def main():
     import argparse
