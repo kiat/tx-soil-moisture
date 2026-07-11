@@ -2,10 +2,10 @@
 # Mediumgaps.py  -  Fill 24‑ to 168‑hour gaps via SARIMAX
 # -----------------------------------------------------------
 # usage examples
-#    python Mediumgaps.py                       # all stations & all SWC T columns
-#    python Mediumgaps.py --station 2           # only station 2
+#    python Mediumgaps.py                       # all stations & all SWC/T columns
+#    python Mediumgaps.py --station CB01        # only station CB01
 #    python Mediumgaps.py --param SWC_20        # all stations, only SWC_20
-#    python Mediumgaps.py --station 3 --param SWC_50  # specific combo
+#    python Mediumgaps.py --station FD08 --param SWC_50  # specific combo
 #
 # Output files (per station)
 #    output/StationX_filled_mediumgaps.csv       - cleaned series after filling
@@ -19,12 +19,11 @@ from pathlib import Path
 from datetime import timedelta
 
 import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
 from statsmodels.tsa.statespace.sarimax import SARIMAX
-from statsmodels.graphics.tsaplots import plot_acf
 from statsmodels.stats.diagnostic import acorr_ljungbox
 from pmdarima import auto_arima
+
+from param_config import ALL_SOIL_PARAMS, exog_for
 
 warnings.filterwarnings("ignore")
 
@@ -40,8 +39,7 @@ def load_cleaned_data(station_id):
     filename = CLEAN_DIR / f"Station{station_id}_filled_shortgaps.csv"
     df = pd.read_csv(filename, parse_dates=True, index_col=0)
     df.index = pd.DatetimeIndex(df.index)
-    df.index.freq = 'H'
-    return df
+    return ensure_hourly_regular_index(df)
 
 def load_missing_data(station_id):
     filename = MISS_DIR / f"Station{station_id}_missing_data.csv"
@@ -66,12 +64,14 @@ def sarima_forecast(y, s_ts, e_ts, exog, ctx_days = 7, max_pq = 3, max_PQ = 2):
     train_start = s_ts - timedelta(days=ctx_days)
     train_end = s_ts - timedelta(hours=1)
 
-    # Extract and clean training data
+    # Extract and locally regularize training data. Short gaps are already filled,
+    # but longer neighboring gaps can still leave NaNs in this context window.
     y_window = y.loc[train_start:train_end]
-    y_train = y_window.dropna()
-    if y_train.empty:
-        print(f"[skip] No sufficient training data {train_start}–{train_end}")
+    observed = y_window.dropna()
+    if len(observed) < 24:
+        print(f"[skip] Only {len(observed)} observed training hours {train_start}–{train_end}")
         return None, None
+    y_train = y_window.interpolate(method="time", limit_direction="both").ffill().bfill()
     y_train.index = pd.DatetimeIndex(y_train.index, freq="H")
 
     # Prepare exogenous data
@@ -83,48 +83,51 @@ def sarima_forecast(y, s_ts, e_ts, exog, ctx_days = 7, max_pq = 3, max_PQ = 2):
         X_pred = exog.reindex(pred_index).fillna(0)
 
     # Automatic model order selection with daily seasonality
-    auto = auto_arima(
-        y_train,
-        exogenous=X_train,
-        seasonal=True, m=24,
-        d=None, D=1,
-        start_p=1, start_q=1, max_p=max_pq, max_q=max_pq,
-        start_P=0, start_Q=0, max_P=max_PQ, max_Q=max_PQ,
-        stepwise=True,
-        suppress_warnings=True,
-        error_action="ignore",
-        trace=False
-    )
-    p, d, q = auto.order
-    P, D, Q, s = auto.seasonal_order
-    print(f"  → SARIMA({p},{d},{q})x({P},{D},{Q},{s})24h")
-
-    # Fit the SARIMAX model with frequency parameter
-    model = SARIMAX(
-        y_train,
-        exog=X_train,
-        order=(p, d, q),
-        seasonal_order=(P, D, Q, s),
-        enforce_stationarity=False,
-        enforce_invertibility=False,
-        freq='H'
-    )
-    res = model.fit(method='powell', maxiter=300, disp=False)
-
-    # Check residuals for autocorrelation
-    lb_p = acorr_ljungbox(res.resid, lags=[24], return_df=True)["lb_pvalue"].iat[0]
-    if lb_p < 0.05 and (max_pq < 5 or max_PQ < 3):
-        # Retry with larger parameter bounds
-        return sarima_forecast(
-            y, s_ts, e_ts, exog,
-            ctx_days=ctx_days,
-            max_pq=max_pq+1,
-            max_PQ=max_PQ+1
+    try:
+        auto = auto_arima(
+            y_train,
+            X=X_train,
+            seasonal=True, m=24,
+            d=None, D=1,
+            start_p=1, start_q=1, max_p=max_pq, max_q=max_pq,
+            start_P=0, start_Q=0, max_P=max_PQ, max_Q=max_PQ,
+            stepwise=True,
+            suppress_warnings=True,
+            error_action="ignore",
+            trace=False
         )
+        p, d, q = auto.order
+        P, D, Q, s = auto.seasonal_order
+        print(f"  → SARIMA({p},{d},{q})x({P},{D},{Q},{s})24h")
 
-    # Forecast the gap interval
-    forecast_index = pd.date_range(s_ts, e_ts, freq="H")
-    fc = res.forecast(steps=len(forecast_index), exog=X_pred)
+        model = SARIMAX(
+            y_train,
+            exog=X_train,
+            order=(p, d, q),
+            seasonal_order=(P, D, Q, s),
+            enforce_stationarity=False,
+            enforce_invertibility=False,
+            freq="H"
+        )
+        res = model.fit(method="powell", maxiter=300, disp=False)
+
+        # Check residuals for autocorrelation when enough residuals are available.
+        if len(res.resid) > 24:
+            lb_p = acorr_ljungbox(res.resid, lags=[24], return_df=True)["lb_pvalue"].iat[0]
+            if lb_p < 0.05 and (max_pq < 5 or max_PQ < 3):
+                return sarima_forecast(
+                    y, s_ts, e_ts, exog,
+                    ctx_days=ctx_days,
+                    max_pq=max_pq+1,
+                    max_PQ=max_PQ+1
+                )
+
+        forecast_index = pd.date_range(s_ts, e_ts, freq="H")
+        fc = res.forecast(steps=len(forecast_index), exog=X_pred)
+    except Exception as exc:
+        print(f"[skip] SARIMAX failed for {s_ts}–{e_ts}: {exc}")
+        return None, None
+
     fc.index = forecast_index
     return fc, res
 
@@ -138,33 +141,11 @@ def fill_medium_gaps(series, gaps, exog, gap_log, station, param, ctx_days=7):
         e_ts = row["End Timestamp"]
         idx = pd.date_range(s_ts, e_ts, freq="H")
 
-        # For temperature params, prepare a training-ready series by filling NaNs ONLY
-        # in the training window to maintain hourly regularity when dropna() is applied
-        y_for_model = filled
-        if isinstance(param, str) and param.startswith("T_"):
-            train_start = s_ts - timedelta(days=ctx_days)
-            train_end   = s_ts - timedelta(hours=1)
-            y_input = filled.copy()
-            if train_start < y_input.index.min():
-                train_start = y_input.index.min()
-            if train_end > y_input.index.max():
-                train_end = y_input.index.max()
-            if train_start <= train_end:
-                seg = y_input.loc[train_start:train_end]
-                seg_filled = seg.interpolate(limit_direction="both").ffill().bfill()
-                y_input.loc[train_start:train_end] = seg_filled
-            y_for_model = y_input
-
-        fc, _ = sarima_forecast(y_for_model, s_ts, e_ts, exog, ctx_days)
+        fc, _ = sarima_forecast(filled, s_ts, e_ts, exog, ctx_days)
         if fc is None:
             continue
-        # Smooth edges between original and predicted values
-        if (s_ts - timedelta(hours=1)) in filled.index:
-            left_val = filled.loc[s_ts - timedelta(hours=1)] 
-            fc.iloc[0] = 0.5 * (left_val + fc.iloc[0])
-        if (e_ts + timedelta(hours=1)) in filled.index:
-            right_val = filled.loc[e_ts + timedelta(hours=1)]
-            fc.iloc[-1] = 0.5 * (right_val + fc.iloc[-1])
+        fc = correct_boundary_drift(fc, filled, s_ts, e_ts)
+        fc = apply_physical_bounds(fc, param)
 
         filled.loc[idx] = fc
         gap_log.extend({
@@ -175,43 +156,74 @@ def fill_medium_gaps(series, gaps, exog, gap_log, station, param, ctx_days=7):
     return filled
 
 
+def correct_boundary_drift(fc, observed, s_ts, e_ts):
+    """Linearly anchor a forecast to real observations around the gap."""
+    left_ts = s_ts - timedelta(hours=1)
+    right_ts = e_ts + timedelta(hours=1)
+    has_left = left_ts in observed.index and pd.notna(observed.loc[left_ts])
+    has_right = right_ts in observed.index and pd.notna(observed.loc[right_ts])
+
+    corrected = fc.copy()
+    if has_left and has_right:
+        left_delta = observed.loc[left_ts] - corrected.iloc[0]
+        right_delta = observed.loc[right_ts] - corrected.iloc[-1]
+        if len(corrected) == 1:
+            corrected.iloc[0] = 0.5 * (observed.loc[left_ts] + observed.loc[right_ts])
+        else:
+            correction = [
+                left_delta + (right_delta - left_delta) * i / (len(corrected) - 1)
+                for i in range(len(corrected))
+            ]
+            corrected = corrected + pd.Series(correction, index=corrected.index)
+    elif has_left:
+        corrected.iloc[0] = 0.5 * (observed.loc[left_ts] + corrected.iloc[0])
+    elif has_right:
+        corrected.iloc[-1] = 0.5 * (observed.loc[right_ts] + corrected.iloc[-1])
+    return corrected
+
+
+def apply_physical_bounds(fc, param):
+    """Keep model output within basic physical ranges used by cleaning."""
+    if isinstance(param, str) and param.startswith("SWC_"):
+        return fc.clip(lower=0, upper=0.6)
+    if isinstance(param, str) and (param.startswith("T_") or param == "Tair"):
+        return fc.clip(lower=-30, upper=60)
+    return fc
+
+
 
 # Fill medium gaps for each SWC parameter and save outputs
 def process_station(station, params):
     df = load_cleaned_data(station)
     miss_tbl = load_missing_data(station)
-    df_ref = load_cleaned_data(3)  # Ppt fallback
 
     # Regularize indices to avoid frequency issues
     df = ensure_hourly_regular_index(df)
-    df_ref = ensure_hourly_regular_index(df_ref)
 
     log = []
-    any_fill = False
+    filled_count = 0
 
     for p in params:
+        if p not in df.columns:
+            print(f"  {p}: column missing in short-gap data, skip.")
+            continue
         mgaps = filter_medium_gaps(miss_tbl, p)
         if mgaps.empty:
             print(f"  {p}: no 24–168 h gaps")
             continue
-        # Choose exogenous variables and any pre-processing based on parameter type
-        if isinstance(p, str) and p.startswith("T_"):
-            # Temperature: prefer Tair + Srad as exogenous
-            exog = get_exog(df, ref_df=df_ref, prefer=("Tair", "Srad"))
-        else:
-            # Soil moisture: keep existing Ppt exog behavior
-            exog = df["Ppt"].fillna(df_ref["Ppt"]).fillna(0)
+        exog = get_exog(df, prefer=exog_for(p))
 
         print(f"  {p}: filling {len(mgaps)} gaps")
+        before = len(log)
         df[p] = fill_medium_gaps(df[p], mgaps, exog, log, station, p)
-        any_fill = True
+        filled_count += len(log) - before
 
     OUT_DIR.mkdir(exist_ok=True)
     df.to_csv(OUT_DIR / f"Station{station}_filled_mediumgaps.csv")
     if log:
         pd.DataFrame(log).to_csv(
             OUT_DIR / f"Station{station}_mediumgap_fill_detail.csv", index=False)
-    status = " (unchanged)" if not any_fill else ""
+    status = " (unchanged)" if filled_count == 0 else f" ({filled_count} values filled)"
     print(f"→ saved Station{station}_filled_mediumgaps.csv{status}\n")
 
 
@@ -232,20 +244,17 @@ def ensure_hourly_regular_index(df: pd.DataFrame) -> pd.DataFrame:
     return df.reindex(full_idx)
 
 
-def get_exog(df: pd.DataFrame, ref_df: pd.DataFrame | None = None, prefer=("Tair", "Srad")):
+def get_exog(df: pd.DataFrame, prefer=()):
     """
-    Build an exogenous variables DataFrame using preferred columns in order.
-    Returns a DataFrame with any available columns among `prefer`, aligned to df.index
-    and with NaNs filled to 0. Returns None if none found.
+    Build an exogenous variables DataFrame using available preferred columns.
+    Returns None when no usable exogenous driver exists.
     """
     exog_series = []
     for col in prefer:
-        s = None
-        if col in df.columns:
-            s = df[col]
-        elif ref_df is not None and col in ref_df.columns:
-            s = ref_df[col]
-        if s is not None:
+        if col not in df.columns:
+            continue
+        s = df[col]
+        if s.notna().any():
             exog_series.append(s.rename(col))
     if not exog_series:
         return None
@@ -257,13 +266,13 @@ def get_exog(df: pd.DataFrame, ref_df: pd.DataFrame | None = None, prefer=("Tair
 # --------------- CLI helpers ---------------------------
 
 def discover_stations():
-    pat = re.compile(r"Station(\d+)_filled_shortgaps\.csv")
-    return sorted(int(m.group(1)) for fn in CLEAN_DIR.glob("Station*_filled_shortgaps.csv")
+    pat = re.compile(r"Station(.+)_filled_shortgaps\.csv")
+    return sorted(m.group(1) for fn in CLEAN_DIR.glob("Station*_filled_shortgaps.csv")
                   if (m := pat.match(fn.name)))
 
 def parse_args():
     p = argparse.ArgumentParser("Fill 24–168 h gaps via SARIMAX")
-    p.add_argument("--station", type=int, nargs="*", help="station IDs")
+    p.add_argument("--station", type=str, nargs="*", help="station IDs/site codes")
     p.add_argument("--param",   type=str, nargs="*", help="Columns to fill (SWC_* or T_*).")
     return p.parse_args()
 
@@ -272,11 +281,8 @@ def parse_args():
 def main():
     args = parse_args()
     stations = args.station if args.station else discover_stations()
-    # Default: fill both soil moisture and soil temperature medium gaps
-    default_params = [
-        "SWC_5", "SWC_10", "SWC_20", "SWC_50",
-        "T_5", "T_10", "T_20", "T_50",
-    ]
+    # Default: fill both soil moisture and soil temperature medium gaps.
+    default_params = ALL_SOIL_PARAMS
     params   = args.param if args.param else default_params
 
     print("Stations :", stations)

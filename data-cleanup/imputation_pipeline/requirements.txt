@@ -1,7 +1,20 @@
-matplotlib
-numpy
-pandas
-pmdarima
-scikit-learn
-statsmodels
-xgboost
+# Tested with Python 3.11 on macOS.
+#
+# Keep numpy below 2.0 because pmdarima/statsmodels/scikit-learn wheels are
+# more reliable for this pipeline with the NumPy 1.26 ABI.
+numpy==1.26.4
+pandas==2.2.3
+scipy==1.11.4
+
+# Gap-filling models
+statsmodels==0.14.2
+pmdarima==2.0.4
+scikit-learn==1.4.2
+xgboost==2.1.4
+
+# Plots, reports, and notebooks
+matplotlib==3.9.2
+plotly==5.24.1
+ipywidgets==8.1.5
+ipykernel==6.29.5
+jupyterlab==4.2.5

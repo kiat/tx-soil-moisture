@@ -23,6 +23,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from pathlib import Path
 
+from param_config import ALL_PARAMS, short_interp_for
+
 # Path 
 BASE_DIR  = Path(__file__).resolve().parent
 CLEAN_DIR = BASE_DIR / "cleaned_data"
@@ -56,6 +58,17 @@ def time_interpolate(series, start_ts, end_ts, method="pchip"):
     s = s.interpolate(method=method)
     return s.loc[start_ts:end_ts]
 
+
+def wind_direction_interpolate(series, start_ts, end_ts):
+    idx = pd.date_range(start_ts, end_ts, freq="H")
+    radians = np.deg2rad(series)
+    sin_series = np.sin(radians)
+    cos_series = np.cos(radians)
+    sin_interp = time_interpolate(sin_series, start_ts, end_ts, method="time")
+    cos_interp = time_interpolate(cos_series, start_ts, end_ts, method="time")
+    angles = (np.degrees(np.arctan2(sin_interp, cos_interp)) + 360) % 360
+    return pd.Series(angles, index=idx)
+
 # 4. Fill short gaps
 def fill_short_gaps(series, gap_df, gap_log, *, station_id, param, interp_method="pchip"):
     filled = series.copy()
@@ -64,10 +77,16 @@ def fill_short_gaps(series, gap_df, gap_log, *, station_id, param, interp_method
         end_ts   = pd.to_datetime(row["End Timestamp"])
         idx      = pd.date_range(start_ts, end_ts, freq="H")
 
-        new_vals = time_interpolate(filled, start_ts, end_ts, method=interp_method)
+        if interp_method == "zero":
+            new_vals = pd.Series(0.0, index=idx)
+        elif interp_method == "wind_angle":
+            new_vals = wind_direction_interpolate(filled, start_ts, end_ts)
+        else:
+            method = interp_method if interp_method != "time" else "time"
+            new_vals = time_interpolate(filled, start_ts, end_ts, method=method)
+
         filled.loc[idx] = new_vals.values   # write back
 
-        # --- log each written value ---
         gap_log.extend({
             "Station":   station_id,
             "Parameter": param,
@@ -86,17 +105,14 @@ def process_station(station_id, parameters):
 
     any_filled = False
     for param in parameters:
+        if param not in df.columns:
+            print(f"  {param}: column missing in cleaned data – skip")
+            continue
         sgaps = filter_short_gaps(gap_table, param)
         if sgaps.empty:
             print(f"  {param}: no <24h gaps")
             continue
-        # Choose interpolation method per parameter family
-        #  - SWC_* -> PCHIP (existing)
-        #  - T_*   -> time-based interpolation
-        if isinstance(param, str) and param.startswith("T_"):
-            interp_method = "time"
-        else:
-            interp_method = "pchip"
+        interp_method = short_interp_for(param)
 
         print(f"  {param}: filling {len(sgaps)} gaps (method={interp_method})")
         df[param] = fill_short_gaps(
@@ -120,8 +136,8 @@ def process_station(station_id, parameters):
 
 # Discover all station Ids
 def discover_stations():
-    pat = re.compile(r"Station(\d+)_cleaned_data\.csv")
-    ids = [int(pat.match(fn.name).group(1))
+    pat = re.compile(r"Station(.+)_cleaned_data\.csv")
+    ids = [pat.match(fn.name).group(1)
            for fn in CLEAN_DIR.glob("Station*_cleaned_data.csv")
            if pat.match(fn.name)]
     return sorted(ids)
@@ -129,8 +145,8 @@ def discover_stations():
 # CLI
 def parse_args():
     p = argparse.ArgumentParser("Fill <24 h gaps for one/all stations.")
-    p.add_argument("--station", type=int, nargs="*", default=None,
-                   help="Station IDs (omit for all discovered).")
+    p.add_argument("--station", type=str, nargs="*", default=None,
+                   help="Station IDs/site codes (omit for all discovered).")
     p.add_argument("--param", type=str, nargs="*", default=None,
                    help="Columns to fill. Omit for SWC_5/10/20/50 and T_5/10/20/50.")
     return p.parse_args()
@@ -140,11 +156,8 @@ def parse_args():
 def main():
     args = parse_args()
     stations   = args.station if args.station else discover_stations()
-    # Default: fill both soil moisture and soil temperature short gaps
-    default_params = [
-        "SWC_5","SWC_10","SWC_20","SWC_50",
-        "T_5","T_10","T_20","T_50",
-    ]
+    # Default: fill every configured parameter (soil + MET)
+    default_params = ALL_PARAMS
     parameters = args.param   if args.param else default_params
 
     print("Stations :", stations)
