@@ -45,6 +45,7 @@ STAGE_ORDER = [
     "qc-before-sensor",
     "sensor-decisions",
     "sensor-mask",
+    "manual-mask",
     "qc-after-sensor",
     "final",
     "qc-final",
@@ -58,7 +59,7 @@ STAGE_GROUPS = {
     "medium": ["medium", "validate-medium"],
     "long": ["long", "validate-long"],
     "verylong": ["verylong", "validate-verylong"],
-    "qc": ["qc-before-sensor", "sensor-decisions", "sensor-mask", "qc-after-sensor"],
+    "qc": ["qc-before-sensor", "sensor-decisions", "sensor-mask", "manual-mask", "qc-after-sensor"],
     "final": ["final", "qc-final"],
 }
 
@@ -105,6 +106,8 @@ STALE_PATTERNS_BY_STAGE = {
     "sensor-mask": [
         "output/Station*_filled_sensor_qc.csv",
         "sensor_qc_reports",
+        "manual_qc_reports",
+        "output/Station*_filled_manual_qc.csv",
     ],
     "final": [
         "output/Station*_filled_final.csv",
@@ -203,6 +206,7 @@ def build_steps(args: argparse.Namespace, stages: Sequence[str], stations: Seque
         "qc-before-sensor": command_with_selection([py, "final_qc_summary.py"], stations_arg, params_arg),
         "sensor-decisions": [py, "sensor_qc_decisions.py"],
         "sensor-mask": [py, "apply_sensor_qc_masks.py", "--write", *(["--station", *stations_arg] if stations_arg else [])],
+        "manual-mask": [py, "apply_manual_qc_masks.py", "--write", *(["--station", *stations_arg] if stations_arg else [])],
         "qc-after-sensor": command_with_selection([py, "final_qc_summary.py"], stations_arg, params_arg),
         "final": command_with_selection([py, "FinalResidualGaps.py"], stations_arg, params_arg),
         "qc-final": command_with_selection([py, "final_qc_summary.py"], stations_arg, params_arg),

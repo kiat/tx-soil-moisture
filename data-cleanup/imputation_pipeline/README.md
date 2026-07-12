@@ -108,6 +108,8 @@ Runtime note:
 | Suspicious sensor summary | `final_qc_reports/final_qc_suspicious_sensors.csv` |
 | Sensor QC decisions | `sensor_qc_reports/sensor_qc_decisions.csv` |
 | Sensor QC mask log | `sensor_qc_reports/sensor_qc_masked_points.csv` |
+| Manual QC masks | `manual_qc_masks.csv` |
+| Manual QC mask log | `manual_qc_reports/manual_qc_mask_detail.csv` |
 | Dynamic visualization notebook | [Dynamic_Data_Visualization_TxSON33.ipynb](../../data_visualization/Dynamic_Data_Visualization_TxSON33.ipynb) |
 | Detailed technical notes | [TECHNICAL_NOTES_TxSON33.md](TECHNICAL_NOTES_TxSON33.md) |
 
@@ -129,6 +131,7 @@ Current final soil status:
 | Long gaps | 168-720 hr | XGBoost rolling prediction, followed by validation repair |
 | Very long gaps | >=720 hr | Cross-station donor linear regression with donor-mean fallback, followed by validation repair |
 | Sensor-level anomalies | bad sensor periods | Mask suspicious sensor values, then refill with final donor-based residual filling |
+| Manual QC masks | manually reviewed bad or low-confidence segments | Mask confirmed bad segments, then refill with final donor-based residual filling |
 | Final residual NaNs | remaining missing values | Linear donor, donor mean, or donor climatology fallback |
 
 ## Pipeline Overview
@@ -146,9 +149,10 @@ flowchart TD
     I --> J[final_qc_summary.py]
     J --> K[sensor_qc_decisions.py]
     K --> L[apply_sensor_qc_masks.py]
-    L --> M[FinalResidualGaps.py]
-    M --> N[final_qc_summary.py]
-    N --> O[output/Station_site_filled_final.csv]
+    L --> M[apply_manual_qc_masks.py]
+    M --> N[FinalResidualGaps.py]
+    N --> O[final_qc_summary.py]
+    O --> P[output/Station_site_filled_final.csv]
 ```
 
 The individual scripts remain useful for debugging, but normal users should run
@@ -167,7 +171,7 @@ the workflow through `imputation_pipeline.py`.
 | `medium` | Medium gaps plus medium validation/repair |
 | `long` | Long gaps plus long validation/repair |
 | `verylong` | Very-long gaps plus very-long validation/repair |
-| `qc` | Final QC before sensor masking, sensor decisions, sensor masks |
+| `qc` | Final QC before sensor masking, sensor decisions, sensor masks, manual masks |
 | `final` | Final residual filling plus final QC |
 
 Examples:
@@ -193,8 +197,9 @@ python imputation_pipeline.py --stage all --param SWC_5 SWC_10
 | 8 | `final_qc_summary.py` | latest staged output | `final_qc_reports/` | Summarize remaining NaNs and sensor issues |
 | 9 | `sensor_qc_decisions.py` | final QC reports | `sensor_qc_reports/sensor_qc_decisions.csv` | Classify suspicious sensors |
 | 10 | `apply_sensor_qc_masks.py` | sensor decisions | `output/*_filled_sensor_qc.csv` | Mask bad-sensor candidates |
-| 11 | `FinalResidualGaps.py` | sensor-QC outputs | `output/*_filled_final.csv` | Fill remaining soil NaNs |
-| 12 | `final_qc_summary.py` | final outputs | `final_qc_reports/` | Confirm final status |
+| 11 | `apply_manual_qc_masks.py` | manual QC masks + sensor-QC outputs | `output/*_filled_manual_qc.csv` | Mask manually confirmed bad or low-confidence segments |
+| 12 | `FinalResidualGaps.py` | manual-QC/sensor-QC outputs | `output/*_filled_final.csv` | Fill remaining soil NaNs |
+| 13 | `final_qc_summary.py` | final outputs | `final_qc_reports/` | Confirm final status |
 
 ## Validation And QC
 
@@ -207,13 +212,15 @@ Validation is intentionally staged:
 | Very-long validation | bad points inside long donor-based fills, clipped values, large jumps |
 | Final QC | remaining NaNs, missing sensor columns, low-variability sensors |
 | Sensor QC | bad-sensor candidates such as near-zero/stuck sensors |
-| Final residual filling | remaining NaNs after sensor QC |
+| Manual QC | user-reviewed bad or low-confidence segments found in visualization |
+| Final residual filling | remaining NaNs after sensor and manual QC |
 
 Important report folders:
 
 ```text
 final_qc_reports/
 sensor_qc_reports/
+manual_qc_reports/
 ```
 
 The current final outputs have zero remaining NaNs for soil moisture and soil
@@ -249,6 +256,17 @@ FD11 SWC_10
 
 These values are not treated as valid observations in `*_filled_sensor_qc.csv`;
 they are replaced during the final residual-fill stage and logged.
+
+Manual notebook review also masked and refilled:
+
+```text
+CB15 SWC_5
+CB19 SWC_5, CB19 SWC_10
+CB20 SWC_5, CB20 SWC_50
+```
+
+These decisions are recorded in `manual_qc_masks.csv` and
+`manual_qc_reports/manual_qc_mask_detail.csv`.
 
 ## Manual Debugging
 

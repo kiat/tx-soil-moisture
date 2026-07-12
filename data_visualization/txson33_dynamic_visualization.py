@@ -51,6 +51,7 @@ def load_station_data(station_id: str) -> pd.DataFrame:
     base = pipeline_dir()
     candidates = [
         base / "output" / f"Station{station_id}_filled_final.csv",
+        base / "output" / f"Station{station_id}_filled_manual_qc.csv",
         base / "output" / f"Station{station_id}_filled_sensor_qc.csv",
         base / "output" / f"Station{station_id}_filled_verylonggaps_repaired.csv",
         base / "output" / f"Station{station_id}_filled_verylonggaps.csv",

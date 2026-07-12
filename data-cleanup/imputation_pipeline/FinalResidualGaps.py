@@ -1,8 +1,9 @@
 """Fill remaining soil NaNs after validation and sensor-level QC.
 
-This is a final non-destructive filling stage. It reads the sensor-QC output
-when available:
+This is a final non-destructive filling stage. It reads the manual-QC output
+when available, otherwise the sensor-QC output:
 
+    output/Station{site}_filled_manual_qc.csv
     output/Station{site}_filled_sensor_qc.csv
 
 and writes:
@@ -36,11 +37,13 @@ warnings.filterwarnings("ignore")
 
 BASE_DIR = Path(__file__).resolve().parent
 OUT_DIR = BASE_DIR / "output"
+MANUAL_QC_MASKS = BASE_DIR / "manual_qc_masks.csv"
 DEFAULT_PARAMS = ALL_SOIL_PARAMS
 
 
 def input_path_for(station: str) -> Path:
     candidates = [
+        OUT_DIR / f"Station{station}_filled_manual_qc.csv",
         OUT_DIR / f"Station{station}_filled_sensor_qc.csv",
         OUT_DIR / f"Station{station}_filled_verylonggaps_repaired.csv",
         OUT_DIR / f"Station{station}_filled_verylonggaps.csv",
@@ -50,14 +53,22 @@ def input_path_for(station: str) -> Path:
 
 
 def discover_stations() -> List[str]:
+    manual_pat = re.compile(r"Station(.+)_filled_manual_qc\.csv")
+    manual_stations = [
+        m.group(1)
+        for path in OUT_DIR.glob("Station*_filled_manual_qc.csv")
+        if (m := manual_pat.match(path.name))
+    ]
+
     pat = re.compile(r"Station(.+)_filled_sensor_qc\.csv")
-    stations = [
+    sensor_stations = [
         m.group(1)
         for path in OUT_DIR.glob("Station*_filled_sensor_qc.csv")
         if (m := pat.match(path.name))
     ]
+    stations = sorted(set(manual_stations) | set(sensor_stations))
     if stations:
-        return sorted(stations)
+        return stations
 
     fallback = re.compile(r"Station(.+)_filled_verylonggaps_repaired\.csv")
     return sorted(
@@ -235,6 +246,42 @@ def apply_physical_bounds(values: pd.Series, param: str) -> pd.Series:
     return values
 
 
+def choose_boundary_adjusted_prediction(
+    raw_preds: pd.Series,
+    corrected_preds: pd.Series,
+    param: str,
+    min_long_run: int = 720,
+) -> Tuple[pd.Series, str]:
+    """Use boundary drift unless it creates a clear low-bound artifact.
+
+    Long manually reviewed SWC gaps can have unreliable values immediately
+    before or after the masked segment. In that case, forcing the fill to match
+    those boundaries can push an otherwise reasonable donor prediction down to
+    zero for thousands of hours. Keep the uncorrected donor prediction when that
+    specific artifact is detected.
+    """
+    bounded_raw = apply_physical_bounds(raw_preds, param)
+    bounded_corrected = apply_physical_bounds(corrected_preds, param)
+
+    if not param.startswith("SWC_") or len(bounded_corrected) < min_long_run:
+        return bounded_corrected, "applied"
+
+    raw_near_zero = float((bounded_raw <= 0.01).mean()) if len(bounded_raw) else 0.0
+    corrected_near_zero = float((bounded_corrected <= 0.01).mean()) if len(bounded_corrected) else 0.0
+    raw_exact_lower = float((bounded_raw == 0.0).mean()) if len(bounded_raw) else 0.0
+    corrected_exact_lower = float((bounded_corrected == 0.0).mean()) if len(bounded_corrected) else 0.0
+
+    if (
+        corrected_near_zero >= 0.50
+        and raw_near_zero <= 0.20
+        and corrected_exact_lower >= 0.20
+        and raw_exact_lower <= 0.05
+    ):
+        return bounded_raw, "skipped_low_bound_artifact"
+
+    return bounded_corrected, "applied"
+
+
 def nan_runs(df: pd.DataFrame, param: str) -> List[pd.DatetimeIndex]:
     if param not in df.columns:
         return []
@@ -253,12 +300,44 @@ def nan_runs(df: pd.DataFrame, param: str) -> List[pd.DatetimeIndex]:
     return runs
 
 
+def load_manual_refill_overrides() -> pd.DataFrame:
+    if not MANUAL_QC_MASKS.exists():
+        return pd.DataFrame()
+    masks = pd.read_csv(MANUAL_QC_MASKS, parse_dates=["Start", "End"])
+    if "Refill Method" not in masks.columns:
+        return pd.DataFrame()
+    masks["Station"] = masks["Station"].astype(str)
+    masks["Refill Method"] = masks["Refill Method"].fillna("auto").astype(str)
+    return masks[masks["Refill Method"].ne("auto")].copy()
+
+
+def refill_method_for_run(
+    overrides: pd.DataFrame,
+    station: str,
+    param: str,
+    start: pd.Timestamp,
+    end: pd.Timestamp,
+) -> str:
+    if overrides.empty:
+        return "auto"
+    matches = overrides[
+        overrides["Station"].eq(station)
+        & overrides["Parameter"].eq(param)
+        & (overrides["Start"] <= end)
+        & (overrides["End"] >= start)
+    ]
+    if matches.empty:
+        return "auto"
+    return str(matches.iloc[0]["Refill Method"])
+
+
 def fill_station(
     station: str,
     params: Iterable[str],
     all_data: Dict[str, pd.DataFrame],
     min_overlap: int,
     min_abs_corr: float,
+    refill_overrides: pd.DataFrame,
 ) -> None:
     print(f"\n=== Station {station} | final residual filling ===")
     target_df = all_data[station].copy()
@@ -301,8 +380,19 @@ def fill_station(
             start, end = idx[0], idx[-1]
             pred_parts: List[pd.DataFrame] = []
             linear_preds = pd.Series(dtype=float)
+            refill_method = refill_method_for_run(refill_overrides, station, param, start, end)
 
-            if model is not None and donor_sid is not None:
+            if refill_method == "donor_mean":
+                mean_preds = donor_mean_prediction(idx, available_donors, param, min_std).dropna()
+                if not mean_preds.empty:
+                    pred_parts.append(pd.DataFrame({
+                        "Filled": mean_preds,
+                        "Method": "donor_mean_manual_override",
+                        "Donor": np.nan,
+                        "Abs Corr": np.nan,
+                        "Overlap Hours": observed_count,
+                    }))
+            elif model is not None and donor_sid is not None:
                 linear_preds = linear_prediction(idx, available_donors[donor_sid][param], model).dropna()
                 if not linear_preds.empty:
                     pred_parts.append(pd.DataFrame({
@@ -313,7 +403,10 @@ def fill_station(
                         "Overlap Hours": overlap,
                     }))
 
-            fallback_idx = idx.difference(linear_preds.index)
+            predicted_idx_for_fallback = pd.DatetimeIndex([])
+            if pred_parts:
+                predicted_idx_for_fallback = pd.DatetimeIndex(pd.concat(pred_parts).index.unique())
+            fallback_idx = idx.difference(predicted_idx_for_fallback)
             if len(fallback_idx) > 0:
                 mean_preds = donor_mean_prediction(fallback_idx, available_donors, param, min_std).dropna()
                 if not mean_preds.empty:
@@ -350,8 +443,16 @@ def fill_station(
 
             preds = pd.concat(pred_parts).sort_index()
             preds = preds[~preds.index.duplicated(keep="first")]
-            corrected = correct_boundary_drift(preds["Filled"], target_df[param], start, end)
-            preds["Filled"] = apply_physical_bounds(corrected, param)
+            if refill_method == "donor_mean":
+                preds["Filled"] = apply_physical_bounds(preds["Filled"], param)
+                boundary_adjustment = "skipped_manual_donor_mean_override"
+            else:
+                corrected = correct_boundary_drift(preds["Filled"], target_df[param], start, end)
+                preds["Filled"], boundary_adjustment = choose_boundary_adjusted_prediction(
+                    preds["Filled"],
+                    corrected,
+                    param,
+                )
 
             target_df.loc[preds.index, param] = preds["Filled"].values
             filled_count += len(preds)
@@ -367,6 +468,8 @@ def fill_station(
                     "Donor": row["Donor"],
                     "Abs Corr": row["Abs Corr"],
                     "Overlap Hours": row["Overlap Hours"],
+                    "Boundary Adjustment": boundary_adjustment,
+                    "Refill Override": refill_method,
                 })
 
         print(f"    filled {filled_count} hours; NaN left {int(target_df[param].isna().sum())}")
@@ -406,9 +509,10 @@ def main() -> None:
         sys.exit(1)
 
     all_data = {station: read_station(input_path_for(station)) for station in donor_pool}
+    refill_overrides = load_manual_refill_overrides()
     OUT_DIR.mkdir(exist_ok=True)
     for station in stations:
-        fill_station(station, params, all_data, args.min_overlap, args.min_abs_corr)
+        fill_station(station, params, all_data, args.min_overlap, args.min_abs_corr, refill_overrides)
 
 
 if __name__ == "__main__":

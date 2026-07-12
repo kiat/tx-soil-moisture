@@ -22,6 +22,7 @@ datasets/TxSON_data_2026-02-24/
 - [Very-Long-Gap Filling And Validation](#very-long-gap-filling-and-validation)
 - [Final QC Summary](#final-qc-summary)
 - [Sensor-Level Data Quality Notes](#sensor-level-data-quality-notes)
+- [Manual QC Masks](#manual-qc-masks)
 - [Final Residual Filling](#final-residual-filling)
 - [Validation Outputs](#validation-outputs)
 - [Visualizations](#visualizations)
@@ -106,8 +107,10 @@ flowchart TD
     K --> L[Sensor decisions: sensor_qc_decisions.py]
     L --> M[Sensor mask: apply_sensor_qc_masks.py]
     M --> M1[filled_sensor_qc.csv]
+    M1 --> M2[Manual QC masks: apply_manual_qc_masks.py]
+    M2 --> M3[filled_manual_qc.csv]
 
-    M1 --> N[Final residual fill: FinalResidualGaps.py]
+    M3 --> N[Final residual fill: FinalResidualGaps.py]
     N --> N1[filled_final.csv]
     N --> N2[final_residual_fill_detail.csv]
 
@@ -646,7 +649,7 @@ stations audited: 33
 remaining NaN runs: 0
 remaining NaN hours: 0
 missing sensor columns: 12
-suspicious station/parameter rows: 9
+suspicious station/parameter rows: 7
 ```
 
 The `833,715` NaN hours seen after sensor-level QC masking were resolved by
@@ -656,9 +659,9 @@ unavailable columns, not fillable gaps.
 Final residual detail methods:
 
 ```text
-donor_mean_no_target_training:           777,195 rows
-linear_donor:                             43,905 rows
-donor_mean_missing_linear_donor:          11,867 rows
+donor_mean_no_target_training:           859,660 rows
+linear_donor:                            115,726 rows
+donor_mean_missing_linear_donor:           4,412 rows
 donor_climatology_no_timestamp_donor:        748 rows
 ```
 
@@ -747,6 +750,52 @@ newly masked hours: 766,651
 
 The original very-long-gap repaired files remain available.
 
+## Manual QC Masks
+
+Script:
+
+```text
+data-cleanup/imputation_pipeline/apply_manual_qc_masks.py
+```
+
+Mask definitions:
+
+```text
+data-cleanup/imputation_pipeline/manual_qc_masks.csv
+```
+
+Run:
+
+```powershell
+python apply_manual_qc_masks.py --write
+```
+
+This stage records manual notebook-review decisions that should be applied
+after automatic sensor QC but before final residual filling. It writes:
+
+```text
+output/Station{site}_filled_manual_qc.csv
+manual_qc_reports/manual_qc_mask_station_summary.csv
+manual_qc_reports/manual_qc_mask_detail.csv
+```
+
+Current manual masks:
+
+```text
+CB15 SWC_5: full column treated as bad sensor
+CB19 SWC_5: 2019-07-01 to 2022-10-31 low-confidence imputed segment
+CB19 SWC_10: 2019-07-01 to 2022-10-31 low-confidence imputed segment
+CB20 SWC_5: 2017-01-01 to 2022-11-30 low-confidence imputed segment
+CB20 SWC_50: 2017-01-15 to 2023-03-22 low-confidence imputed segment, donor-mean override
+```
+
+Current manual-mask report:
+
+```text
+stations processed: 3
+masked hours: 200,993
+```
+
 ## Final Residual Filling
 
 Script:
@@ -762,7 +811,7 @@ python FinalResidualGaps.py
 ```
 
 This fills the remaining soil moisture and soil temperature NaNs after
-validation and sensor-level QC. It writes a non-destructive final stage:
+validation, sensor-level QC, and manual QC. It writes a non-destructive final stage:
 
 ```text
 output/Station{site}_filled_final.csv
@@ -776,6 +825,18 @@ Method priority:
 2. donor mean for timestamps where the selected linear donor is missing
 3. donor mean without target training for fully masked bad-sensor columns
 4. donor day-of-year/hour climatology when no same-timestamp donor exists
+```
+
+For long manually reviewed SWC segments, boundary-drift correction is skipped
+when it would create a clear low-bound artifact by pushing an otherwise
+reasonable donor prediction down to zero.
+
+Manual refill override:
+
+```text
+CB20 SWC_50 uses donor_mean instead of automatic linear donor because the
+automatic CB27 linear-donor fill reproduced an unusually flat/low segment.
+Boundary correction is skipped for this donor_mean override.
 ```
 
 Current result:
@@ -799,8 +860,9 @@ These columns should be handled by a sensor-quality rule before final delivery.
 
 Additional suspicious sensor rows are listed in
 final_qc_reports/final_qc_suspicious_sensors.csv.
-These include near-zero or low-variability SWC columns such as CB15 SWC_10,
-FD11 SWC_10, FD22 SWC_20/SWC_50, FD16 SWC_5, and FD08 SWC_5.
+After manual QC and refill, this list has 7 rows. These remaining rows are
+mostly localized exact-zero or long-constant warnings rather than full-column
+bad-sensor candidates.
 ```
 
 ## Validation Outputs
@@ -886,6 +948,7 @@ Data source priority:
 
 ```text
 output/Station{site}_filled_final.csv
+output/Station{site}_filled_manual_qc.csv
 output/Station{site}_filled_sensor_qc.csv
 output/Station{site}_filled_verylonggaps_repaired.csv
 output/Station{site}_filled_verylonggaps.csv
@@ -911,6 +974,6 @@ The following items still need to be completed before final delivery:
 
 ```text
 Review very-long-gap segments marked as review
-Review the 9 remaining suspicious sensor rows in final_qc_suspicious_sensors.csv
+Review the 7 remaining suspicious sensor rows in final_qc_suspicious_sensors.csv
 Design filling/quality-control methods for MET parameters
 ```

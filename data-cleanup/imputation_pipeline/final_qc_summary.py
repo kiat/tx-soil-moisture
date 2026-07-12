@@ -40,6 +40,7 @@ def parse_args() -> argparse.Namespace:
 def latest_path_for(station: str) -> Path:
     candidates = [
         OUT_DIR / f"Station{station}_filled_final.csv",
+        OUT_DIR / f"Station{station}_filled_manual_qc.csv",
         OUT_DIR / f"Station{station}_filled_sensor_qc.csv",
         OUT_DIR / f"Station{station}_filled_verylonggaps_repaired.csv",
         OUT_DIR / f"Station{station}_filled_verylonggaps.csv",
