@@ -9,8 +9,10 @@ warnings.filterwarnings('ignore')
 # ==========================================
 # 1. CONFIGURATION
 # ==========================================
-TARGET_DEPTH = 'SWC_50'       # Options: 'SWC_5', 'SWC_10', 'SWC_20', 'SWC_50'
+TARGET_DEPTH = 'SWC_20'       # Options: 'SWC_5', 'SWC_10', 'SWC_20', 'SWC_50'
 PPT_COLUMN = 'Ppt'           
+
+TEST_STATION = 'Station2_filled_Data.csv'   # change this depending on the station being tested 
 
 # Pre-selected structural settings
 ORDER = (0, 1, 2)
@@ -56,18 +58,22 @@ print("✓ Data loaded.")
 # ==========================================
 # 3. BUILD TRAINING SIGNALS & TEST TARGET
 # ==========================================
-# Target training signal: hourly mean SWC across Stations 2-6
-train_swc = pd.concat([station_swc[s] for s in STATIONS[1:]], axis=1).mean(axis=1)
+train_stations = [s for s in STATIONS if s != TEST_STATION]
+test_ppt = station_ppt[TEST_STATION]
 
-# Exogenous feature training signal: hourly mean Precipitation across Stations 2-6
-train_ppt = pd.concat([station_ppt[s] for s in STATIONS[1:]], axis=1).mean(axis=1)
+# Target training signal: hourly mean SWC across training stations (1, 3, 4, 5, 6)
+train_swc = pd.concat([station_swc[s] for s in train_stations], axis=1).mean(axis=1)
 
-# Test target: Station 1 actual SWC
-test_swc = station_swc['Station1_filled_Data.csv']
+# Exogenous feature training signal: hourly mean Precipitation across training stations
+train_ppt = pd.concat([station_ppt[s] for s in train_stations], axis=1).mean(axis=1)
 
-print(f"Train SWC signal length : {len(train_swc)} hours (mean of Stations 2-6)")
-print(f"Train PPT feature length: {len(train_ppt)} hours (mean of Stations 2-6)")
-print(f"Test SWC target length  : {len(test_swc)} hours (Station 1)")
+# Test target: Station 2's actual SWC
+test_swc = station_swc[TEST_STATION]
+
+print(f"Testing Target          : {TEST_STATION}")
+print(f"Train SWC signal length : {len(train_swc)} hours (mean of remaining stations)")
+print(f"Train PPT feature length: {len(train_ppt)} hours (mean of remaining stations)")
+print(f"Test SWC target length  : {len(test_swc)} hours")
 
 # ==========================================
 # 4. ROLLING H-STEP-AHEAD SARIMAX EVALUATION
@@ -98,7 +104,7 @@ for name, H in horizons.items():
         res = model.fit(disp=False, maxiter=500)
         
         # Pull future precipitation data for the H-step forecast horizon window
-        future_exog = train_ppt.iloc[t : t + H]
+        future_exog = test_ppt.iloc[t : t + H]
         
         # Produce H-step-ahead out-of-sample forecast passing the future rain data
         fc = res.forecast(steps=H, exog=future_exog)

@@ -7,7 +7,8 @@ import pmdarima as pm
 warnings.filterwarnings('ignore')
 
 # TARGET_DEPTH 
-TARGET_DEPTH = 'SWC_10'
+TARGET_DEPTH = 'SWC_50'
+TEST_STATION = 'Station2_filled_Data.csv' # change this depending on the station being tested 
 
 # Minimum hours of history before first forecast
 INIT_TRAIN_HOURS = 30 * 24  # 720 h
@@ -46,15 +47,15 @@ print("✓ Data loaded.")
 # BUILD TRAINING SIGNAL & TEST TARGET
 
 # Training signal: hourly mean across Stations 2-6
-train_series = pd.concat(
-    [station_data[s] for s in STATIONS[1:]], axis=1
-).mean(axis=1)
+train_stations = [s for s in STATIONS if s != TEST_STATION]
+train_series = pd.concat([station_data[s] for s in train_stations], axis=1).mean(axis=1)
 
-# Test target: Station 1 actuals
-test_series = station_data['Station1_filled_Data.csv']
+# Test target: The selected station's actuals (Station 2)
+test_series = station_data[TEST_STATION]
 
-print(f"Train signal length : {len(train_series)} hours  (mean of Stations 2-6)")
-print(f"Test  target length : {len(test_series)} hours  (Station 1)")
+print(f"Testing Target      : {TEST_STATION}")
+print(f"Train signal length : {len(train_series)} hours (mean of remaining stations)")
+print(f"Test  target length : {len(test_series)} hours")
 
 
 # AUTO-ARIMA ORDER SELECTION

@@ -11,8 +11,10 @@ warnings.filterwarnings('ignore')
 # 1. CONFIGURATION (CHANGE DEPTH HERE)
 # ==========================================
 TARGET_DEPTH = 'SWC_5'
+TEST_STATION = 'Station2_filled_Data.csv' # change this depending on the station being tested 
 # SARIMA order selected via prior grid search
 ORDER = (0,1,2)
+
 SEASONAL_ORDER = (0, 0, 0, 24)
 
 # Minimum hours of history before first forecast
@@ -53,15 +55,15 @@ print("✓ Data loaded.")
 # 3. BUILD TRAINING SIGNAL & TEST TARGET
 # ==========================================
 # Training signal: hourly mean across Stations 2-6
-train_series = pd.concat(
-    [station_data[s] for s in STATIONS[1:]], axis=1
-).mean(axis=1)
+train_stations = [s for s in STATIONS if s != TEST_STATION]
+train_series = pd.concat([station_data[s] for s in train_stations], axis=1).mean(axis=1)
 
-# Test target: Station 1 actuals
-test_series = station_data['Station1_filled_Data.csv']
+# Test target: The selected station's actuals (Station 2)
+test_series = station_data[TEST_STATION]
 
-print(f"Train signal length : {len(train_series)} hours  (mean of Stations 2-6)")
-print(f"Test  target length : {len(test_series)} hours  (Station 1)")
+print(f"Testing Target      : {TEST_STATION}")
+print(f"Train signal length : {len(train_series)} hours (mean of remaining stations)")
+print(f"Test  target length : {len(test_series)} hours")
 
 # ==========================================
 # 4. ROLLING H-STEP-AHEAD SARIMA EVALUATION
