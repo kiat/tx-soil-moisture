@@ -34,7 +34,7 @@ def treat_subhourly_data(df, precip_col="Ppt"):
         return df
 
     # a timestamp is sub-hourly if it does not sit exactly on the hour
-    on_hour = df.index == df.index.floor("h")
+    on_hour = df.index == df.index.floor("h") # True for on-the-hour, False for sub-hourly
 
     # nothing to condense
     if on_hour.all():
@@ -49,20 +49,22 @@ def treat_subhourly_data(df, precip_col="Ppt"):
         target_hours = sub.index.ceil("h")
 
         # sum the precip falling into each receiving hour
-        # (min_count=1 keeps all-NaN groups as NaN instead of 0)
+        # (with min_count=1, sum returns all-NaN groups as NaN instead of 0)
         carry = sub[precip_col].groupby(target_hours).sum(min_count=1).dropna()
 
+        # now we need to inject the carried precip into the hourly series
         if not carry.empty:
-            # make sure every receiving hour exists as a row
-            missing = carry.index.difference(hourly.index)
+            # make sure every receiving hour exists as a row, fill with NaN if it doesn't
+            missing = carry.index.difference(hourly.index) # gets the hours in carry that are not in hourly
             if len(missing) > 0:
-                hourly = hourly.reindex(hourly.index.union(missing))
+                filled_hourly = hourly.index.union(missing)
+                hourly = hourly.reindex(filled_hourly) # add the missing hours as new rows with NaN values
 
             # add the carried precip onto the hourly precip.
             # only touch hours that actually receive a contribution, treating a
             # missing/NaN hourly precip as 0 so the rainfall is not lost.
-            add = carry.reindex(hourly.index)
-            mask = add.notna()
+            add = carry.reindex(hourly.index) # every hour in carry not in hourly gets NaN
+            mask = add.notna() # True for hours that actually received a sum
             hourly.loc[mask, precip_col] = (
                 hourly.loc[mask, precip_col].fillna(0) + add[mask]
             )
