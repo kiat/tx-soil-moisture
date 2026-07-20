@@ -67,9 +67,11 @@ def score_method(impute, samples, bins=None, name=None):
         print(f"overall: RMSE {scores['rmse'].mean():.4f}   MAE {scores['mae'].mean():.4f}   "
               f"bias {scores['bias'].mean():+.4f}")
         summary = (scores.groupby(["length_bin", "rain_in_gap"], observed=True)
-                         .agg(n=("rmse", "size"), rmse=("rmse", "mean"),
+                         .agg(n=("rmse", "count"), rmse=("rmse", "mean"),
                               mae=("mae", "mean"), bias=("bias", "mean"))
-                         .reset_index().round(4))
+                         .reset_index().round(4))   # n = gaps with a score; a gap
+                                                    # left unfilled scores NaN and
+                                                    # is excluded from the means
         print(summary.to_string(index=False))
 
     return scores
