@@ -24,7 +24,9 @@ def score_method(impute, samples, bins=None, name=None):
     station     : str — station the gap was drawn from.
     column      : str — the SWC column that was gapped.
     length_h    : int — gap length in hours.
-    rain_in_gap : bool — True if Ppt > 0 at any hour inside the gap window.
+    rain_in_gap : bool — True if Ppt > 0 at any hour inside the gap window
+                  (taken from the sample dict when present; recomputed from the
+                  gapped frame only for hand-built samples that lack the key).
     rmse        : float — root-mean-square error of the fill over the gap.
     mae         : float — mean absolute error of the fill over the gap.
     bias        : float — mean error (fill - truth); positive = fill too wet.
@@ -35,10 +37,14 @@ def score_method(impute, samples, bins=None, name=None):
         est   = impute(s["gapped"], s["column"]).loc[s["answer"].index]
         truth = s["answer"][s["column"]]
         err   = est - truth
+        if "rain_in_gap" in s:                       # trust the sampler's flag: it is
+            rain = bool(s["rain_in_gap"])            # computed from the original data,
+        else:                                        # so it's right even when Ppt is
+            rain = bool(s["gapped"].loc[s["answer"].index, "Ppt"]   # the gapped column
+                        .fillna(0).gt(0).any())
         rows.append({"station": s["station"], "column": s["column"],
                      "length_h": s["length_h"],
-                     "rain_in_gap": bool(s["gapped"].loc[s["answer"].index, "Ppt"]
-                                         .fillna(0).gt(0).any()),
+                     "rain_in_gap": rain,
                      "rmse": float(np.sqrt((err ** 2).mean())),
                      "mae":  float(err.abs().mean()),
                      "bias": float(err.mean())})
