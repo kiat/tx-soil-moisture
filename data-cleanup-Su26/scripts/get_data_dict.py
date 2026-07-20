@@ -99,10 +99,11 @@ class data_ingest:
 
         self.check_for_folders()
 
-        if self.prewash:
-            prewashed_met_dict, prewashed_soil_dict = self.open_df()
         if self.clean and not self.prewash:
             raise ValueError("If clean is True, prewash must also be True since we have to prewash before we can clean.")
+
+        # always read the raw data; the loops below prewash/clean it if asked
+        prewashed_met_dict, prewashed_soil_dict = self.open_df()
         if self.clean:
             cleaned_met_dict = {}
             cleaned_soil_dict = {}
@@ -121,10 +122,10 @@ class data_ingest:
             if self.clean:
                 cleaned_soil_dict[station] = self.clean_data(prewashed_soil_dict[station], station, self.download)
 
-        if self.prewash:
-            return prewashed_met_dict, prewashed_soil_dict
-        elif self.clean:
+        if self.clean:
             return cleaned_met_dict, cleaned_soil_dict
+        return prewashed_met_dict, prewashed_soil_dict   # prewashed, or raw when
+                                                         # prewash_the_data=False
 
 def main():
     import argparse
