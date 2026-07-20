@@ -86,6 +86,8 @@ def _print_tally(samples, attempts, n_gaps, strata, rain_frac):
     """Report how the draw went, after the fact."""
     if len(samples) < n_gaps:
         print(f"warning: only {len(samples)} of {n_gaps} slots filled after {attempts} attempts")
+    if not samples:
+        return                                  # nothing drawn -> nothing to tally
     if not strata and rain_frac is None:
         return                                  # plain draw -> nothing more to report
     drawn = pd.DataFrame([{"length_h": s["length_h"], "rain": s["rain_in_gap"]}
@@ -119,7 +121,10 @@ def sample_gaps(data_dir="prewashed_data", n_gaps=250, seed=None, column=None,
                 of gaps must contain rain (Ppt > 0 inside the gap window),
                 enforced separately at every distinct gap length.
     context   : data kept on each side of each gap (rows or a span like "2D");
-                None keeps the full station frame.
+                None keeps the full station frame — but beware: the strictly-
+                synthetic rule then requires the WHOLE record to be gap-free,
+                which only a few stations are, so None quietly restricts the
+                draw to those stations. Prefer a finite context.
     pool_max  : when lengths is None, only real-gap durations shorter than this
                 span are matched; "24h" (the default) fits the project's <24h
                 imputation goal, "7D" would admit multi-day durations too.
