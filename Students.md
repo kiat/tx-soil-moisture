@@ -2,6 +2,18 @@
 # List of Students who contributed to this project. 
 
 # Summer 2026 
+* Zun Cao <zc6222@utexas.edu> 
+* Frank, Julian A <julianfrank@my.utexas.edu> 
+* Yingchen Liu <yl42556@utexas.edu>
+* May, Jason R <jm98262@my.utexas.edu>
+* Nandanavanam, Saranya <sn29969@my.utexas.edu>  
+* Aggarwal, Avika <aa99222@my.utexas.edu> 
+* Goel, Shreya <sg63353@my.utexas.edu> 
+* Jana M Kassem <jana.kassem@utexas.edu>
+* Zhehan Zhang <zhehanzhang@utexas.edu>
+* Esmailji, Sakina S <sse475@my.utexas.edu>
+* Merrill, Hannah E <hem2479@my.utexas.edu>
+* Samantha G Ward <samanthagsci@utexas.edu>
 
 # Spring 2026 
 
