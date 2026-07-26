@@ -5,7 +5,7 @@ import torch.nn as nn
 
 from models import get_model_class, is_registered, list_models
 from utils import Trainer, Evaluator, prepare_dataloaders, get_output_helpers
-
+from core.evaluation_helpers import save_experiment_results, write_model_results_to_csv
 
 def main(args):
     """Main training and evaluation pipeline."""
@@ -73,8 +73,6 @@ def main(args):
         )
     )
 
-    # Get output helpers
-    write_loss_history_to_csv, write_model_results_to_csv = get_output_helpers()
 
     # Setup directories
     model_dir = "saved_models_pytorch"
@@ -148,16 +146,6 @@ def main(args):
             torch.save(trainer.model.state_dict(), model_path)
             print(f"{model_name.upper()} model saved at {model_path}")
 
-            # Save training history
-            write_loss_history_to_csv(
-                target_station,
-                model_name,
-                args.window_size,
-                args.offset,
-                history,
-                feature_str,
-                label_str=predict_features_str,
-            )
 
         # Print and save metrics
         print(f"\n--- {model_name.upper()} Final Test Metrics ---")
@@ -165,14 +153,34 @@ def main(args):
             print(f"{key}: {value:.6f}")
 
         feature_str = "_".join(predictors_list)
-        write_model_results_to_csv(
-            target_station,
-            model_name,
-            args.window_size,
-            args.offset,
-            performance,
-            feature_str,
-        )
+
+        if model_name in ["baseline", "movingaverage"]:
+            print("Skipping loss history save for non-trainable baseline model.")
+
+            write_model_results_to_csv(
+                station=target_station,
+                model_name=model_name,
+                window_size=args.window_size,
+                offset=args.offset,
+                performance=performance,
+                feature_str=feature_str,
+                label_str=predict_features_str,
+                epochs=args.epochs,
+                patience=args.patience,
+            )
+        else:
+            save_experiment_results(
+                station=target_station,
+                model_name=model_name,
+                window_size=args.window_size,
+                offset=args.offset,
+                history=history,
+                performance=performance,
+                feature_str=feature_str,
+                label_str=predict_features_str,
+                epochs=args.epochs,
+                patience=args.patience,
+            )
         print("-------------------------------------\n")
 
     print("All runs complete! Results have been saved.")
