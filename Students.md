@@ -16,6 +16,12 @@
 * Samantha G Ward <samanthagsci@utexas.edu>
 
 # Spring 2026 
+* Zun Cao <zc6222@utexas.edu> 
+* Siddharth Na Umachandran <siddharth.umachandran@utexas.edu>
+* Aditya Dhanraj <adityadhanraj@utexas.edu>
+* Tony Huynh <tnyhynh@utexas.edu>
+* Aggarwal, Avika <aa99222@my.utexas.edu>
+
 
 
 
