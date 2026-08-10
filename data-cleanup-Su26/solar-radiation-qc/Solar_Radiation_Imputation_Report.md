@@ -1,7 +1,5 @@
 # Solar Radiation Imputation Report
 
-Generated with fixed random seed `20260728`.
-
 ## Inputs and units
 
 Six hourly anomaly-marked station files were checked against their corresponding
@@ -36,6 +34,7 @@ deviant; all others remain unchanged and are marked for manual review.
 | FD03 | 0 | 390 | 0 | 62 | 0 |
 | WC05 | 1568 | 558 | 452 | 133 | 0 |
 
+![Imputation outcomes](figures/imputation_outcomes_by_station.png)
 
 ## Validation
 
@@ -43,6 +42,20 @@ Normal records were masked in reproducible continuous segments of 1 hour, 2–6
 hours, 7–24 hours, and 48–96 hours. Calibration and climatology fitting excluded
 all target-station validation timestamps. The table below aggregates all gap
 lengths and stations.
+
+- **Multi-peer:** Calibrates each available peer's clear-sky index to the target
+  station by month, removes inconsistent estimates, and combines at least two
+  peer predictions before multiplying by the target `Rso`.
+- **Single-peer:** Uses one calibrated peer clear-sky index when no second
+  consistent peer is available, then converts it to `Srad` with the target `Rso`.
+- **Month-hour climatology:** Uses the target station's historical median
+  clear-sky index for the same month and hour, multiplied by the current `Rso`.
+- **Clear-sky-index interpolation:** Linearly interpolates the target station's
+  clear-sky index between surrounding normal observations and multiplies it by
+  `Rso`; production use is limited to gaps of three hours or less.
+- **Linear Srad interpolation:** Directly interpolates raw `Srad` between the
+  surrounding observations; it is a validation baseline and is not used for
+  production imputation.
 
 | method | n_expected | n_predicted | coverage | MAE | RMSE | bias | R2 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -54,6 +67,7 @@ lengths and stations.
 
 Best overall RMSE: **multi_peer** (66.932 W/m²).
 
+![Validation RMSE](figures/validation_rmse_by_method.png)
 
 Detailed station-by-gap metrics are in `validation_metrics.csv`, and all masked
 predictions are in `validation_predictions.csv`.
