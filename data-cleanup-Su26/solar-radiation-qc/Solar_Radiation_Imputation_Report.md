@@ -34,7 +34,7 @@ deviant; all others remain unchanged and are marked for manual review.
 | FD03 | 0 | 390 | 0 | 62 | 0 |
 | WC05 | 1568 | 558 | 452 | 133 | 0 |
 
-![Imputation outcomes](figures/imputation_outcomes_by_station.png)
+![Imputation outcomes](imputation_outcomes_by_station.png)
 
 ## Validation
 
@@ -67,7 +67,7 @@ lengths and stations.
 
 Best overall RMSE: **multi_peer** (66.932 W/m²).
 
-![Validation RMSE](figures/validation_rmse_by_method.png)
+![Validation RMSE](validation_rmse_by_method.png)
 
 Detailed station-by-gap metrics are in `validation_metrics.csv`, and all masked
 predictions are in `validation_predictions.csv`.
