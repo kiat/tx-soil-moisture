@@ -47,9 +47,17 @@ def discover_stations() -> list[str]:
     return sorted(stations)
 
 
+def read_time_series(path: Path) -> pd.DataFrame:
+    df = pd.read_csv(path, index_col=0, low_memory=False)
+    df.index = pd.to_datetime(df.index, errors="coerce")
+    df = df.loc[df.index.notna()]
+    return df.loc[~df.index.duplicated(keep="last")].sort_index()
+
+
 def load_station_data(station_id: str) -> pd.DataFrame:
+    """Merge the latest soil result with the final MET result by timestamp."""
     base = pipeline_dir()
-    candidates = [
+    soil_candidates = [
         base / "output" / f"Station{station_id}_filled_final.csv",
         base / "output" / f"Station{station_id}_filled_manual_qc.csv",
         base / "output" / f"Station{station_id}_filled_sensor_qc.csv",
@@ -62,12 +70,27 @@ def load_station_data(station_id: str) -> pd.DataFrame:
         base / "output" / f"Station{station_id}_filled_shortgaps.csv",
         base / "cleaned_data" / f"Station{station_id}_cleaned_data.csv",
     ]
-    path = next((candidate for candidate in candidates if candidate.exists()), None)
-    if path is None:
+    soil_path = next(
+        (candidate for candidate in soil_candidates if candidate.exists()),
+        None,
+    )
+    if soil_path is None:
         raise FileNotFoundError(f"No pipeline output found for station {station_id}")
-    df = pd.read_csv(path, index_col=0, parse_dates=True)
-    df.index = pd.DatetimeIndex(df.index)
-    return df.sort_index()
+
+    combined = read_time_series(soil_path)
+    met_path = (
+        base / "met_output" / f"Station{station_id}_met_filled_complete.csv"
+    )
+    if not met_path.exists():
+        return combined
+
+    met = read_time_series(met_path)
+    merged_index = combined.index.union(met.index).sort_values()
+    combined = combined.reindex(merged_index)
+    for column in MET_COLS:
+        if column in met.columns:
+            combined[column] = met[column].reindex(merged_index)
+    return combined
 
 
 def station_years(station_id: str) -> list[int]:

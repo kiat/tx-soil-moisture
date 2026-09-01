@@ -31,6 +31,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--mask-file", type=Path, default=DEFAULT_MASK_FILE)
     parser.add_argument("--station", type=str, nargs="*", help="Optional station/site codes to process.")
     parser.add_argument("--write", action="store_true", help="Write *_filled_manual_qc.csv files.")
+    parser.add_argument("--report-dir", type=Path, default=REPORT_DIR)
     return parser.parse_args()
 
 
@@ -143,15 +144,24 @@ def main() -> None:
         if args.write:
             df.to_csv(output_path, na_rep="NaN")
 
-    REPORT_DIR.mkdir(exist_ok=True)
-    pd.DataFrame(station_rows).to_csv(REPORT_DIR / "manual_qc_mask_station_summary.csv", index=False)
-    pd.DataFrame(detail_rows).to_csv(REPORT_DIR / "manual_qc_mask_detail.csv", index=False)
+    args.report_dir.mkdir(parents=True, exist_ok=True)
+    pd.DataFrame(
+        station_rows,
+        columns=["Station", "Input File", "Output File", "Masked Hours", "Status"],
+    ).to_csv(args.report_dir / "manual_qc_mask_station_summary.csv", index=False)
+    pd.DataFrame(
+        detail_rows,
+        columns=[
+            "Station", "Parameter", "Start", "End", "Masked Hours",
+            "Refill Method", "Reason", "Notes", "Status",
+        ],
+    ).to_csv(args.report_dir / "manual_qc_mask_detail.csv", index=False)
 
     total_masked = sum(row["Masked Hours"] for row in station_rows)
     print("Manual QC mask step complete.")
     print(f"Stations processed: {len(station_rows)}")
     print(f"Masked hours: {total_masked}")
-    print(f"Reports written under: {REPORT_DIR}")
+    print(f"Reports written under: {args.report_dir}")
     if args.write:
         print("Station files written to output/*_filled_manual_qc.csv")
     else:

@@ -1,4 +1,4 @@
-"""Fill >=30-day soil gaps with cross-station donor regression.
+"""Fill soil gaps of 720 hours or longer with donor-station regression.
 
 The 33-station workflow uses repaired long-gap outputs as the default input:
 
@@ -190,13 +190,23 @@ def prediction_from_donor(
     return pd.Series(preds, index=x.index)
 
 
-def cv_metrics(target: pd.Series, donor: pd.Series, model: LinearRegression) -> Tuple[float, float]:
+def holdout_metrics(target: pd.Series, donor: pd.Series) -> Tuple[float, float]:
+    """Evaluate the donor map on the latest 10% of overlapping observations."""
     mask = target.notna() & donor.notna()
     if int(mask.sum()) < 100:
         return float("nan"), float("nan")
-    sample_idx = mask[mask].sample(frac=0.1, random_state=0).index
-    y_true = target.loc[sample_idx]
-    y_pred = model.predict(donor.loc[sample_idx].values.reshape(-1, 1))
+    overlap_idx = target.index[mask].sort_values()
+    split = max(1, int(len(overlap_idx) * 0.9))
+    train_idx = overlap_idx[:split]
+    test_idx = overlap_idx[split:]
+    if len(test_idx) == 0:
+        return float("nan"), float("nan")
+    eval_model = LinearRegression().fit(
+        donor.loc[train_idx].values.reshape(-1, 1),
+        target.loc[train_idx],
+    )
+    y_true = target.loc[test_idx]
+    y_pred = eval_model.predict(donor.loc[test_idx].values.reshape(-1, 1))
     return (
         float(mean_absolute_error(y_true, y_pred)),
         float(mean_squared_error(y_true, y_pred, squared=False)),
@@ -245,9 +255,9 @@ def fill_station(
         model = None
         if donor_sid is not None:
             model = fit_linear_map(df_target[param], available_donors[donor_sid][param])
-            mae, rmse = cv_metrics(df_target[param], available_donors[donor_sid][param], model)
+            mae, rmse = holdout_metrics(df_target[param], available_donors[donor_sid][param])
             method = "linear_donor"
-            print(f"    donor={donor_sid} |r|={corr:.3f} overlap={overlap} CV_MAE={mae:.4f} CV_RMSE={rmse:.4f}")
+            print(f"    donor={donor_sid} |r|={corr:.3f} overlap={overlap} holdout_MAE={mae:.4f} holdout_RMSE={rmse:.4f}")
         else:
             print("    no regression donor; using donor-mean fallback when available")
 

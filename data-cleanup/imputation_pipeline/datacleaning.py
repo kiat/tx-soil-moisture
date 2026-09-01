@@ -17,6 +17,12 @@ import pandas as pd
 
 warnings.filterwarnings("ignore")
 
+DEFAULT_TXSON_DATA_DIR = (
+    Path(__file__).resolve().parents[2]
+    / "datasets"
+    / "TxSON_data_2026-02-24"
+)
+
 
 # Manual overrides for stations whose sensors reported bad-but-present readings
 # that we want to treat as contiguous missing intervals.
@@ -101,12 +107,14 @@ def aggregate_observations_to_hourly(df):
     if aligned_to_hour:
         return df
 
-    hourly_index = df.index.floor("H")
+    hourly_index = df.index.floor("h")
     pieces = {}
     for col in df.columns:
         series = df[col]
         if col == "Ppt":
             pieces[col] = series.groupby(hourly_index).sum(min_count=1)
+        elif col == "Flag":
+            pieces[col] = series.groupby(hourly_index).last()
         elif pd.api.types.is_numeric_dtype(series):
             pieces[col] = series.groupby(hourly_index).mean()
         else:
@@ -189,11 +197,21 @@ def load_met_data(station_id, base_dir):
 
 
 def merge_raw_data(station_id, soil_base_dir, met_base_dir):
-    """Merge soil and MET data, keeping MET precipitation when both exist."""
+    """Merge MET onto the complete hourly soil-coverage timeline."""
     df_soil = load_soil_data(station_id, soil_base_dir)
     df_met = load_met_data(station_id, met_base_dir)
     if df_met.empty:
         return df_soil
+
+    # Preserve MET observations at hours where the entire soil record is
+    # absent, without extending soil data beyond its actual coverage period.
+    soil_timeline = pd.date_range(
+        df_soil.index.min(),
+        df_soil.index.max(),
+        freq="h",
+        name=df_soil.index.name or "Date",
+    )
+    df_soil = df_soil.reindex(soil_timeline)
 
     merged = pd.merge(
         df_soil,
@@ -354,7 +372,7 @@ def inject_manual_gaps(station_id, summary_df: pd.DataFrame) -> pd.DataFrame:
 
 
 def build_hourly_cleaned_data(merged_df):
-    full_idx = pd.date_range(start=merged_df.index.min(), end=merged_df.index.max(), freq="H")
+    full_idx = pd.date_range(start=merged_df.index.min(), end=merged_df.index.max(), freq="h")
     full_df = merged_df.reindex(full_idx)
     return find_and_replace_wrong_data(full_df)
 
@@ -364,8 +382,8 @@ def main():
         description="Generate merged, missing/invalid summary, and cleaned full-timeline CSVs for a soil station."
     )
     parser.add_argument("--station", "-s", type=str, default="1", help="Station ID or site code, e.g. 1 or CB01.")
-    parser.add_argument("--soil-base-dir", type=str, default="../../datasets/TX-Data/soil_station", help="Path to soil .dat files.")
-    parser.add_argument("--met-base-dir", type=str, default="../../datasets/TX-Data/met_station", help="Path to MET .dat files.")
+    parser.add_argument("--soil-base-dir", type=str, default=str(DEFAULT_TXSON_DATA_DIR), help="Path to soil .dat files.")
+    parser.add_argument("--met-base-dir", type=str, default=str(DEFAULT_TXSON_DATA_DIR), help="Path to MET .dat files.")
     parser.add_argument("--raw-output-dir", type=str, default="raw_merged_data", help="Directory for merged CSVs.")
     parser.add_argument("--missing-output", type=str, default=None, help="Filename for missing/invalid summary CSV.")
     parser.add_argument("--cleaned-output", type=str, default=None, help="Filename for cleaned full-timeline CSV.")

@@ -1,292 +1,337 @@
-# TxSON 33-Station Soil Imputation Pipeline
+# TxSON 33-Station Cleanup and Imputation
 
 ## Zun Cao
 
-This folder contains the soil moisture and soil temperature cleanup/imputation
-workflow for the new TxSON 33-station dataset.
-
-```text
-datasets/TxSON_data_2026-02-24/
-```
-
-The current pipeline produces final filled soil outputs for:
-
-```text
-SWC_5, SWC_10, SWC_20, SWC_50
-T_5, T_10, T_20, T_50
-```
-
-> MET variables such as `Ppt`, `Tair`, `RH`, `Srad`, `Wind speed`, and
-> `Wind direction` still need separate filling/QC methods.
+This folder contains the reproducible cleanup, gap-filling, validation, and QC
+workflow for the TxSON 33-station dataset. Soil and MET processing share the
+same cleaned hourly input but write separate outputs.
 
 ## Contents
 
+- [Current Status](#current-status)
 - [Quick Links](#quick-links)
 - [Setup](#setup)
-- [Quick Start](#quick-start)
-- [What To Open](#what-to-open)
-- [Gap Filling Strategy](#gap-filling-strategy)
-- [Pipeline Overview](#pipeline-overview)
-- [Run Stages](#run-stages)
-- [Stage Reference](#stage-reference)
-- [Validation And QC](#validation-and-qc)
-- [Known Data Notes](#known-data-notes)
-- [Manual Debugging](#manual-debugging)
-- [Detailed Notes](#detailed-notes)
+- [Run the Pipeline](#run-the-pipeline)
+- [Stage Names](#stage-names)
+- [Pipeline Map](#pipeline-map)
+- [Gap Methods](#gap-methods)
+- [Ppt Source Policy](#ppt-source-policy)
+- [Main Outputs](#main-outputs)
+- [Soil Data Notes](#soil-data-notes)
+- [Validation and Review](#validation-and-review)
+- [Runtime](#runtime)
+- [Publication Follow-up](#publication-follow-up)
+
+## Current Status
+
+| Part | Verified result |
+|---|---|
+| Stage 0 cleaning | 33 station files parsed and standardized to hourly data |
+| Soil moisture and soil temperature | 33 final files; 0 NaNs and 0 bound violations in source-present columns |
+| Soil QC | 89/89 recorded review items closed; 0 unresolved |
+| Soil model comparison | Four seeds and independent confirmation complete; exact production-adapter testing retained the current 32-entry method map |
+| Non-Ppt MET | All internal gaps filled for the six dedicated-MET stations; 50/50 flags reviewed |
+| MET model robustness | Four-seed benchmark, independent confirmation, and all-gap deployment coverage audit complete; all current methods retained |
+| Ppt | MET-first source reconciliation and model filling completed for 33 stations; 0 NaNs |
+
+Non-Ppt MET values outside a station's retained post-QC coverage are not
+extrapolated.
+The 10 low-confidence Ppt segments are retained with caveats; external rainfall
+comparison is optional and does not block the pipeline.
 
 ## Quick Links
 
-| Open | Description |
+| Open | Use |
 |---|---|
-| [Open Dynamic Visualization Notebook](../../data_visualization/Dynamic_Data_Visualization_TxSON33.ipynb) | Interactive notebook for checking filled station data visually |
-| [Open Technical Notes](TECHNICAL_NOTES_TxSON33.md) | Detailed implementation notes, validation counts, and known issues |
-| [Open Visualization Script](../../data_visualization/txson33_dynamic_visualization.py) | Python source used by the dynamic visualization notebook |
+| [Technical notes](TECHNICAL_NOTES_TxSON33.md) | Methods, validation counts, QC decisions, and limitations |
+| [MET model comparison notebook](Gap_Filling_Model_Comparison.ipynb) | MET artificial-gap benchmark and error matrices |
+| [MET robustness notebook](MET_Model_Robustness.ipynb) | Four-seed, seasonal, and station-level validation of non-Ppt MET methods |
+| [Soil model comparison notebook](Soil_Gap_Filling_Model_Comparison.ipynb) | Soil artificial-gap benchmark and publication figure |
+| [MET QC review notebook](MET_QC_Review.ipynb) | Review the 50 flagged MET segments and their decisions |
+| [Dynamic visualization notebook](../../data_visualization/Dynamic_Data_Visualization_TxSON33.ipynb) | Inspect the final Soil + MET view by station, year, and parameter |
 
 ## Setup
 
-From the repository root:
+Run from the repository root:
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r data-cleanup/imputation_pipeline/requirements.txt
-```
-
-Then run pipeline commands from this folder:
-
-```bash
 cd data-cleanup/imputation_pipeline
 ```
 
-## Quick Start
+The default raw-data directory is:
 
-Run the full soil workflow from raw `.dat` files to final QC:
-
-```bash
-python imputation_pipeline.py --stage all
+```text
+datasets/TxSON_data_2026-02-24/
 ```
 
-Preview what would run without changing files:
+Python 3.11 is the tested version.
+
+## Run the Pipeline
+
+Preview a run first:
 
 ```bash
 python imputation_pipeline.py --stage all --dry-run
 ```
 
-Run only final residual filling and final QC:
+Run the complete soil workflow:
 
 ```bash
-python imputation_pipeline.py --stage final
+python imputation_pipeline.py --stage all
 ```
 
-Run selected stations:
+Run the isolated MET stages in order:
 
 ```bash
-python imputation_pipeline.py --stage final --station CB01 FD08
+python imputation_pipeline.py --stage met
+python imputation_pipeline.py --stage met-full
+python imputation_pipeline.py --stage met-ppt
 ```
 
-The runner removes stale generated outputs for the selected stage range before
-running. This prevents old downstream files, such as `filled_final.csv`, from
-being accidentally reused by QC scripts.
+`all` means the full soil workflow. MET is separate so a MET rerun cannot
+overwrite final soil files.
 
-Runtime note:
+Run a smaller target when testing:
 
-- `medium` is usually the slowest stage because it fits donor-based models for
-  many station/parameter/depth gap segments.
-- The full `all` pipeline can take a long time on a laptop, especially when
-  rerunning all 33 stations from raw data.
-- For testing or debugging, use `--dry-run`, run one stage at a time, or run a
-  small station subset first, such as `--station CB01 FD08`.
+```bash
+python imputation_pipeline.py --stage medium --station CB01
+python imputation_pipeline.py --stage final --station CB19 FD24 --param SWC_5 SWC_10
+python imputation_pipeline.py --stage met-full --station CB04 --param Tair RH
+```
 
-## What To Open
+The runner removes stale downstream outputs for the selected stage. Use
+`--no-clean-stale` only when deliberately preserving an earlier batch.
 
-| Need | Open |
+## Stage Names
+
+| Stage | What it runs |
 |---|---|
-| Final filled soil data | `output/Station{site}_filled_final.csv` |
-| Final residual-fill detail log | `output/Station{site}_final_residual_fill_detail.csv` |
-| Final QC summary | `final_qc_reports/final_qc_overview.csv` |
-| Remaining NaN runs | `final_qc_reports/final_qc_remaining_nan_runs.csv` |
-| Suspicious sensor summary | `final_qc_reports/final_qc_suspicious_sensors.csv` |
-| Sensor QC decisions | `sensor_qc_reports/sensor_qc_decisions.csv` |
-| Sensor QC mask log | `sensor_qc_reports/sensor_qc_masked_points.csv` |
-| Manual QC masks | `manual_qc_masks.csv` |
-| Manual QC mask log | `manual_qc_reports/manual_qc_mask_detail.csv` |
-| Dynamic visualization notebook | [Dynamic_Data_Visualization_TxSON33.ipynb](../../data_visualization/Dynamic_Data_Visualization_TxSON33.ipynb) |
-| Detailed technical notes | [TECHNICAL_NOTES_TxSON33.md](TECHNICAL_NOTES_TxSON33.md) |
+| `clean` | Parse raw files, aggregate sub-hourly records, build the hourly timeline, and flag invalid values |
+| `short` | Fill soil gaps shorter than 24 hours |
+| `medium` | Fill and validate 24-167 hour soil gaps |
+| `long` | Fill and validate 168-719 hour soil gaps |
+| `verylong` | Fill and validate soil gaps of 720 hours or longer |
+| `qc` | Build QC reports, apply sensor decisions, and apply manual masks |
+| `final` | Fill residual soil NaNs and run final QC |
+| `all` / `soil` | Run every soil stage from `clean` through `final` |
+| `met` | Reconcile Ppt sources, audit MET coverage, and fill short non-Ppt gaps |
+| `met-full` | Apply MET sensor QC and fill all internal non-Ppt MET gaps within retained coverage |
+| `met-ppt` | Fill Ppt hours missing from all approved direct sources |
 
-Current final soil status:
-
-| Check | Result |
-|---|---:|
-| Final station files | 33/33 |
-| Soil moisture/temperature NaN remaining | 0 |
-| Physical bound violations | 0 |
-| Known unavailable sensor columns | 12 |
-
-## Gap Filling Strategy
-
-| Gap Type | Gap Length | Current Method |
-|---|---:|---|
-| Short gaps | 1-24 hr | Local interpolation / nearest-neighbor style filling |
-| Medium gaps | 24-168 hr | SARIMAX with optional exogenous variables, followed by validation repair |
-| Long gaps | 168-720 hr | XGBoost rolling prediction, followed by validation repair |
-| Very long gaps | >=720 hr | Cross-station donor linear regression with donor-mean fallback, followed by validation repair |
-| Sensor-level anomalies | bad sensor periods | Mask suspicious sensor values, then refill with final donor-based residual filling |
-| Manual QC masks | manually reviewed bad or low-confidence segments | Mask confirmed bad segments, then refill with final donor-based residual filling |
-| Final residual NaNs | remaining missing values | Linear donor, donor mean, or donor climatology fallback |
-
-## Pipeline Overview
+## Pipeline Map
 
 ```mermaid
 flowchart TD
-    A[Raw TxSON .dat files] --> B[datacleaning.py]
-    B --> C[Shortgaps.py]
-    C --> D[Mediumgaps.py]
-    D --> E[validate_mediumgaps.py]
-    E --> F[Longgaps.py]
-    F --> G[validate_longgaps.py]
-    G --> H[VeryLongGaps.py]
-    H --> I[validate_verylonggaps.py]
-    I --> J[final_qc_summary.py]
-    J --> K[sensor_qc_decisions.py]
-    K --> L[apply_sensor_qc_masks.py]
-    L --> M[apply_manual_qc_masks.py]
-    M --> N[FinalResidualGaps.py]
-    N --> O[final_qc_summary.py]
-    O --> P[output/Station_site_filled_final.csv]
+    A[Raw TxSON .dat files] --> B[Stage 0 hourly cleaning]
+    B --> C[Short soil gaps]
+    C --> D[Medium soil gaps + validation]
+    D --> E[Long soil gaps + validation]
+    E --> F[Very-long soil gaps + validation]
+    F --> G[Sensor QC + manual masks]
+    G --> H[Final residual fill + final QC]
+    H --> I["output/Station{site}_filled_final.csv"]
+
+    B --> J[MET audit + Ppt source reconciliation]
+    J --> K[Non-Ppt MET internal-gap filling + QC]
+    K --> L[Two-part Ppt model]
+    L --> M["met_output/Station{site}_met_filled_complete.csv"]
 ```
 
-The individual scripts remain useful for debugging, but normal users should run
-the workflow through `imputation_pipeline.py`.
+## Gap Methods
 
-## Run Stages
+| Gap length | Soil method | Non-Ppt MET method |
+|---|---|---|
+| `<24 h` | PCHIP for SWC; time interpolation for soil temperature | Parameter-specific interpolation or benchmark winner |
+| `24-167 h` | SARIMAX | Parameter-specific benchmark winner |
+| `168-719 h` | XGBoost | Parameter-specific benchmark winner |
+| `>=720 h` | Donor-station regression with donor-mean fallback | Parameter-specific benchmark winner |
 
-`imputation_pipeline.py` supports these stage groups:
+Ppt is handled separately with a two-part Random Forest: rain occurrence is
+classified first, then positive rainfall amount is estimated.
 
-| Stage | What It Runs |
+The saved expanded MET benchmark sampled five artificial gaps per station,
+parameter, and gap class: 720 hidden gaps and 4,440 candidate-model fits.
+Of those fits, 4,416 completed; 24 SARIMAX fits reported non-convergence and
+were retained as explicit failures rather than used in a ranking. The only
+production-map change supported by stable station-level evidence was short-gap
+Wind direction, which now uses Random Forest and was confirmed with a second
+random seed.
+
+The follow-up non-Ppt MET robustness benchmark first excludes 33,142 confirmed
+RH/Tair sensor-QC hours, then evaluates seeds 42, 7, 21, and 84. Tree-model
+drivers use the reconciled direct-source Ppt series, following the approved
+MET-first source policy. The benchmark contains 2,400 paired artificial gaps
+and 13,920 standard-model results; 13,919 completed. A method is stable only
+when the same winner leads at least 3/4 seeds, 3/4 seasons, and 4/6 stations.
+Seven of 20 parameter-gap combinations confirm the current production method
+and 12 unstable rankings retain the current method. XGBoost was the one stable
+alternative for very-long Wind speed gaps, winning 4/4 seeds, 4/4 seasons, and
+5/6 stations. In an independent seed-126 test it also passed all statistical
+and QC gates for 720-1,440 hour gaps. The actual affected FD03 gap is much
+longer at 12,368 hours, so a second seed-127 test hid one deployment-length
+segment per station. XGBoost improved mean normalized RMSE by only 3.7% and
+won 3/6 stations, failing the pre-defined 5% error and 4/6 station gates.
+Donor regression therefore remains the production method, and no station file
+was changed. A separate 96-case medium-gap SARIMAX screen completed but had
+higher matched normalized RMSE than the best standard method for every tested
+parameter.
+
+The final deployment audit compared all 2,665 actual internal non-Ppt MET gaps
+(109,863 hours) with the benchmark lengths. Every medium and long gap was
+inside the tested range. The 1,697 gaps below the benchmark sampling minimum
+were only 1-5 hours, so they are shorter interpolation cases rather than
+longer-horizon extrapolations. Eight very-long gaps exceeded the 1,440-hour
+benchmark maximum. Exact deployment-length tests compared the current method
+with the strongest complete alternative at all eight over-range segment
+lengths across Tair, RH, Srad, Wind speed, and Wind direction; all eight tests
+retained the current method. Reports and the 300-DPI overview are in
+`model_comparison_reports/met_robustness/deployment_coverage/`.
+
+The soil benchmark uses all 33 stations and 242 QC-eligible, source-present
+soil sensor columns. Before sampling, it excludes 709,166 observed hours from
+confirmed bad-sensor and manual-QC periods. Across seeds 42, 7, 21, and 84 it
+evaluated 3,872 gaps and 19,424 model results; 19,340 completed. Of 32
+parameter-gap rankings, 27 were stable in at least three seeds and three
+seasons. Reports and publication figures are under
+`model_comparison_reports/soil/`.
+
+A separate seed-126 confirmation then tested the 17 stable winners that differ
+from the current production map. It used one paired artificial gap per season
+for each candidate: 68 gaps and 136 current-versus-proposed fits, all
+successful and with zero raw physical violations. Eleven changes passed the
+error, season, physical-range, and boundary gates. Six retained the current
+method: `SWC_5 medium`, `SWC_10 medium`, `T_10 short`, `T_20 short`, and
+`T_50 medium` failed the independent error gate; `T_10 long` failed the
+boundary gate.
+
+The 11 candidates were then tested non-destructively through the exact
+production functions and validator-aligned adoption checks. Five passed a shortest-
+case smoke test and continued to an exact four-season trial. None passed the
+complete adoption gate: four failed the exact matched-error/season rule, and
+the `T_5 medium` comparison was incomplete because the current auto-SARIMAX
+method exceeded the 180-second case limit in two seasons. The final production
+method map therefore remains unchanged. These tests did not modify final
+station CSV files.
+
+## Ppt Source Policy
+
+For the six stations with both soil-file and dedicated-MET rainfall:
+
+1. Use valid dedicated-MET Ppt.
+2. If MET Ppt is missing, use valid soil-file Ppt.
+3. If both are missing, leave NaN for the Ppt model.
+4. Never turn missing Ppt into zero before modeling.
+
+For the other 27 stations, the soil-file Ppt is the observed source. This
+policy was approved by the project lead in August 2026.
+
+## Main Outputs
+
+| Output | Path |
 |---|---|
-| `all` | Full soil workflow from raw data to final QC |
-| `soil` | Alias for `all` |
-| `clean` | Raw `.dat` files to `cleaned_data/`, `missing_data/`, `raw_merged_data/` |
-| `short` | Fill `<24h` gaps |
-| `medium` | Medium gaps plus medium validation/repair |
-| `long` | Long gaps plus long validation/repair |
-| `verylong` | Very-long gaps plus very-long validation/repair |
-| `qc` | Final QC before sensor masking, sensor decisions, sensor masks, manual masks |
-| `final` | Final residual filling plus final QC |
+| Final soil station data | `output/Station{site}_filled_final.csv` |
+| Soil fill provenance | `output/Station{site}_final_residual_fill_detail.csv` |
+| Final soil QC | `final_qc_reports/` |
+| Soil QC decisions | `soil_qc_review_decisions.csv` |
+| MET QC decisions | `met_qc_review_decisions.csv` |
+| Short-gap MET data | `met_output/Station{site}_met_filled_shortgaps.csv` |
+| Filled non-Ppt MET data | `met_output/Station{site}_met_filled_allgaps.csv` |
+| Complete MET/Ppt delivery | `met_output/Station{site}_met_filled_complete.csv` |
+| MET QC and provenance | `met_qc_reports/` |
+| Current MET method map | `met_qc_reports/met_selected_method_map.csv` |
+| MET robustness reports | `model_comparison_reports/met_robustness/` |
+| Soil model comparison | `model_comparison_reports/soil/` |
+| Soil robustness reports | `model_comparison_reports/soil/robustness/` |
+| Soil independent confirmation | `model_comparison_reports/soil/targeted_confirmation/` |
+| Soil exact production-adapter decision | `model_comparison_reports/soil/targeted_confirmation/production_adapter_four_season/` |
 
-Examples:
+The current dynamic notebook merges the final soil file and complete MET file
+by timestamp in memory. It does not create a third combined CSV or modify either
+delivery file. See the [technical pipeline map](TECHNICAL_NOTES_TxSON33.md#current-pipeline-map)
+for every intermediate output and report.
 
-```bash
-python imputation_pipeline.py --stage medium
-python imputation_pipeline.py --stage verylong --station CB01
-python imputation_pipeline.py --stage all --param SWC_5 SWC_10
-```
+Generated station data and report folders can be large. Review them locally,
+but do not add them to Git unless the project explicitly requests a release
+artifact. Commit scripts, notebooks, documentation, and compact decision files.
 
-## Stage Reference
+## Soil Data Notes
 
-| Order | Script | Main Input | Main Output | Purpose |
-|---:|---|---|---|---|
-| 0 | `datacleaning.py` | Raw `.dat` files | `cleaned_data/`, `missing_data/`, `raw_merged_data/` | Parse files, merge soil/MET, enforce hourly timeline, summarize gaps |
-| 1 | `Shortgaps.py` | `cleaned_data/` | `output/*_filled_shortgaps.csv` | Fill gaps shorter than 24 hours |
-| 2 | `Mediumgaps.py` | short-gap outputs | `output/*_filled_mediumgaps.csv` | Fill 24-168 hour gaps with SARIMAX |
-| 3 | `validate_mediumgaps.py` | medium outputs | `output/*_filled_mediumgaps_repaired.csv` | Reject suspicious medium fills |
-| 4 | `Longgaps.py` | repaired medium outputs | `output/*_filled_longgaps.csv` | Fill 168-720 hour gaps with XGBoost |
-| 5 | `validate_longgaps.py` | long outputs | `output/*_filled_longgaps_repaired.csv` | Reject suspicious long fills |
-| 6 | `VeryLongGaps.py` | repaired long outputs | `output/*_filled_verylonggaps.csv` | Fill `>=720h` gaps using cross-station donors |
-| 7 | `validate_verylonggaps.py` | very-long outputs | `output/*_filled_verylonggaps_repaired.csv` | Repair suspicious very-long fill points |
-| 8 | `final_qc_summary.py` | latest staged output | `final_qc_reports/` | Summarize remaining NaNs and sensor issues |
-| 9 | `sensor_qc_decisions.py` | final QC reports | `sensor_qc_reports/sensor_qc_decisions.csv` | Classify suspicious sensors |
-| 10 | `apply_sensor_qc_masks.py` | sensor decisions | `output/*_filled_sensor_qc.csv` | Mask bad-sensor candidates |
-| 11 | `apply_manual_qc_masks.py` | manual QC masks + sensor-QC outputs | `output/*_filled_manual_qc.csv` | Mask manually confirmed bad or low-confidence segments |
-| 12 | `FinalResidualGaps.py` | manual-QC/sensor-QC outputs | `output/*_filled_final.csv` | Fill remaining soil NaNs |
-| 13 | `final_qc_summary.py` | final outputs | `final_qc_reports/` | Confirm final status |
-
-## Validation And QC
-
-Validation is intentionally staged:
-
-| QC Layer | What It Catches |
-|---|---|
-| Medium validation | suspicious SARIMAX fills, boundary jumps, physical bounds |
-| Long validation | suspicious XGBoost fills, boundary jumps, physical bounds |
-| Very-long validation | bad points inside long donor-based fills, clipped values, large jumps |
-| Final QC | remaining NaNs, missing sensor columns, low-variability sensors |
-| Sensor QC | bad-sensor candidates such as near-zero/stuck sensors |
-| Manual QC | user-reviewed bad or low-confidence segments found in visualization |
-| Final residual filling | remaining NaNs after sensor and manual QC |
-
-Important report folders:
-
-```text
-final_qc_reports/
-sensor_qc_reports/
-manual_qc_reports/
-```
-
-The current final outputs have zero remaining NaNs for soil moisture and soil
-temperature. However, some final values are lower confidence because they come
-from full-column sensor replacement, not local station training. The method is
-recorded in:
-
-```text
-output/Station{site}_final_residual_fill_detail.csv
-```
-
-## Known Data Notes
-
-Some stations do not include all soil-depth columns in the source data. These
-are unavailable sensors, not fillable gaps. The current stations missing
-`SWC_50` and `T_50` are:
+The following source files do not contain `SWC_50` or `T_50`:
 
 ```text
 CB07, CB26, FD03, FD18, FD21, FD24
 ```
 
-Known bad-sensor candidates were masked before final residual filling. Examples
-include:
+These 12 station-parameter columns are unavailable sensors, not failed fills.
+The pipeline skips them and does not invent full sensor histories.
 
-```text
-WC05 SWC_20, WC05 SWC_50
-FD22 SWC_5, FD22 SWC_20, FD22 SWC_50
-FD16 SWC_5
-FD08 SWC_5
-CB15 SWC_10
-FD11 SWC_10
-```
+The final QC retained localized source-observed zero values at CB27, FD03, and
+FD12. It also retained a source-observed CB15 `SWC_50` flat run. Model-created
+zero fills at CB19 and FD24 were replaced with positive donor support.
 
-These values are not treated as valid observations in `*_filled_sensor_qc.csv`;
-they are replaced during the final residual-fill stage and logged.
+## Validation and Review
 
-Manual notebook review also masked and refilled:
+- Medium, long, and very-long soil fills each pass a separate validator.
+- Sensor and manual masks are applied before the final residual fill.
+- Every soil review item has a recorded closed decision.
+- Every flagged non-Ppt MET segment has a recorded decision: 50/50 closed.
+- Every flagged Ppt segment has a recorded decision; 10 retain an optional
+  external-validation caveat.
 
-```text
-CB15 SWC_5
-CB19 SWC_5, CB19 SWC_10
-CB20 SWC_5, CB20 SWC_50
-```
+Open the notebooks through the links above for visual review. The notebooks do
+not change production CSV files.
 
-These decisions are recorded in `manual_qc_masks.csv` and
-`manual_qc_reports/manual_qc_mask_detail.csv`.
+## Runtime
 
-## Manual Debugging
+The medium soil stage is usually the slowest because it fits many SARIMAX
+models. A complete 33-station rerun can take hours on a laptop. Test one station
+first, then run the full batch only after the targeted output looks correct.
 
-Each script can still be run directly. This is useful when testing one station
-or one parameter.
+The expanded MET model-comparison notebook took about 3 hours 48 minutes on the
+development Mac. It is a research benchmark and is not required for a normal
+production pipeline run.
 
-```bash
-python Mediumgaps.py --station CB01 --param SWC_50
-python validate_mediumgaps.py --station CB01 --param SWC_50 --write-repaired
-python FinalResidualGaps.py --station WC05 --param SWC_20
-```
+The optimized four-seed non-Ppt MET robustness run took about 34 minutes,
+including the 96-case SARIMAX screen. Version-matched cached reruns take about
+five seconds. The two independent Wind speed confirmations each run in under a
+minute. The complete deployment-coverage audit, including seven seed-128
+exact-length comparisons and reuse of the Wind speed test, takes about four
+minutes on the development Mac; cached reruns take seconds.
 
-When running scripts manually, make sure the previous stage output exists.
-For normal use, prefer `imputation_pipeline.py`.
+The initial soil seed takes roughly 3-4 minutes, and the complete four-seed
+notebook takes about 10-12 minutes on the development Mac. Each seed limits
+fixed-order univariate SARIMAX to 16 matched medium-gap cases; the production
+medium stage remains much slower because it also uses optional drivers and
+performs automatic order selection for many gaps. Cached reruns take seconds.
+The independent seed-126 confirmation adds only 136 targeted fits and took
+under one minute in the saved development run; its cached rerun also takes
+seconds. The exact production-adapter smoke test took about 12 minutes and the
+four-season trial about 14 minutes in the saved run. Cached notebook reruns
+reuse their detail reports and take seconds.
 
-## Detailed Notes
+## Publication Follow-up
 
-Detailed implementation notes, validation counts, and the full development
-record are in:
+The operational pipeline is complete. Work that strengthens a paper, but is
+not required to produce the current dataset:
 
-```text
-TECHNICAL_NOTES_TxSON33.md
-```
+- optionally investigate the five soil parameter-gap rankings that remain
+  seasonally or seed unstable;
+- separately profile or simplify production auto-SARIMAX if medium-stage
+  runtime becomes a development priority;
+- optionally compare the 10 low-confidence Ppt segments with an independent
+  rainfall source after verified TxSON coordinates are available.
+
+The four-seed MET robustness benchmark, independent Wind speed confirmation,
+and full deployment-gap coverage audit are complete. Exact-length tests of all
+eight over-range segments across five non-Ppt parameters retained the current
+MET production map.
+The four-seed soil comparison is complete as a robustness benchmark. Its 27
+stable rankings produced 17 possible changes; 11 passed an independent
+four-season confirmation, but none passed the complete exact-production
+adoption sequence. The existing soil methods and final CSV files remain
+unchanged. This completed selection funnel, including rejected candidates, is
+the reproducible result to report rather than selecting from proxy-model scores
+alone.

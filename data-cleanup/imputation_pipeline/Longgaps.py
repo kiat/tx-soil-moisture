@@ -1,4 +1,4 @@
-"""Fill 7- to 30-day soil gaps with XGBoost.
+"""Fill 168- to 719-hour soil gaps with XGBoost.
 
 The 33-station workflow uses repaired medium-gap outputs as the default input:
 
@@ -61,11 +61,11 @@ def ensure_hourly_regular_index(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def ensure_driver_columns(df: pd.DataFrame) -> None:
-    """Create local driver columns used by feature engineering."""
+    """Create model-only driver columns without changing source MET values."""
     if "Ppt" in df.columns:
-        df["Ppt"] = df["Ppt"].reindex(df.index).fillna(0.0)
+        df["Ppt_model"] = df["Ppt"].reindex(df.index).fillna(0.0)
     else:
-        df["Ppt"] = 0.0
+        df["Ppt_model"] = 0.0
 
     if "Tair" in df.columns and df["Tair"].notna().any():
         tair = df["Tair"]
@@ -87,7 +87,7 @@ def filter_long_gaps(df_missing, parameter, min_gap=168, max_gap=720):
     mask = (
         (df_missing["Parameter"] == parameter)
         & (df_missing["Number Missing"] >= min_gap)
-        & (df_missing["Number Missing"] <= max_gap)
+        & (df_missing["Number Missing"] < max_gap)
     )
     return df_missing.loc[mask].sort_values("Start Timestamp")
 
@@ -95,7 +95,7 @@ def filter_long_gaps(df_missing, parameter, min_gap=168, max_gap=720):
 def make_features(df, ts, param, window=168):
     hist = df.loc[ts - timedelta(hours=window) : ts - timedelta(hours=1)]
     target_hist = hist[param] if param in hist.columns else pd.Series(dtype=float)
-    ppt = hist["Ppt"] if "Ppt" in hist.columns else pd.Series(dtype=float)
+    ppt = hist["Ppt_model"] if "Ppt_model" in hist.columns else pd.Series(dtype=float)
     tair = hist["Tair_model"] if "Tair_model" in hist.columns else pd.Series(dtype=float)
     srad = hist["Srad_model"] if "Srad_model" in hist.columns else pd.Series(dtype=float)
 
@@ -216,7 +216,7 @@ def fill_long_gaps_xgb_drift(df, gaps, param, station_id):
 # ────────────────────────────────────────────────────────────
 #  Driver per station
 # ────────────────────────────────────────────────────────────
-def process_station(station, params, ref_station = 3):
+def process_station(station, params):
     print(f"\n=== Station {station} ===")
 
     df = load_medium_data(station)
@@ -245,7 +245,8 @@ def process_station(station, params, ref_station = 3):
 
     # write results
     out_clean = OUT_DIR / f"Station{station}_filled_longgaps.csv"
-    df.to_csv(out_clean)
+    output_df = df.drop(columns=["Ppt_model", "Tair_model", "Srad_model"], errors="ignore")
+    output_df.to_csv(out_clean)
     print("  • written:", out_clean)
 
     if log_all:

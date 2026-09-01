@@ -1,5 +1,5 @@
 # -----------------------------------------------------------
-# Mediumgaps.py  -  Fill 24‑ to 168‑hour gaps via SARIMAX
+# Mediumgaps.py  -  Fill 24- to <168-hour gaps via SARIMAX
 # -----------------------------------------------------------
 # usage examples
 #    python Mediumgaps.py                       # all stations & all SWC/T columns
@@ -53,13 +53,16 @@ def filter_medium_gaps(df_missing, parameter="SWC_5", min_gap=24, max_gap=168):
     # Convert "Number Missing" column to numeric
     df_missing["Number Missing"] = pd.to_numeric(df_missing["Number Missing"], errors="coerce")
     mask = (df_missing["Parameter"] == parameter) & \
-           (df_missing["Number Missing"] >= min_gap) & (df_missing["Number Missing"] <= max_gap)
+           (df_missing["Number Missing"] >= min_gap) & (df_missing["Number Missing"] < max_gap)
     return df_missing.loc[mask].sort_values("Start Timestamp")
 
 
 
 # Fit SARIMAX model and predict missing values
-def sarima_forecast(y, s_ts, e_ts, exog, ctx_days = 7, max_pq = 3, max_PQ = 2):
+def sarima_forecast(
+    y, s_ts, e_ts, exog, ctx_days=7, max_pq=3, max_PQ=2,
+    _previous_spec=None,
+):
     # Determine the training window up to one hour before gap
     train_start = s_ts - timedelta(days=ctx_days)
     train_end = s_ts - timedelta(hours=1)
@@ -72,14 +75,14 @@ def sarima_forecast(y, s_ts, e_ts, exog, ctx_days = 7, max_pq = 3, max_PQ = 2):
         print(f"[skip] Only {len(observed)} observed training hours {train_start}–{train_end}")
         return None, None
     y_train = y_window.interpolate(method="time", limit_direction="both").ffill().bfill()
-    y_train.index = pd.DatetimeIndex(y_train.index, freq="H")
+    y_train.index = pd.DatetimeIndex(y_train.index, freq="h")
 
     # Prepare exogenous data
     X_train = X_pred = None
     if exog is not None:
         exog_window = exog.loc[train_start:train_end]
         X_train = exog_window.reindex(y_train.index).fillna(0)
-        pred_index = pd.date_range(s_ts, e_ts, freq="H")
+        pred_index = pd.date_range(s_ts, e_ts, freq="h")
         X_pred = exog.reindex(pred_index).fillna(0)
 
     # Automatic model order selection with daily seasonality
@@ -98,6 +101,7 @@ def sarima_forecast(y, s_ts, e_ts, exog, ctx_days = 7, max_pq = 3, max_PQ = 2):
         )
         p, d, q = auto.order
         P, D, Q, s = auto.seasonal_order
+        selected_spec = (auto.order, auto.seasonal_order)
         print(f"  → SARIMA({p},{d},{q})x({P},{D},{Q},{s})24h")
 
         model = SARIMAX(
@@ -107,23 +111,29 @@ def sarima_forecast(y, s_ts, e_ts, exog, ctx_days = 7, max_pq = 3, max_PQ = 2):
             seasonal_order=(P, D, Q, s),
             enforce_stationarity=False,
             enforce_invertibility=False,
-            freq="H"
+            freq="h"
         )
         res = model.fit(method="powell", maxiter=300, disp=False)
 
         # Check residuals for autocorrelation when enough residuals are available.
         if len(res.resid) > 24:
             lb_p = acorr_ljungbox(res.resid, lags=[24], return_df=True)["lb_pvalue"].iat[0]
-            if lb_p < 0.05 and (max_pq < 5 or max_PQ < 3):
+            should_expand = lb_p < 0.05 and (max_pq < 5 or max_PQ < 3)
+            if should_expand and selected_spec != _previous_spec:
                 return sarima_forecast(
                     y, s_ts, e_ts, exog,
                     ctx_days=ctx_days,
                     max_pq=max_pq+1,
-                    max_PQ=max_PQ+1
+                    max_PQ=max_PQ+1,
+                    _previous_spec=selected_spec,
                 )
+            if should_expand and selected_spec == _previous_spec:
+                print("  → expanded search selected the same order; keeping current fit")
 
-        forecast_index = pd.date_range(s_ts, e_ts, freq="H")
+        forecast_index = pd.date_range(s_ts, e_ts, freq="h")
         fc = res.forecast(steps=len(forecast_index), exog=X_pred)
+    except TimeoutError:
+        raise
     except Exception as exc:
         print(f"[skip] SARIMAX failed for {s_ts}–{e_ts}: {exc}")
         return None, None
@@ -139,7 +149,7 @@ def fill_medium_gaps(series, gaps, exog, gap_log, station, param, ctx_days=7):
     for _, row in gaps.iterrows():
         s_ts = row["Start Timestamp"]
         e_ts = row["End Timestamp"]
-        idx = pd.date_range(s_ts, e_ts, freq="H")
+        idx = pd.date_range(s_ts, e_ts, freq="h")
 
         fc, _ = sarima_forecast(filled, s_ts, e_ts, exog, ctx_days)
         if fc is None:
@@ -209,7 +219,7 @@ def process_station(station, params):
             continue
         mgaps = filter_medium_gaps(miss_tbl, p)
         if mgaps.empty:
-            print(f"  {p}: no 24–168 h gaps")
+            print(f"  {p}: no 24-<168 h gaps")
             continue
         exog = get_exog(df, prefer=exog_for(p))
 
@@ -240,7 +250,7 @@ def ensure_hourly_regular_index(df: pd.DataFrame) -> pd.DataFrame:
     df = df[~df.index.duplicated(keep='first')].sort_index()
     if len(df.index) == 0:
         return df
-    full_idx = pd.date_range(df.index.min(), df.index.max(), freq='H')
+    full_idx = pd.date_range(df.index.min(), df.index.max(), freq="h")
     return df.reindex(full_idx)
 
 
@@ -271,7 +281,7 @@ def discover_stations():
                   if (m := pat.match(fn.name)))
 
 def parse_args():
-    p = argparse.ArgumentParser("Fill 24–168 h gaps via SARIMAX")
+    p = argparse.ArgumentParser("Fill 24-<168 h gaps via SARIMAX")
     p.add_argument("--station", type=str, nargs="*", help="station IDs/site codes")
     p.add_argument("--param",   type=str, nargs="*", help="Columns to fill (SWC_* or T_*).")
     return p.parse_args()

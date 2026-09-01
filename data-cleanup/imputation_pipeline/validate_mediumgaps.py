@@ -47,6 +47,7 @@ def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser("Validate and repair medium-gap fills.")
     p.add_argument("--station", type=str, nargs="*", help="Station IDs/site codes to validate.")
     p.add_argument("--param", type=str, nargs="*", help="Parameters to validate.")
+    p.add_argument("--report-dir", type=Path, default=BASE_DIR, help="Directory for validation summary CSVs.")
     p.add_argument(
         "--write-repaired",
         action="store_true",
@@ -83,7 +84,8 @@ def load_expected_segments(stations: Iterable[str], params: Iterable[str]) -> Di
         miss["Number Missing"] = pd.to_numeric(miss["Number Missing"], errors="coerce")
         mask = (
             miss["Parameter"].isin(selected_params)
-            & miss["Number Missing"].between(24, 168, inclusive="both")
+            & (miss["Number Missing"] >= 24)
+            & (miss["Number Missing"] < 168)
         )
         for _, row in miss.loc[mask].iterrows():
             key = SegmentKey(
@@ -102,6 +104,9 @@ def load_filled_segments(stations: Iterable[str], params: Iterable[str]) -> Dict
     filled: Dict[SegmentKey, pd.DataFrame] = {}
 
     for detail_path in sorted(OUT_DIR.glob("Station*_mediumgap_fill_detail.csv")):
+        station_from_name = detail_path.name[len("Station") : -len("_mediumgap_fill_detail.csv")]
+        if station_from_name not in selected_stations:
+            continue
         detail = pd.read_csv(detail_path, parse_dates=["Start", "End", "Timestamp"])
         if detail.empty:
             continue
@@ -331,10 +336,11 @@ def write_repaired_outputs(
             )
 
 
-def write_summaries(summary: pd.DataFrame) -> None:
-    summary_path = BASE_DIR / "mediumgaps_validation_summary.csv"
-    rejected_path = BASE_DIR / "mediumgaps_rejected_segments.csv"
-    station_path = BASE_DIR / "mediumgaps_validation_station_summary.csv"
+def write_summaries(summary: pd.DataFrame, report_dir: Path) -> None:
+    report_dir.mkdir(parents=True, exist_ok=True)
+    summary_path = report_dir / "mediumgaps_validation_summary.csv"
+    rejected_path = report_dir / "mediumgaps_rejected_segments.csv"
+    station_path = report_dir / "mediumgaps_validation_station_summary.csv"
 
     summary.to_csv(summary_path, index=False)
     summary[summary["Status"] == "rejected"].to_csv(rejected_path, index=False)
@@ -356,7 +362,11 @@ def main() -> None:
     stations = args.station if args.station else discover_stations()
 
     summary, accepted_details = build_summary(args)
-    write_summaries(summary)
+    if summary.empty:
+        summary = pd.DataFrame(
+            columns=["Station", "Parameter", "Start", "End", "Expected Hours", "Filled Hours", "Status", "Reason"]
+        )
+    write_summaries(summary, args.report_dir)
 
     if args.write_repaired:
         write_repaired_outputs(summary, accepted_details, stations)
@@ -364,9 +374,9 @@ def main() -> None:
     counts = summary["Status"].value_counts().to_dict()
     print("Medium-gap validation complete.")
     print("Segments:", counts)
-    print(f"Summary: {BASE_DIR / 'mediumgaps_validation_summary.csv'}")
-    print(f"Rejected: {BASE_DIR / 'mediumgaps_rejected_segments.csv'}")
-    print(f"Station summary: {BASE_DIR / 'mediumgaps_validation_station_summary.csv'}")
+    print(f"Summary: {args.report_dir / 'mediumgaps_validation_summary.csv'}")
+    print(f"Rejected: {args.report_dir / 'mediumgaps_rejected_segments.csv'}")
+    print(f"Station summary: {args.report_dir / 'mediumgaps_validation_station_summary.csv'}")
     if args.write_repaired:
         print("Repaired station files written to output/*_filled_mediumgaps_repaired.csv")
     else:

@@ -13,7 +13,7 @@ from __future__ import annotations
 import argparse
 import re
 from pathlib import Path
-from typing import Dict, Iterable, List
+from typing import Dict, List
 
 import pandas as pd
 
@@ -27,6 +27,8 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser("Apply sensor QC masks to station outputs.")
     parser.add_argument("--station", type=str, nargs="*", help="Station IDs/site codes to process.")
     parser.add_argument("--write", action="store_true", help="Write *_filled_sensor_qc.csv files.")
+    parser.add_argument("--decision-dir", type=Path, default=REPORT_DIR)
+    parser.add_argument("--report-dir", type=Path, default=REPORT_DIR)
     parser.add_argument(
         "--mask-localized-bound-values",
         action="store_true",
@@ -60,8 +62,8 @@ def read_station(path: Path) -> pd.DataFrame:
     return df.sort_index()
 
 
-def load_decisions() -> pd.DataFrame:
-    path = REPORT_DIR / "sensor_qc_decisions.csv"
+def load_decisions(directory: Path = REPORT_DIR) -> pd.DataFrame:
+    path = directory / "sensor_qc_decisions.csv"
     if not path.exists():
         raise FileNotFoundError(f"Missing {path}. Run sensor_qc_decisions.py first.")
     return pd.read_csv(path)
@@ -89,7 +91,7 @@ def mask_for_row(df: pd.DataFrame, row: pd.Series, mask_localized_bound_values: 
 def main() -> None:
     args = parse_args()
     stations = args.station if args.station else discover_stations()
-    decisions = load_decisions()
+    decisions = load_decisions(args.decision_dir)
     decisions["Station"] = decisions["Station"].astype(str)
     selected = decisions[decisions["Station"].isin(stations)]
 
@@ -135,14 +137,20 @@ def main() -> None:
         if args.write:
             df.to_csv(OUT_DIR / f"Station{station}_filled_sensor_qc.csv", na_rep="NaN")
 
-    REPORT_DIR.mkdir(exist_ok=True)
-    pd.DataFrame(station_rows).to_csv(REPORT_DIR / "sensor_qc_mask_station_summary.csv", index=False)
-    pd.DataFrame(detail_rows).to_csv(REPORT_DIR / "sensor_qc_masked_points.csv", index=False)
+    args.report_dir.mkdir(parents=True, exist_ok=True)
+    pd.DataFrame(
+        station_rows,
+        columns=["Station", "Input File", "Output File", "Newly Masked Hours"],
+    ).to_csv(args.report_dir / "sensor_qc_mask_station_summary.csv", index=False)
+    pd.DataFrame(
+        detail_rows,
+        columns=["Station", "Parameter", "Timestamp", "QC Decision", "Recommended Action"],
+    ).to_csv(args.report_dir / "sensor_qc_masked_points.csv", index=False)
 
     print("Sensor QC mask step complete.")
     print(f"Stations processed: {len(station_rows)}")
     print(f"Newly masked hours: {sum(row['Newly Masked Hours'] for row in station_rows)}")
-    print(f"Reports written under: {REPORT_DIR}")
+    print(f"Reports written under: {args.report_dir}")
     if args.write:
         print("Station files written to output/*_filled_sensor_qc.csv")
     else:

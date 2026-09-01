@@ -1,9 +1,9 @@
 """Build final QC summaries after staged soil-gap filling.
 
 This script does not modify station data. It audits the latest repaired output
-files and writes CSV summaries for the remaining issues that need a final
-decision: residual NaN gaps, unavailable sensor columns, exact bound values,
-near-zero/flat sensors, and very-long-gap segments marked for review.
+files, reports residual issues, and joins the recorded review decisions for
+unavailable sensors, bound values, near-zero/flat sensors, and screened
+very-long-gap segments.
 """
 from __future__ import annotations
 
@@ -20,15 +20,24 @@ from param_config import ALL_SOIL_PARAMS
 BASE_DIR = Path(__file__).resolve().parent
 OUT_DIR = BASE_DIR / "output"
 REPORT_DIR = BASE_DIR / "final_qc_reports"
+REVIEW_DECISIONS = BASE_DIR / "soil_qc_review_decisions.csv"
 
-SWC_PARAMS = [p for p in ALL_SOIL_PARAMS if p.startswith("SWC_")]
-TEMP_PARAMS = [p for p in ALL_SOIL_PARAMS if p.startswith("T_")]
+PARAM_SUMMARY_COLUMNS = [
+    "Station", "Parameter", "Input File", "Start", "End", "Total Hours",
+    "NaN Runs", "Max NaN Run Hours", "Short NaN Runs", "Medium NaN Runs",
+    "Long NaN Runs", "VeryLong NaN Runs", "Flags", "Nonmissing Hours",
+    "NaN Hours", "NaN Fraction", "Min", "Max", "Mean", "Std", "Range",
+    "Exact Lower Bound Count", "Exact Upper Bound Count", "SWC Near-Zero Count",
+    "SWC Near-Zero Fraction", "Longest Constant Run Hours",
+    "Longest Constant Run Value",
+]
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser("Summarize final QC issues after gap filling.")
     parser.add_argument("--station", type=str, nargs="*", help="Station IDs/site codes to audit.")
     parser.add_argument("--param", type=str, nargs="*", help="Parameters to audit.")
+    parser.add_argument("--report-dir", type=Path, default=REPORT_DIR, help="Directory for QC report CSVs.")
     parser.add_argument("--swc-near-zero", type=float, default=0.01)
     parser.add_argument("--swc-flat-range", type=float, default=0.01)
     parser.add_argument("--temp-flat-range", type=float, default=1.0)
@@ -129,7 +138,6 @@ def longest_equal_run(series: pd.Series) -> Tuple[int, object]:
 
 
 def sensor_flags(
-    station: str,
     param: str,
     series: pd.Series,
     args: argparse.Namespace,
@@ -187,11 +195,20 @@ def sensor_flags(
     return sorted(set(flags)), metrics
 
 
-def summarize_verylong_review() -> pd.DataFrame:
+def summarize_verylong_review(
+    stations: Iterable[str] | None = None,
+    params: Iterable[str] | None = None,
+) -> pd.DataFrame:
     path = BASE_DIR / "verylonggaps_review_segments.csv"
     if not path.exists():
         return pd.DataFrame()
     review = pd.read_csv(path)
+    if review.empty:
+        return pd.DataFrame()
+    if stations is not None:
+        review = review[review["Station"].astype(str).isin(set(stations))]
+    if params is not None:
+        review = review[review["Parameter"].isin(set(params))]
     if review.empty:
         return pd.DataFrame()
     return (
@@ -208,27 +225,147 @@ def summarize_verylong_review() -> pd.DataFrame:
     )
 
 
+def load_review_decisions() -> pd.DataFrame:
+    if not REVIEW_DECISIONS.exists():
+        return pd.DataFrame()
+    decisions = pd.read_csv(REVIEW_DECISIONS, parse_dates=["Start", "End"])
+    required = {
+        "Review Type", "Station", "Parameter", "Decision", "Action",
+        "Decision Reason", "Status", "Review Date",
+    }
+    missing = required - set(decisions.columns)
+    if missing:
+        raise ValueError(
+            f"{REVIEW_DECISIONS.name} is missing columns: {sorted(missing)}"
+        )
+    decisions["Station"] = decisions["Station"].astype(str)
+    return decisions
+
+
+def attach_sensor_decisions(
+    suspicious: pd.DataFrame,
+    decisions: pd.DataFrame,
+) -> pd.DataFrame:
+    columns = [
+        "QC Decision", "Decision Action", "Decision Reason",
+        "Review Status", "Review Date",
+    ]
+    if decisions.empty:
+        for column in columns:
+            suspicious[column] = pd.NA
+        return suspicious
+
+    sensor = decisions.loc[
+        decisions["Review Type"].eq("final_sensor_flag"),
+        [
+            "Station", "Parameter", "Decision", "Action",
+            "Decision Reason", "Status", "Review Date",
+        ],
+    ].rename(
+        columns={
+            "Decision": "QC Decision",
+            "Action": "Decision Action",
+            "Status": "Review Status",
+        }
+    )
+    return suspicious.merge(
+        sensor,
+        on=["Station", "Parameter"],
+        how="left",
+        validate="one_to_one",
+    )
+
+
+def unresolved_review_count(
+    suspicious: pd.DataFrame,
+    decisions: pd.DataFrame,
+) -> int:
+    unresolved_sensor = int(
+        suspicious.get("Review Status", pd.Series(index=suspicious.index, dtype=object))
+        .fillna("unresolved")
+        .ne("closed")
+        .sum()
+    )
+    review_path = BASE_DIR / "verylonggaps_review_segments.csv"
+    if not review_path.exists():
+        return unresolved_sensor
+    current = pd.read_csv(review_path, parse_dates=["Start", "End"])
+    current = current.loc[current["Status"].eq("review")]
+    if current.empty:
+        return unresolved_sensor
+    if decisions.empty:
+        return unresolved_sensor + len(current)
+    verylong = decisions.loc[
+        decisions["Review Type"].eq("verylong_segment"),
+        ["Station", "Parameter", "Start", "End", "Status"],
+    ].rename(columns={"Status": "Review Status"})
+    closure = current.merge(
+        verylong,
+        on=["Station", "Parameter", "Start", "End"],
+        how="left",
+        validate="one_to_one",
+    )
+    unresolved_verylong = int(
+        closure["Review Status"].fillna("unresolved").ne("closed").sum()
+    )
+    return unresolved_sensor + unresolved_verylong
+
+
 def write_outputs(
     overview_rows: List[dict],
     param_rows: List[dict],
     gap_rows: List[dict],
     missing_column_rows: List[dict],
     suspicious_rows: List[dict],
-) -> None:
-    REPORT_DIR.mkdir(exist_ok=True)
-    overview = pd.DataFrame(overview_rows)
-    param_summary = pd.DataFrame(param_rows)
-    remaining_gaps = pd.DataFrame(gap_rows)
-    missing_columns = pd.DataFrame(missing_column_rows)
-    suspicious = pd.DataFrame(suspicious_rows)
-    verylong_review = summarize_verylong_review()
+    report_dir: Path,
+    stations: Iterable[str],
+    params: Iterable[str],
+) -> int:
+    report_dir.mkdir(parents=True, exist_ok=True)
+    overview = pd.DataFrame(
+        overview_rows,
+        columns=["Station", "Input File", "Status", "Rows", "Remaining Soil NaN Hours", "Missing Soil Columns"],
+    )
+    param_summary = pd.DataFrame(param_rows, columns=PARAM_SUMMARY_COLUMNS)
+    remaining_gaps = pd.DataFrame(
+        gap_rows,
+        columns=["Station", "Parameter", "Start", "End", "Hours", "Category"],
+    )
+    missing_columns = pd.DataFrame(
+        missing_column_rows,
+        columns=["Station", "Parameter", "Reason"],
+    )
+    suspicious = pd.DataFrame(suspicious_rows, columns=param_summary.columns)
+    decisions = load_review_decisions()
+    suspicious = attach_sensor_decisions(suspicious, decisions)
+    verylong_review = summarize_verylong_review(stations, params)
+    if verylong_review.empty:
+        verylong_review = pd.DataFrame(
+            columns=[
+                "Station", "Parameter", "Status", "Review Reason", "Segments",
+                "Filled_Hours", "Repaired_Points", "Max_Hourly_Change",
+                "Max_Donor_Mean_Fraction",
+            ]
+        )
 
-    overview.to_csv(REPORT_DIR / "final_qc_overview.csv", index=False)
-    param_summary.to_csv(REPORT_DIR / "final_qc_station_parameter_summary.csv", index=False)
-    remaining_gaps.to_csv(REPORT_DIR / "final_qc_remaining_nan_runs.csv", index=False)
-    missing_columns.to_csv(REPORT_DIR / "final_qc_missing_sensor_columns.csv", index=False)
-    suspicious.to_csv(REPORT_DIR / "final_qc_suspicious_sensors.csv", index=False)
-    verylong_review.to_csv(REPORT_DIR / "final_qc_verylong_review_summary.csv", index=False)
+    overview.to_csv(report_dir / "final_qc_overview.csv", index=False)
+    param_summary.to_csv(report_dir / "final_qc_station_parameter_summary.csv", index=False)
+    remaining_gaps.to_csv(report_dir / "final_qc_remaining_nan_runs.csv", index=False)
+    missing_columns.to_csv(report_dir / "final_qc_missing_sensor_columns.csv", index=False)
+    suspicious.to_csv(report_dir / "final_qc_suspicious_sensors.csv", index=False)
+    verylong_review.to_csv(report_dir / "final_qc_verylong_review_summary.csv", index=False)
+    if not decisions.empty:
+        decisions.to_csv(report_dir / "final_qc_review_decisions.csv", index=False)
+        (
+            decisions.groupby(["Review Type", "Status", "Decision"], dropna=False)
+            .agg(
+                Items=("Decision", "size"),
+                Values_Changed=("Values Changed", "sum"),
+            )
+            .reset_index()
+            .to_csv(report_dir / "final_qc_review_closure_summary.csv", index=False)
+        )
+    return unresolved_review_count(suspicious, decisions)
 
 
 def main() -> None:
@@ -261,7 +398,7 @@ def main() -> None:
             station_nan += nan_hours
             run_counts = pd.Series([r["Category"] for r in runs]).value_counts().to_dict() if runs else {}
 
-            flags, metrics = sensor_flags(station, param, df[param], args)
+            flags, metrics = sensor_flags(param, df[param], args)
             summary = {
                 "Station": station,
                 "Parameter": param,
@@ -296,7 +433,16 @@ def main() -> None:
             }
         )
 
-    write_outputs(overview_rows, param_rows, gap_rows, missing_column_rows, suspicious_rows)
+    unresolved_reviews = write_outputs(
+        overview_rows,
+        param_rows,
+        gap_rows,
+        missing_column_rows,
+        suspicious_rows,
+        args.report_dir,
+        stations,
+        params,
+    )
 
     remaining = pd.DataFrame(gap_rows)
     suspicious = pd.DataFrame(suspicious_rows)
@@ -308,7 +454,8 @@ def main() -> None:
     print(f"Remaining NaN hours: {int(remaining['Hours'].sum()) if not remaining.empty else 0}")
     print(f"Missing sensor columns: {len(missing_columns)}")
     print(f"Suspicious station/parameter rows: {len(suspicious)}")
-    print(f"Outputs written under: {REPORT_DIR}")
+    print(f"Unresolved recorded review items: {unresolved_reviews}")
+    print(f"Outputs written under: {args.report_dir}")
 
 
 if __name__ == "__main__":

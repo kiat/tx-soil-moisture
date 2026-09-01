@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Orchestrate the TxSON 33-station soil imputation workflow.
+"""Orchestrate the TxSON soil workflow and isolated MET stages.
 
 This runner is the preferred entry point for the current 33-station workflow.
 It keeps the individual scripts available for debugging, but gives users one
@@ -11,6 +11,9 @@ Examples:
     python imputation_pipeline.py --stage final
     python imputation_pipeline.py --stage all --dry-run
     python imputation_pipeline.py --stage all --station CB01 FD08
+    python imputation_pipeline.py --stage met --station FD02
+    python imputation_pipeline.py --stage met-full --station FD02
+    python imputation_pipeline.py --stage met-ppt --station FD02
 """
 from __future__ import annotations
 
@@ -21,6 +24,8 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable, List, Sequence
+
+from param_config import ALL_MET_PARAMS, ALL_SOIL_PARAMS
 
 
 ROOT = Path(__file__).resolve().parent
@@ -61,6 +66,9 @@ STAGE_GROUPS = {
     "verylong": ["verylong", "validate-verylong"],
     "qc": ["qc-before-sensor", "sensor-decisions", "sensor-mask", "manual-mask", "qc-after-sensor"],
     "final": ["final", "qc-final"],
+    "met": ["met"],
+    "met-full": ["met-full"],
+    "met-ppt": ["met-ppt"],
 }
 
 STALE_PATTERNS_BY_STAGE = {
@@ -68,8 +76,6 @@ STALE_PATTERNS_BY_STAGE = {
         "cleaned_data/Station*_cleaned_data.csv",
         "missing_data/Station*_missing_data.csv",
         "raw_merged_data/raw_merged_station_*.csv",
-        "stage0_summary.csv",
-        "shortgaps_summary.csv",
     ],
     "short": [
         "output/Station*_filled_shortgaps.csv",
@@ -114,12 +120,26 @@ STALE_PATTERNS_BY_STAGE = {
         "output/Station*_final_residual_fill_detail.csv",
         "final_qc_reports",
     ],
+    "met": [
+        "met_output/Station*_met_filled_shortgaps.csv",
+        "met_qc_reports/met_station_parameter_summary.csv",
+        "met_qc_reports/met_gap_inventory.csv",
+        "met_qc_reports/ppt_source_comparison_summary.csv",
+    ],
+    "met-full": [
+        "met_output/Station*_met_filled_allgaps.csv",
+        "met_qc_reports/model_fill",
+    ],
+    "met-ppt": [
+        "met_output/Station*_met_filled_complete.csv",
+        "met_qc_reports/ppt_model_fill",
+    ],
 }
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        "Run the TxSON 33-station soil imputation workflow.",
+        "Run the TxSON soil workflow or an isolated MET stage.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
@@ -129,7 +149,7 @@ def parse_args() -> argparse.Namespace:
         help="Workflow group to run.",
     )
     parser.add_argument("--station", type=str, nargs="*", help="Optional station/site codes, e.g. CB01 FD08.")
-    parser.add_argument("--param", type=str, nargs="*", help="Optional soil parameters for fill/validation scripts.")
+    parser.add_argument("--param", type=str, nargs="*", help="Optional parameters for the selected soil or MET stage.")
     parser.add_argument("--soil-base-dir", type=Path, default=DEFAULT_DATA_DIR, help="Directory containing soil .dat files.")
     parser.add_argument("--met-base-dir", type=Path, default=DEFAULT_DATA_DIR, help="Directory containing MET .dat files.")
     parser.add_argument("--dry-run", action="store_true", help="Print commands and cleanup actions without running.")
@@ -156,10 +176,6 @@ def discover_stations(soil_base_dir: Path) -> List[str]:
     if not stations:
         raise FileNotFoundError(f"No soil station .dat files found in {soil_base_dir}")
     return sorted(dict.fromkeys(stations))
-
-
-def selected_stages(stage_group: str) -> List[str]:
-    return list(STAGE_GROUPS[stage_group])
 
 
 def command_with_selection(base: Sequence[str], stations: Sequence[str] | None, params: Sequence[str] | None) -> List[str]:
@@ -195,21 +211,74 @@ def build_steps(args: argparse.Namespace, stages: Sequence[str], stations: Seque
 
     stations_arg = args.station
     params_arg = args.param
+    targeted = bool(stations_arg)
+
+    def final_qc_command(report_name: str) -> List[str]:
+        base = [py, "final_qc_summary.py"]
+        if targeted:
+            base.extend(["--report-dir", str(ROOT / "targeted_qc_reports" / report_name)])
+        return command_with_selection(base, stations_arg, params_arg)
+
+    sensor_report_dir = ROOT / "targeted_qc_reports" / "sensor_qc"
+    manual_report_dir = ROOT / "targeted_qc_reports" / "manual_qc"
+    before_sensor_dir = ROOT / "targeted_qc_reports" / "before_sensor"
+
+    def validation_command(script: str, report_name: str) -> List[str]:
+        base = [py, script, "--write-repaired"]
+        if targeted:
+            base.extend(["--report-dir", str(ROOT / "targeted_qc_reports" / report_name)])
+        return command_with_selection(base, stations_arg, params_arg)
+
+    def met_command(*mode_flags: str) -> List[str]:
+        return command_with_selection(
+            [
+                py,
+                "MetGaps.py",
+                *mode_flags,
+                "--write",
+                "--soil-base-dir",
+                str(args.soil_base_dir),
+                "--met-base-dir",
+                str(args.met_base_dir),
+            ],
+            stations_arg,
+            params_arg,
+        )
+
     stage_commands = {
         "short": command_with_selection([py, "Shortgaps.py"], stations_arg, params_arg),
         "medium": command_with_selection([py, "Mediumgaps.py"], stations_arg, params_arg),
-        "validate-medium": command_with_selection([py, "validate_mediumgaps.py", "--write-repaired"], stations_arg, params_arg),
+        "validate-medium": validation_command("validate_mediumgaps.py", "medium_validation"),
         "long": command_with_selection([py, "Longgaps.py"], stations_arg, params_arg),
-        "validate-long": command_with_selection([py, "validate_longgaps.py", "--write-repaired"], stations_arg, params_arg),
+        "validate-long": validation_command("validate_longgaps.py", "long_validation"),
         "verylong": command_with_selection([py, "VeryLongGaps.py"], stations_arg, params_arg),
-        "validate-verylong": command_with_selection([py, "validate_verylonggaps.py", "--write-repaired"], stations_arg, params_arg),
-        "qc-before-sensor": command_with_selection([py, "final_qc_summary.py"], stations_arg, params_arg),
-        "sensor-decisions": [py, "sensor_qc_decisions.py"],
-        "sensor-mask": [py, "apply_sensor_qc_masks.py", "--write", *(["--station", *stations_arg] if stations_arg else [])],
-        "manual-mask": [py, "apply_manual_qc_masks.py", "--write", *(["--station", *stations_arg] if stations_arg else [])],
-        "qc-after-sensor": command_with_selection([py, "final_qc_summary.py"], stations_arg, params_arg),
+        "validate-verylong": validation_command("validate_verylonggaps.py", "verylong_validation"),
+        "qc-before-sensor": final_qc_command("before_sensor"),
+        "sensor-decisions": [
+            py,
+            "sensor_qc_decisions.py",
+            *(["--input-dir", str(before_sensor_dir), "--report-dir", str(sensor_report_dir)] if targeted else []),
+        ],
+        "sensor-mask": [
+            py,
+            "apply_sensor_qc_masks.py",
+            "--write",
+            *(["--decision-dir", str(sensor_report_dir), "--report-dir", str(sensor_report_dir)] if targeted else []),
+            *(["--station", *stations_arg] if stations_arg else []),
+        ],
+        "manual-mask": [
+            py,
+            "apply_manual_qc_masks.py",
+            "--write",
+            *(["--report-dir", str(manual_report_dir)] if targeted else []),
+            *(["--station", *stations_arg] if stations_arg else []),
+        ],
+        "qc-after-sensor": final_qc_command("after_sensor"),
         "final": command_with_selection([py, "FinalResidualGaps.py"], stations_arg, params_arg),
-        "qc-final": command_with_selection([py, "final_qc_summary.py"], stations_arg, params_arg),
+        "qc-final": final_qc_command("final"),
+        "met": met_command(),
+        "met-full": met_command("--full", "--repair-review"),
+        "met-ppt": met_command("--ppt-full"),
     }
 
     for stage in stages:
@@ -228,7 +297,11 @@ def cleanup_start_index(stages: Sequence[str]) -> int | None:
 def stale_patterns_for_run(stages: Sequence[str]) -> List[str]:
     start = cleanup_start_index(stages)
     if start is None:
-        return []
+        return [
+            pattern
+            for stage in stages
+            for pattern in STALE_PATTERNS_BY_STAGE.get(stage, [])
+        ]
     selected = set(STAGE_ORDER[start:])
     patterns: List[str] = []
     for stage, stage_patterns in STALE_PATTERNS_BY_STAGE.items():
@@ -240,12 +313,15 @@ def stale_patterns_for_run(stages: Sequence[str]) -> List[str]:
 def station_scoped_path(path: Path, stations: Sequence[str] | None) -> bool:
     if not stations:
         return True
+    if path.is_dir():
+        # A selected-station run must not delete full-batch global reports.
+        return False
     name = path.name
     if name.startswith("Station"):
         return any(name.startswith(f"Station{station}_") for station in stations)
     if name.startswith("raw_merged_station_"):
         return any(name.startswith(f"raw_merged_station_{station}") for station in stations)
-    return True
+    return False
 
 
 def clean_stale_outputs(patterns: Iterable[str], dry_run: bool, stations: Sequence[str] | None = None) -> None:
@@ -280,7 +356,22 @@ def main() -> None:
     args.soil_base_dir = args.soil_base_dir.expanduser().resolve()
     args.met_base_dir = args.met_base_dir.expanduser().resolve()
 
-    stages = selected_stages(args.stage)
+    stages = list(STAGE_GROUPS[args.stage])
+    if args.param:
+        if args.stage == "met-ppt":
+            allowed = {"Ppt"}
+        elif args.stage in {"met", "met-full"}:
+            allowed = set(ALL_MET_PARAMS)
+        else:
+            allowed = set(ALL_SOIL_PARAMS)
+        unsupported = sorted(set(args.param) - allowed)
+        if unsupported:
+            scope = (
+                "MET"
+                if args.stage in {"met", "met-full", "met-ppt"}
+                else "soil"
+            )
+            raise ValueError(f"Unsupported {scope} parameter(s) for stage {args.stage}: {', '.join(unsupported)}")
     stations = args.station if args.station else discover_stations(args.soil_base_dir)
     steps = build_steps(args, stages, stations)
 
@@ -293,6 +384,14 @@ def main() -> None:
 
     if not args.no_clean_stale:
         patterns = stale_patterns_for_run(stages)
+        if args.param and args.stage in {"met", "met-full"}:
+            # Parameter-scoped MET reruns merge into existing station files.
+            # Keep those files available so unselected columns are preserved.
+            patterns = [
+                pattern
+                for pattern in patterns
+                if not pattern.startswith("met_output/")
+            ]
         if patterns:
             print("\nRemoving stale generated outputs for selected stage range...")
             clean_stale_outputs(patterns, args.dry_run, args.station)

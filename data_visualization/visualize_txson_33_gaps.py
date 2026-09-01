@@ -1,4 +1,7 @@
-"""Visualize missing-data patterns for the TxSON 33-station cleanup outputs.
+"""Visualize the Stage 0 gap inventory for the TxSON 33-station inputs.
+
+This diagnostic describes source gaps and optional soil short-gap output. Use
+Dynamic_Data_Visualization_TxSON33.ipynb to inspect final Soil + MET results.
 
 Examples:
     python data_visualization/visualize_txson_33_gaps.py
@@ -8,6 +11,7 @@ Examples:
 from __future__ import annotations
 
 import argparse
+import re
 from pathlib import Path
 
 import pandas as pd
@@ -34,19 +38,42 @@ PARAM_ORDER = [
 ]
 
 GAP_BUCKETS = [
-    ("Short <24h", 0, 24, "Already filled by Shortgaps.py"),
-    ("Medium 24h-7d", 24, 168, "Use Mediumgaps.py / SARIMAX"),
-    ("Long 7-30d", 168, 720, "Use Longgaps.py / XGBoost"),
-    ("Very long >=30d", 720, None, "Use VeryLongGaps.py / donor stations"),
+    ("Short <24h", 0, 24),
+    ("Medium 24-167h", 24, 168),
+    ("Long 168-719h", 168, 720),
+    ("Very long >=720h", 720, None),
 ]
+
+SOIL_PARAMS = {
+    "SWC_5", "SWC_10", "SWC_20", "SWC_50",
+    "T_5", "T_10", "T_20", "T_50",
+}
+
+SOIL_STAGE_BY_BUCKET = {
+    "Short <24h": "Shortgaps.py",
+    "Medium 24-167h": "Mediumgaps.py + validation",
+    "Long 168-719h": "Longgaps.py + validation",
+    "Very long >=720h": "VeryLongGaps.py + validation",
+}
 
 
 def site_codes(cleaned_dir: Path) -> list[str]:
-    return sorted(
-        path.name.removeprefix("Station").removesuffix("_cleaned_data.csv")
-        for path in cleaned_dir.glob("Station*_cleaned_data.csv")
-        if not path.name.removeprefix("Station").startswith(tuple("123456"))
-    )
+    sites = []
+    for path in cleaned_dir.glob("Station*_cleaned_data.csv"):
+        site = path.name.removeprefix("Station").removesuffix("_cleaned_data.csv")
+        if re.fullmatch(r"[A-Za-z]{2}\d{2}", site):
+            sites.append(site)
+    return sorted(sites)
+
+
+def recommended_fill(parameter: str, bucket: str) -> str:
+    if parameter in SOIL_PARAMS:
+        return SOIL_STAGE_BY_BUCKET[bucket]
+    if parameter == "Ppt":
+        return "MetGaps.py --ppt-full"
+    if parameter in {"Tair", "RH", "Srad", "Wind speed", "Wind direction"}:
+        return "MetGaps.py --full"
+    return "Review source/QC rule"
 
 
 def read_cleaned(cleaned_dir: Path, site: str) -> pd.DataFrame:
@@ -104,7 +131,7 @@ def gap_bucket_table(missing_dir: Path, sites: list[str]) -> tuple[pd.DataFrame,
             continue
 
         missing["Number Missing"] = pd.to_numeric(missing["Number Missing"], errors="coerce").fillna(0)
-        for bucket, min_hours, max_hours, method in GAP_BUCKETS:
+        for bucket, min_hours, max_hours in GAP_BUCKETS:
             mask = missing["Number Missing"] >= min_hours
             if max_hours is not None:
                 mask &= missing["Number Missing"] < max_hours
@@ -118,7 +145,7 @@ def gap_bucket_table(missing_dir: Path, sites: list[str]) -> tuple[pd.DataFrame,
                     "end": row["End Timestamp"],
                     "hours": int(row["Number Missing"]),
                     "bucket": bucket,
-                    "recommended_fill": method,
+                    "recommended_fill": recommended_fill(row["Parameter"], bucket),
                 })
         station_rows.append(station_row)
     return pd.DataFrame(station_rows), pd.DataFrame(detail_rows)
@@ -225,7 +252,7 @@ def write_overview(cleaned_dir: Path, missing_dir: Path, output_dir: Path, repor
     )
 
     fig.update_layout(
-        title="TxSON 33-Station Missing Data Overview",
+        title="TxSON 33-Station Stage 0 Missing Data Overview",
         height=1500,
         barmode="stack",
         template="plotly_white",

@@ -1,5 +1,5 @@
 # -----------------------------------------------------------
-# Shortgaps.py  –  fill every <24‑hour gap via time interpolation
+# Shortgaps.py  -  fill every <24-hour soil gap with bracketed interpolation
 # -----------------------------------------------------------
 #   python Shortgaps.py                                     # ALL stations & ALL SWC/T columns
 #   python Shortgaps.py --station 2                         # only Station 2 (SWC + T)
@@ -20,10 +20,9 @@
 import argparse, re
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
 from pathlib import Path
 
-from param_config import ALL_PARAMS, short_interp_for
+from param_config import ALL_SOIL_PARAMS, short_interp_for
 
 # Path 
 BASE_DIR  = Path(__file__).resolve().parent
@@ -37,7 +36,7 @@ def load_cleaned_data(station_id, directory=CLEAN_DIR):
     filename = Path(directory) / f"Station{station_id}_cleaned_data.csv"
     df = pd.read_csv(filename, parse_dates=True, index_col=0)
     df.index = pd.DatetimeIndex(df.index)
-    df.index.freq = 'H'
+    df.index.freq = "h"
     return df
 
 def load_missing_data(station_id, directory=MISS_DIR):
@@ -60,7 +59,7 @@ def time_interpolate(series, start_ts, end_ts, method="pchip"):
 
 
 def wind_direction_interpolate(series, start_ts, end_ts):
-    idx = pd.date_range(start_ts, end_ts, freq="H")
+    idx = pd.date_range(start_ts, end_ts, freq="h")
     radians = np.deg2rad(series)
     sin_series = np.sin(radians)
     cos_series = np.cos(radians)
@@ -75,7 +74,19 @@ def fill_short_gaps(series, gap_df, gap_log, *, station_id, param, interp_method
     for _, row in gap_df.iterrows():
         start_ts = pd.to_datetime(row["Start Timestamp"])
         end_ts   = pd.to_datetime(row["End Timestamp"])
-        idx      = pd.date_range(start_ts, end_ts, freq="H")
+        idx      = pd.date_range(start_ts, end_ts, freq="h")
+
+        left_ts = start_ts - pd.Timedelta(hours=1)
+        right_ts = end_ts + pd.Timedelta(hours=1)
+        bracketed = (
+            left_ts in filled.index
+            and right_ts in filled.index
+            and pd.notna(filled.loc[left_ts])
+            and pd.notna(filled.loc[right_ts])
+        )
+        if not bracketed:
+            print(f"    [skip] {param} {start_ts} to {end_ts}: gap is not bracketed by observations")
+            continue
 
         if interp_method == "zero":
             new_vals = pd.Series(0.0, index=idx)
@@ -84,6 +95,10 @@ def fill_short_gaps(series, gap_df, gap_log, *, station_id, param, interp_method
         else:
             method = interp_method if interp_method != "time" else "time"
             new_vals = time_interpolate(filled, start_ts, end_ts, method=method)
+
+        if new_vals.isna().any():
+            print(f"    [skip] {param} {start_ts} to {end_ts}: interpolation returned NaN")
+            continue
 
         filled.loc[idx] = new_vals.values   # write back
 
@@ -115,11 +130,12 @@ def process_station(station_id, parameters):
         interp_method = short_interp_for(param)
 
         print(f"  {param}: filling {len(sgaps)} gaps (method={interp_method})")
+        before = len(gap_log)
         df[param] = fill_short_gaps(
             df[param], sgaps, gap_log,
             station_id=station_id, param=param, interp_method=interp_method
         )
-        any_filled = True
+        any_filled = any_filled or len(gap_log) > before
 
     OUT_DIR.mkdir(exist_ok=True)
     filled_csv = OUT_DIR / f"Station{station_id}_filled_shortgaps.csv"
@@ -156,9 +172,16 @@ def parse_args():
 def main():
     args = parse_args()
     stations   = args.station if args.station else discover_stations()
-    # Default: fill every configured parameter (soil + MET)
-    default_params = ALL_PARAMS
+    # The main staged workflow is soil-only. MET variables are handled by
+    # MetGaps.py so their outputs and validation remain separate.
+    default_params = ALL_SOIL_PARAMS
     parameters = args.param   if args.param else default_params
+    unsupported = sorted(set(parameters) - set(ALL_SOIL_PARAMS))
+    if unsupported:
+        raise ValueError(
+            "Shortgaps.py is the soil stage. Use MetGaps.py for MET parameters: "
+            + ", ".join(unsupported)
+        )
 
     print("Stations :", stations)
     print("Parameters:", parameters, "\n")

@@ -23,6 +23,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--near-zero-bad", type=float, default=0.9)
     parser.add_argument("--near-zero-review", type=float, default=0.5)
     parser.add_argument("--min-hours", type=int, default=720)
+    parser.add_argument("--input-dir", type=Path, default=FINAL_QC_DIR)
+    parser.add_argument("--report-dir", type=Path, default=REPORT_DIR)
     return parser.parse_args()
 
 
@@ -79,7 +81,7 @@ def decide(row: pd.Series, args: argparse.Namespace) -> Tuple[str, str, str]:
 
 def main() -> None:
     args = parse_args()
-    input_path = FINAL_QC_DIR / "final_qc_suspicious_sensors.csv"
+    input_path = args.input_dir / "final_qc_suspicious_sensors.csv"
     if not input_path.exists():
         raise FileNotFoundError(f"Missing {input_path}. Run final_qc_summary.py first.")
 
@@ -93,31 +95,38 @@ def main() -> None:
         out["Decision Reason"] = reason
         rows.append(out)
 
-    decisions = pd.DataFrame(rows).sort_values(
-        ["QC Decision", "SWC Near-Zero Fraction", "NaN Hours"],
-        ascending=[True, False, False],
-    )
-
-    summary = (
-        decisions.groupby(["QC Decision", "Recommended Action"], dropna=False)
-        .agg(
-            Rows=("QC Decision", "size"),
-            Total_NaN_Hours=("NaN Hours", "sum"),
-            Max_Near_Zero_Fraction=("SWC Near-Zero Fraction", "max"),
+    if rows:
+        decisions = pd.DataFrame(rows).sort_values(
+            ["QC Decision", "SWC Near-Zero Fraction", "NaN Hours"],
+            ascending=[True, False, False],
         )
-        .reset_index()
-        .sort_values(["Rows", "Total_NaN_Hours"], ascending=False)
-    )
+        summary = (
+            decisions.groupby(["QC Decision", "Recommended Action"], dropna=False)
+            .agg(
+                Rows=("QC Decision", "size"),
+                Total_NaN_Hours=("NaN Hours", "sum"),
+                Max_Near_Zero_Fraction=("SWC Near-Zero Fraction", "max"),
+            )
+            .reset_index()
+            .sort_values(["Rows", "Total_NaN_Hours"], ascending=False)
+        )
+    else:
+        decisions = suspicious.copy()
+        for column in ["QC Decision", "Recommended Action", "Decision Reason"]:
+            decisions[column] = pd.Series(dtype=str)
+        summary = pd.DataFrame(
+            columns=["QC Decision", "Recommended Action", "Rows", "Total_NaN_Hours", "Max_Near_Zero_Fraction"]
+        )
 
-    REPORT_DIR.mkdir(exist_ok=True)
-    decisions.to_csv(REPORT_DIR / "sensor_qc_decisions.csv", index=False)
-    summary.to_csv(REPORT_DIR / "sensor_qc_action_summary.csv", index=False)
+    args.report_dir.mkdir(parents=True, exist_ok=True)
+    decisions.to_csv(args.report_dir / "sensor_qc_decisions.csv", index=False)
+    summary.to_csv(args.report_dir / "sensor_qc_action_summary.csv", index=False)
 
     print("Sensor QC decisions complete.")
     print(f"Suspicious rows classified: {len(decisions)}")
     print("Decision counts:")
     print(decisions["QC Decision"].value_counts().to_string())
-    print(f"Outputs written under: {REPORT_DIR}")
+    print(f"Outputs written under: {args.report_dir}")
 
 
 if __name__ == "__main__":

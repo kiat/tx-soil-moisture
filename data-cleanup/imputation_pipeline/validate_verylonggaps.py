@@ -38,6 +38,7 @@ def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser("Validate and repair very-long-gap fills.")
     p.add_argument("--station", type=str, nargs="*", help="Station IDs/site codes to validate.")
     p.add_argument("--param", type=str, nargs="*", help="Parameters to validate.")
+    p.add_argument("--report-dir", type=Path, default=BASE_DIR, help="Directory for validation summary CSVs.")
     p.add_argument(
         "--write-repaired",
         action="store_true",
@@ -111,6 +112,9 @@ def load_filled_segments(stations: Iterable[str], params: Iterable[str]) -> Dict
     filled: Dict[SegmentKey, pd.DataFrame] = {}
 
     for detail_path in sorted(OUT_DIR.glob("Station*_verylonggap_fill_detail.csv")):
+        station_from_name = detail_path.name[len("Station") : -len("_verylonggap_fill_detail.csv")]
+        if station_from_name not in selected_stations:
+            continue
         detail = pd.read_csv(detail_path, parse_dates=["Start", "End", "Timestamp"], low_memory=False)
         if detail.empty or "Station" not in detail.columns:
             continue
@@ -282,7 +286,6 @@ def build_summary(args: argparse.Namespace) -> Tuple[pd.DataFrame, Dict[SegmentK
 
 
 def write_repaired_outputs(
-    summary: pd.DataFrame,
     repair_points: Dict[SegmentKey, Set[pd.Timestamp]],
     stations: Iterable[str],
 ) -> None:
@@ -317,11 +320,16 @@ def write_repaired_outputs(
                 )
 
 
-def write_summaries(summary: pd.DataFrame, repair_points: Dict[SegmentKey, Set[pd.Timestamp]]) -> None:
-    summary_path = BASE_DIR / "verylonggaps_validation_summary.csv"
-    review_path = BASE_DIR / "verylonggaps_review_segments.csv"
-    repaired_points_path = BASE_DIR / "verylonggaps_repaired_points.csv"
-    station_path = BASE_DIR / "verylonggaps_validation_station_summary.csv"
+def write_summaries(
+    summary: pd.DataFrame,
+    repair_points: Dict[SegmentKey, Set[pd.Timestamp]],
+    report_dir: Path,
+) -> None:
+    report_dir.mkdir(parents=True, exist_ok=True)
+    summary_path = report_dir / "verylonggaps_validation_summary.csv"
+    review_path = report_dir / "verylonggaps_review_segments.csv"
+    repaired_points_path = report_dir / "verylonggaps_repaired_points.csv"
+    station_path = report_dir / "verylonggaps_validation_station_summary.csv"
 
     summary.to_csv(summary_path, index=False)
     summary[summary["Status"].isin(["review", "repaired", "rejected", "skipped"])].to_csv(review_path, index=False)
@@ -338,7 +346,10 @@ def write_summaries(summary: pd.DataFrame, repair_points: Dict[SegmentKey, Set[p
                     "Timestamp": ts,
                 }
             )
-    pd.DataFrame(point_rows).to_csv(repaired_points_path, index=False)
+    pd.DataFrame(
+        point_rows,
+        columns=["Station", "Parameter", "Segment Start", "Segment End", "Timestamp"],
+    ).to_csv(repaired_points_path, index=False)
 
     station_summary = (
         summary.groupby(["Station", "Status"], dropna=False)
@@ -357,19 +368,26 @@ def main() -> None:
     args = parse_args()
     stations = args.station if args.station else discover_stations()
     summary, repair_points = build_summary(args)
-    write_summaries(summary, repair_points)
+    if summary.empty:
+        summary = pd.DataFrame(
+            columns=[
+                "Station", "Parameter", "Start", "End", "Expected Hours",
+                "Filled Hours", "Repaired Points", "Status", "Reason",
+            ]
+        )
+    write_summaries(summary, repair_points, args.report_dir)
 
     if args.write_repaired:
-        write_repaired_outputs(summary, repair_points, stations)
+        write_repaired_outputs(repair_points, stations)
 
     counts = summary["Status"].value_counts().to_dict()
     print("Very-long-gap validation complete.")
     print("Segments:", counts)
     print("Total repaired points:", int(summary["Repaired Points"].sum()))
-    print(f"Summary: {BASE_DIR / 'verylonggaps_validation_summary.csv'}")
-    print(f"Review/repaired segments: {BASE_DIR / 'verylonggaps_review_segments.csv'}")
-    print(f"Repaired points: {BASE_DIR / 'verylonggaps_repaired_points.csv'}")
-    print(f"Station summary: {BASE_DIR / 'verylonggaps_validation_station_summary.csv'}")
+    print(f"Summary: {args.report_dir / 'verylonggaps_validation_summary.csv'}")
+    print(f"Review/repaired segments: {args.report_dir / 'verylonggaps_review_segments.csv'}")
+    print(f"Repaired points: {args.report_dir / 'verylonggaps_repaired_points.csv'}")
+    print(f"Station summary: {args.report_dir / 'verylonggaps_validation_station_summary.csv'}")
     if args.write_repaired:
         print("Repaired station files written to output/*_filled_verylonggaps_repaired.csv")
     else:

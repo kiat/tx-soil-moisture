@@ -41,7 +41,8 @@ ALL_MET_PARAMS = [p for p, fam in PARAM_FAMILY.items() if fam not in {SOIL_MOIST
 # ---------------------------------------------------------------------------
 # Short-gap interpolation hints (per family)
 # ---------------------------------------------------------------------------
-# Supported interpolation tags: "pchip", "time", "linear", "zero", "wind_angle"
+# Ppt is deliberately deferred to the reconciled two-part Ppt model. The
+# production MET method map itself lives in MetGaps.py.
 SHORT_INTERP_BY_FAMILY = {
     SOIL_MOISTURE: "pchip",
     SOIL_TEMPERATURE: "time",
@@ -50,7 +51,7 @@ SHORT_INTERP_BY_FAMILY = {
     SOLAR_RADIATION: "linear",
     WIND_SPEED: "linear",
     WIND_DIRECTION: "wind_angle",
-    PRECIPITATION: "zero",
+    PRECIPITATION: "deferred",
 }
 
 # ---------------------------------------------------------------------------
@@ -82,7 +83,8 @@ FAMILY_DRIVER_DEPENDENCIES = {
 }
 
 # ---------------------------------------------------------------------------
-# Recommended fill order (honors dependencies)
+# Stable parameter/reporting order. Soil and MET run as isolated branches, so
+# this compatibility list is not the production execution order.
 # ---------------------------------------------------------------------------
 FILL_ORDER: Sequence[str] = [
     "Tair",
@@ -91,7 +93,6 @@ FILL_ORDER: Sequence[str] = [
     "Wind speed",
     "Wind direction",
     "Ppt",
-    # After MET drivers, fall back to soil moisture/temperature
     "SWC_5", "SWC_10", "SWC_20", "SWC_50",
     "T_5", "T_10", "T_20", "T_50",
 ]

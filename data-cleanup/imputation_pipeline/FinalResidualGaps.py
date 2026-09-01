@@ -282,6 +282,59 @@ def choose_boundary_adjusted_prediction(
     return bounded_corrected, "applied"
 
 
+def replace_swc_lower_bound_predictions(
+    predictions: pd.DataFrame,
+    donors: Dict[str, pd.DataFrame],
+    param: str,
+    min_std: float,
+) -> Tuple[pd.DataFrame, int]:
+    """Replace model-created exact-zero SWC fills with positive donor support."""
+    if not param.startswith("SWC_") or predictions.empty:
+        return predictions, 0
+
+    result = predictions.copy()
+    remaining = pd.DatetimeIndex(result.index[result["Filled"].le(0.0)])
+    repaired = 0
+    fallback_methods = [
+        (donor_mean_prediction, "donor_mean_lower_bound_repair"),
+        (donor_climatology_prediction, "donor_climatology_lower_bound_repair"),
+    ]
+    for predictor, method in fallback_methods:
+        if not len(remaining):
+            break
+        fallback = predictor(remaining, donors, param, min_std)
+        fallback = fallback[fallback.gt(0.0) & np.isfinite(fallback)]
+        if fallback.empty:
+            continue
+        result.loc[fallback.index, "Filled"] = fallback
+        result.loc[fallback.index, "Method"] = method
+        result.loc[fallback.index, "Donor"] = np.nan
+        result.loc[fallback.index, "Abs Corr"] = np.nan
+        repaired += len(fallback)
+        remaining = remaining.difference(fallback.index)
+    return result, repaired
+
+
+def prediction_frame(
+    values: pd.Series,
+    method: str,
+    overlap_hours: int,
+    donor: object = np.nan,
+    abs_corr: object = np.nan,
+) -> pd.DataFrame:
+    """Build one consistently shaped block for the residual-fill log."""
+    return pd.DataFrame(
+        {
+            "Filled": values,
+            "Method": method,
+            "Donor": donor,
+            "Abs Corr": abs_corr,
+            "Overlap Hours": overlap_hours,
+        },
+        index=values.index,
+    )
+
+
 def nan_runs(df: pd.DataFrame, param: str) -> List[pd.DatetimeIndex]:
     if param not in df.columns:
         return []
@@ -379,34 +432,35 @@ def fill_station(
         for idx in runs:
             start, end = idx[0], idx[-1]
             pred_parts: List[pd.DataFrame] = []
-            linear_preds = pd.Series(dtype=float)
+            predicted_idx = pd.DatetimeIndex([])
             refill_method = refill_method_for_run(refill_overrides, station, param, start, end)
 
             if refill_method == "donor_mean":
                 mean_preds = donor_mean_prediction(idx, available_donors, param, min_std).dropna()
                 if not mean_preds.empty:
-                    pred_parts.append(pd.DataFrame({
-                        "Filled": mean_preds,
-                        "Method": "donor_mean_manual_override",
-                        "Donor": np.nan,
-                        "Abs Corr": np.nan,
-                        "Overlap Hours": observed_count,
-                    }))
+                    pred_parts.append(
+                        prediction_frame(
+                            mean_preds,
+                            "donor_mean_manual_override",
+                            observed_count,
+                        )
+                    )
+                    predicted_idx = predicted_idx.union(mean_preds.index)
             elif model is not None and donor_sid is not None:
                 linear_preds = linear_prediction(idx, available_donors[donor_sid][param], model).dropna()
                 if not linear_preds.empty:
-                    pred_parts.append(pd.DataFrame({
-                        "Filled": linear_preds,
-                        "Method": "linear_donor",
-                        "Donor": donor_sid,
-                        "Abs Corr": corr,
-                        "Overlap Hours": overlap,
-                    }))
+                    pred_parts.append(
+                        prediction_frame(
+                            linear_preds,
+                            "linear_donor",
+                            overlap,
+                            donor_sid,
+                            corr,
+                        )
+                    )
+                    predicted_idx = predicted_idx.union(linear_preds.index)
 
-            predicted_idx_for_fallback = pd.DatetimeIndex([])
-            if pred_parts:
-                predicted_idx_for_fallback = pd.DatetimeIndex(pd.concat(pred_parts).index.unique())
-            fallback_idx = idx.difference(predicted_idx_for_fallback)
+            fallback_idx = idx.difference(predicted_idx)
             if len(fallback_idx) > 0:
                 mean_preds = donor_mean_prediction(fallback_idx, available_donors, param, min_std).dropna()
                 if not mean_preds.empty:
@@ -415,28 +469,22 @@ def fill_station(
                         if observed_count < min_overlap
                         else "donor_mean_missing_linear_donor"
                     )
-                    pred_parts.append(pd.DataFrame({
-                        "Filled": mean_preds,
-                        "Method": method,
-                        "Donor": np.nan,
-                        "Abs Corr": np.nan,
-                        "Overlap Hours": observed_count,
-                    }))
+                    pred_parts.append(
+                        prediction_frame(mean_preds, method, observed_count)
+                    )
+                    predicted_idx = predicted_idx.union(mean_preds.index)
 
-            predicted_idx = pd.DatetimeIndex([])
-            if pred_parts:
-                predicted_idx = pd.DatetimeIndex(pd.concat(pred_parts).index.unique())
             climatology_idx = idx.difference(predicted_idx)
             if len(climatology_idx) > 0:
                 clim_preds = donor_climatology_prediction(climatology_idx, available_donors, param, min_std).dropna()
                 if not clim_preds.empty:
-                    pred_parts.append(pd.DataFrame({
-                        "Filled": clim_preds,
-                        "Method": "donor_climatology_no_timestamp_donor",
-                        "Donor": np.nan,
-                        "Abs Corr": np.nan,
-                        "Overlap Hours": observed_count,
-                    }))
+                    pred_parts.append(
+                        prediction_frame(
+                            clim_preds,
+                            "donor_climatology_no_timestamp_donor",
+                            observed_count,
+                        )
+                    )
 
             if not pred_parts:
                 continue
@@ -452,6 +500,16 @@ def fill_station(
                     preds["Filled"],
                     corrected,
                     param,
+                )
+            preds, lower_bound_repairs = replace_swc_lower_bound_predictions(
+                preds,
+                available_donors,
+                param,
+                min_std,
+            )
+            if lower_bound_repairs:
+                boundary_adjustment += (
+                    f"; positive_donor_lower_bound_repairs={lower_bound_repairs}"
                 )
 
             target_df.loc[preds.index, param] = preds["Filled"].values
