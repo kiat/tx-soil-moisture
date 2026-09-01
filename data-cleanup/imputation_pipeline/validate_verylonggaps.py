@@ -71,13 +71,23 @@ def read_series_file(path: Path) -> pd.DataFrame:
 
 
 def source_path_for(station: str) -> Path:
-    candidates = [
-        OUT_DIR / f"Station{station}_filled_longgaps_repaired.csv",
-        OUT_DIR / f"Station{station}_filled_longgaps.csv",
-        OUT_DIR / f"Station{station}_filled_mediumgaps_repaired.csv",
-        OUT_DIR / f"Station{station}_filled_mediumgaps.csv",
-    ]
-    return next((p for p in candidates if p.exists()), candidates[0])
+    path = OUT_DIR / f"Station{station}_filled_longgaps_repaired.csv"
+    if not path.is_file():
+        raise FileNotFoundError(
+            f"validate_verylonggaps.py requires validated long-gap input for "
+            f"Station{station}: {path}"
+        )
+    return path
+
+
+def verylong_output_path_for(station: str) -> Path:
+    path = OUT_DIR / f"Station{station}_filled_verylonggaps.csv"
+    if not path.is_file():
+        raise FileNotFoundError(
+            f"validate_verylonggaps.py requires VeryLongGaps.py output for "
+            f"Station{station}: {path}"
+        )
+    return path
 
 
 def load_expected_segments(stations: Iterable[str], params: Iterable[str]) -> Dict[SegmentKey, int]:
@@ -243,6 +253,9 @@ def segment_metrics(
 def build_summary(args: argparse.Namespace) -> Tuple[pd.DataFrame, Dict[SegmentKey, Set[pd.Timestamp]]]:
     stations = args.station if args.station else discover_stations()
     params = args.param if args.param else ALL_SOIL_PARAMS
+    for station in stations:
+        source_path_for(station)
+        verylong_output_path_for(station)
     expected = load_expected_segments(stations, params)
     filled = load_filled_segments(stations, params)
     all_keys = sorted(set(expected) | set(filled), key=lambda k: (k.station, k.parameter, k.start, k.end))
@@ -262,7 +275,7 @@ def build_summary(args: argparse.Namespace) -> Tuple[pd.DataFrame, Dict[SegmentK
         }
         if key in filled:
             if key.station not in verylong_cache:
-                verylong_cache[key.station] = read_series_file(OUT_DIR / f"Station{key.station}_filled_verylonggaps.csv")
+                verylong_cache[key.station] = read_series_file(verylong_output_path_for(key.station))
             if key.station not in source_cache:
                 source_cache[key.station] = read_series_file(source_path_for(key.station))
             metrics, points = segment_metrics(
@@ -295,9 +308,7 @@ def write_repaired_outputs(
             points_by_station.setdefault(key.station, []).append((key.parameter, ts))
 
     for station in stations:
-        verylong_path = OUT_DIR / f"Station{station}_filled_verylonggaps.csv"
-        if not verylong_path.exists():
-            continue
+        verylong_path = verylong_output_path_for(station)
         repaired = read_series_file(verylong_path)
         for param, ts in points_by_station.get(station, []):
             if param in repaired.columns and ts in repaired.index:
@@ -367,6 +378,10 @@ def write_summaries(
 def main() -> None:
     args = parse_args()
     stations = args.station if args.station else discover_stations()
+    if not stations:
+        raise FileNotFoundError(
+            "No very-long-gap outputs found. Run VeryLongGaps.py before validation."
+        )
     summary, repair_points = build_summary(args)
     if summary.empty:
         summary = pd.DataFrame(

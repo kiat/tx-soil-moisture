@@ -68,11 +68,22 @@ def read_series_file(path: Path) -> pd.DataFrame:
 
 
 def source_path_for(station: str) -> Path:
-    candidates = [
-        OUT_DIR / f"Station{station}_filled_mediumgaps_repaired.csv",
-        OUT_DIR / f"Station{station}_filled_mediumgaps.csv",
-    ]
-    return next((p for p in candidates if p.exists()), candidates[0])
+    path = OUT_DIR / f"Station{station}_filled_mediumgaps_repaired.csv"
+    if not path.is_file():
+        raise FileNotFoundError(
+            f"validate_longgaps.py requires validated medium-gap input for "
+            f"Station{station}: {path}"
+        )
+    return path
+
+
+def long_output_path_for(station: str) -> Path:
+    path = OUT_DIR / f"Station{station}_filled_longgaps.csv"
+    if not path.is_file():
+        raise FileNotFoundError(
+            f"validate_longgaps.py requires Longgaps.py output for Station{station}: {path}"
+        )
+    return path
 
 
 def load_expected_segments(stations: Iterable[str], params: Iterable[str]) -> Dict[SegmentKey, int]:
@@ -234,6 +245,9 @@ def segment_metrics(
 def build_summary(args: argparse.Namespace) -> Tuple[pd.DataFrame, Dict[SegmentKey, pd.DataFrame]]:
     stations = args.station if args.station else discover_stations()
     params = args.param if args.param else ALL_SOIL_PARAMS
+    for station in stations:
+        source_path_for(station)
+        long_output_path_for(station)
     expected = load_expected_segments(stations, params)
     filled = load_filled_segments(stations, params)
 
@@ -254,7 +268,7 @@ def build_summary(args: argparse.Namespace) -> Tuple[pd.DataFrame, Dict[SegmentK
 
         if key in filled:
             if key.station not in long_cache:
-                long_cache[key.station] = read_series_file(OUT_DIR / f"Station{key.station}_filled_longgaps.csv")
+                long_cache[key.station] = read_series_file(long_output_path_for(key.station))
             if key.station not in source_cache:
                 source_cache[key.station] = read_series_file(source_path_for(key.station))
             status, reason, metrics = segment_metrics(
@@ -294,9 +308,7 @@ def write_repaired_outputs(
         accepted_by_station.setdefault(key.station, []).append(detail)
 
     for station in stations:
-        long_path = OUT_DIR / f"Station{station}_filled_longgaps.csv"
-        if not long_path.exists():
-            continue
+        long_path = long_output_path_for(station)
         repaired = read_series_file(long_path)
         for key in rejected_keys:
             if key.station != station or key.parameter not in repaired.columns:
@@ -338,6 +350,10 @@ def write_summaries(summary: pd.DataFrame, report_dir: Path) -> None:
 def main() -> None:
     args = parse_args()
     stations = args.station if args.station else discover_stations()
+    if not stations:
+        raise FileNotFoundError(
+            "No long-gap outputs found. Run Longgaps.py before validation."
+        )
     summary, accepted_details = build_summary(args)
     if summary.empty:
         summary = pd.DataFrame(

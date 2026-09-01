@@ -41,40 +41,28 @@ MANUAL_QC_MASKS = BASE_DIR / "manual_qc_masks.csv"
 DEFAULT_PARAMS = ALL_SOIL_PARAMS
 
 
-def input_path_for(station: str) -> Path:
-    candidates = [
-        OUT_DIR / f"Station{station}_filled_manual_qc.csv",
-        OUT_DIR / f"Station{station}_filled_sensor_qc.csv",
-        OUT_DIR / f"Station{station}_filled_verylonggaps_repaired.csv",
-        OUT_DIR / f"Station{station}_filled_verylonggaps.csv",
-        OUT_DIR / f"Station{station}_filled_longgaps_repaired.csv",
-    ]
-    return next((p for p in candidates if p.exists()), candidates[0])
+def input_path_for(
+    station: str,
+    manual_stations: set[str],
+    directory: Path = OUT_DIR,
+) -> Path:
+    suffix = "filled_manual_qc.csv" if station in manual_stations else "filled_sensor_qc.csv"
+    path = Path(directory) / f"Station{station}_{suffix}"
+    prerequisite = "manual-QC" if station in manual_stations else "sensor-QC"
+    if not path.is_file():
+        raise FileNotFoundError(
+            f"FinalResidualGaps.py requires {prerequisite} input for "
+            f"Station{station}: {path}"
+        )
+    return path
 
 
 def discover_stations() -> List[str]:
-    manual_pat = re.compile(r"Station(.+)_filled_manual_qc\.csv")
-    manual_stations = [
-        m.group(1)
-        for path in OUT_DIR.glob("Station*_filled_manual_qc.csv")
-        if (m := manual_pat.match(path.name))
-    ]
-
-    pat = re.compile(r"Station(.+)_filled_sensor_qc\.csv")
-    sensor_stations = [
-        m.group(1)
-        for path in OUT_DIR.glob("Station*_filled_sensor_qc.csv")
-        if (m := pat.match(path.name))
-    ]
-    stations = sorted(set(manual_stations) | set(sensor_stations))
-    if stations:
-        return stations
-
-    fallback = re.compile(r"Station(.+)_filled_verylonggaps_repaired\.csv")
+    pattern = re.compile(r"Station(.+)_filled_verylonggaps_repaired\.csv")
     return sorted(
         m.group(1)
         for path in OUT_DIR.glob("Station*_filled_verylonggaps_repaired.csv")
-        if (m := fallback.match(path.name))
+        if (m := pattern.match(path.name))
     )
 
 
@@ -353,35 +341,62 @@ def nan_runs(df: pd.DataFrame, param: str) -> List[pd.DatetimeIndex]:
     return runs
 
 
-def load_manual_refill_overrides() -> pd.DataFrame:
-    if not MANUAL_QC_MASKS.exists():
-        return pd.DataFrame()
-    masks = pd.read_csv(MANUAL_QC_MASKS, parse_dates=["Start", "End"])
+def load_manual_masks(path: Path = MANUAL_QC_MASKS) -> pd.DataFrame:
+    if not path.is_file():
+        raise FileNotFoundError(f"Manual QC decision file not found: {path}")
+    masks = pd.read_csv(path, parse_dates=["Start", "End"])
+    required = {"Station", "Parameter", "Start", "End", "Decision"}
+    missing = required - set(masks.columns)
+    if missing:
+        raise ValueError(f"Manual QC decision file is missing columns: {sorted(missing)}")
+    masks["Station"] = masks["Station"].astype(str)
+    return masks[masks["Decision"].eq("mask_and_refill")].copy()
+
+
+def load_manual_refill_overrides(masks: pd.DataFrame) -> pd.DataFrame:
     if "Refill Method" not in masks.columns:
         return pd.DataFrame()
-    masks["Station"] = masks["Station"].astype(str)
+    masks = masks.copy()
     masks["Refill Method"] = masks["Refill Method"].fillna("auto").astype(str)
     return masks[masks["Refill Method"].ne("auto")].copy()
 
 
-def refill_method_for_run(
+def split_run_by_refill_override(
+    run: pd.DatetimeIndex,
     overrides: pd.DataFrame,
     station: str,
     param: str,
-    start: pd.Timestamp,
-    end: pd.Timestamp,
-) -> str:
+) -> List[Tuple[pd.DatetimeIndex, str]]:
+    if len(run) == 0:
+        return []
+    methods = pd.Series("auto", index=run, dtype="object")
     if overrides.empty:
-        return "auto"
+        return [(run, "auto")]
+
     matches = overrides[
         overrides["Station"].eq(station)
         & overrides["Parameter"].eq(param)
-        & (overrides["Start"] <= end)
-        & (overrides["End"] >= start)
+        & (overrides["Start"] <= run[-1])
+        & (overrides["End"] >= run[0])
     ]
-    if matches.empty:
-        return "auto"
-    return str(matches.iloc[0]["Refill Method"])
+    for _, row in matches.iterrows():
+        method = str(row["Refill Method"])
+        covered = (methods.index >= row["Start"]) & (methods.index <= row["End"])
+        current = methods.loc[covered]
+        conflict = current.ne("auto") & current.ne(method)
+        if conflict.any():
+            first_conflict = current.index[conflict][0]
+            raise ValueError(
+                f"Conflicting manual refill methods for Station{station} {param} "
+                f"at {first_conflict}: {current.loc[first_conflict]} vs {method}"
+            )
+        methods.loc[covered] = method
+
+    group_ids = methods.ne(methods.shift()).cumsum()
+    return [
+        (pd.DatetimeIndex(group.index), str(group.iloc[0]))
+        for _, group in methods.groupby(group_ids, sort=False)
+    ]
 
 
 def fill_station(
@@ -429,11 +444,15 @@ def fill_station(
             print(f"  {param}: {len(runs)} run(s), no regression donor; donor-mean fallback")
 
         filled_count = 0
-        for idx in runs:
+        segmented_runs = (
+            segment
+            for run in runs
+            for segment in split_run_by_refill_override(run, refill_overrides, station, param)
+        )
+        for idx, refill_method in segmented_runs:
             start, end = idx[0], idx[-1]
             pred_parts: List[pd.DataFrame] = []
             predicted_idx = pd.DatetimeIndex([])
-            refill_method = refill_method_for_run(refill_overrides, station, param, start, end)
 
             if refill_method == "donor_mean":
                 mean_preds = donor_mean_prediction(idx, available_donors, param, min_std).dropna()
@@ -563,11 +582,17 @@ def main() -> None:
     stations = args.station if args.station else donor_pool
     params = args.param if args.param else DEFAULT_PARAMS
     if not stations:
-        print("No staged sensor-QC files found in ./output, abort.", file=sys.stderr)
+        print("No validated very-long-gap station cohort found in ./output, abort.", file=sys.stderr)
         sys.exit(1)
 
-    all_data = {station: read_station(input_path_for(station)) for station in donor_pool}
-    refill_overrides = load_manual_refill_overrides()
+    manual_masks = load_manual_masks()
+    manual_stations = set(manual_masks["Station"])
+    load_stations = sorted(set(donor_pool) | set(stations))
+    all_data = {
+        station: read_station(input_path_for(station, manual_stations))
+        for station in load_stations
+    }
+    refill_overrides = load_manual_refill_overrides(manual_masks)
     OUT_DIR.mkdir(exist_ok=True)
     for station in stations:
         fill_station(station, params, all_data, args.min_overlap, args.min_abs_corr, refill_overrides)

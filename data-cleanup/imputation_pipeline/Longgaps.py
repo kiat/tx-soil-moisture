@@ -1,12 +1,12 @@
 """Fill 168- to 719-hour soil gaps with XGBoost.
 
-The 33-station workflow uses repaired medium-gap outputs as the default input:
+The 33-station workflow requires validated medium-gap outputs:
 
     output/Station{site}_filled_mediumgaps_repaired.csv
 
-If a repaired file does not exist, the script falls back to the raw medium-gap
-output. Station IDs are treated as strings, so both site codes (CB01) and old
-numeric IDs can be used.
+Run validate_mediumgaps.py with --write-repaired before this stage. Station IDs
+are treated as strings, so both site codes (CB01) and old numeric IDs can be
+used.
 """
 import argparse
 import re
@@ -30,17 +30,17 @@ DEFAULT_PARAMS = ALL_SOIL_PARAMS
 
 
 def input_path_for(station_id, directory=OUT_DIR):
-    candidates = [
-        Path(directory) / f"Station{station_id}_filled_mediumgaps_repaired.csv",
-        Path(directory) / f"Station{station_id}_filled_mediumgaps.csv",
-    ]
-    return next((p for p in candidates if p.exists()), candidates[0])
+    path = Path(directory) / f"Station{station_id}_filled_mediumgaps_repaired.csv"
+    if not path.is_file():
+        raise FileNotFoundError(
+            f"Longgaps.py requires validated medium-gap input for Station{station_id}: "
+            f"{path}. Run validate_mediumgaps.py --write-repaired first."
+        )
+    return path
 
 
 def load_medium_data(station_id, directory=OUT_DIR):
     filename = input_path_for(station_id, directory)
-    if not filename.exists():
-        raise FileNotFoundError(f"No medium-gap input found for Station{station_id}")
     df = pd.read_csv(filename, parse_dates=[0], index_col=0)
     df.index = pd.DatetimeIndex(df.index)
     df = ensure_hourly_regular_index(df)
@@ -268,10 +268,10 @@ def parse_args():
 
 
 def discover_stations():
-    pat = re.compile(r"Station(.+)_filled_mediumgaps(?:_repaired)?\.csv")
+    pat = re.compile(r"Station(.+)_filled_mediumgaps_repaired\.csv")
     stations = {
         m.group(1)
-        for f in OUT_DIR.glob("Station*_filled_mediumgaps*.csv")
+        for f in OUT_DIR.glob("Station*_filled_mediumgaps_repaired.csv")
         if (m := pat.match(f.name))
     }
     return sorted(stations)

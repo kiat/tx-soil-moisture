@@ -43,12 +43,13 @@ def read_station(path: Path) -> pd.DataFrame:
 
 
 def input_path_for(station: str) -> Path:
-    candidates = [
-        OUT_DIR / f"Station{station}_filled_sensor_qc.csv",
-        OUT_DIR / f"Station{station}_filled_verylonggaps_repaired.csv",
-        OUT_DIR / f"Station{station}_filled_verylonggaps.csv",
-    ]
-    return next((p for p in candidates if p.exists()), candidates[0])
+    path = OUT_DIR / f"Station{station}_filled_sensor_qc.csv"
+    if not path.is_file():
+        raise FileNotFoundError(
+            f"apply_manual_qc_masks.py requires sensor-QC input for "
+            f"Station{station}: {path}"
+        )
+    return path
 
 
 def load_masks(path: Path) -> pd.DataFrame:
@@ -75,18 +76,6 @@ def main() -> None:
 
     for station in stations:
         input_path = input_path_for(station)
-        if not input_path.exists():
-            station_rows.append(
-                {
-                    "Station": station,
-                    "Input File": input_path.name,
-                    "Output File": f"Station{station}_filled_manual_qc.csv",
-                    "Masked Hours": 0,
-                    "Status": "missing_input",
-                }
-            )
-            continue
-
         df = read_station(input_path)
         station_masked = 0
         station_masks = masks[masks["Station"] == station]

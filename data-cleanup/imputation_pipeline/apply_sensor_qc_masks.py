@@ -46,13 +46,14 @@ def discover_stations() -> List[str]:
     )
 
 
-def latest_path_for(station: str) -> Path:
-    candidates = [
-        OUT_DIR / f"Station{station}_filled_verylonggaps_repaired.csv",
-        OUT_DIR / f"Station{station}_filled_verylonggaps.csv",
-        OUT_DIR / f"Station{station}_filled_longgaps_repaired.csv",
-    ]
-    return next((p for p in candidates if p.exists()), candidates[0])
+def input_path_for(station: str) -> Path:
+    path = OUT_DIR / f"Station{station}_filled_verylonggaps_repaired.csv"
+    if not path.is_file():
+        raise FileNotFoundError(
+            f"apply_sensor_qc_masks.py requires validated very-long-gap input "
+            f"for Station{station}: {path}"
+        )
+    return path
 
 
 def read_station(path: Path) -> pd.DataFrame:
@@ -91,6 +92,11 @@ def mask_for_row(df: pd.DataFrame, row: pd.Series, mask_localized_bound_values: 
 def main() -> None:
     args = parse_args()
     stations = args.station if args.station else discover_stations()
+    if not stations:
+        raise FileNotFoundError(
+            "No validated very-long-gap outputs found. Run validate_verylonggaps.py "
+            "--write-repaired before sensor QC."
+        )
     decisions = load_decisions(args.decision_dir)
     decisions["Station"] = decisions["Station"].astype(str)
     selected = decisions[decisions["Station"].isin(stations)]
@@ -99,9 +105,7 @@ def main() -> None:
     station_rows: List[Dict[str, object]] = []
 
     for station in stations:
-        input_path = latest_path_for(station)
-        if not input_path.exists():
-            continue
+        input_path = input_path_for(station)
         df = read_station(input_path)
         station_masked = 0
 

@@ -101,16 +101,22 @@ ALL_PARAMS = list(FILL_ORDER)
 
 
 def get_family(param: str) -> str:
-    return PARAM_FAMILY.get(param, SOIL_MOISTURE)
+    try:
+        return PARAM_FAMILY[param]
+    except KeyError as exc:
+        supported = ", ".join(PARAM_FAMILY)
+        raise ValueError(
+            f"Unknown parameter {param!r}. Supported parameters: {supported}"
+        ) from exc
 
 
 def short_interp_for(param: str) -> str:
-    return SHORT_INTERP_BY_FAMILY.get(get_family(param), "linear")
+    return SHORT_INTERP_BY_FAMILY[get_family(param)]
 
 
 def exog_for(param: str) -> List[str]:
-    return FAMILY_EXOG_MAP.get(get_family(param), [])
+    return FAMILY_EXOG_MAP[get_family(param)]
 
 
 def driver_dependencies(param: str) -> List[str]:
-    return FAMILY_DRIVER_DEPENDENCIES.get(get_family(param), [])
+    return FAMILY_DRIVER_DEPENDENCIES[get_family(param)]

@@ -1,6 +1,6 @@
 """Fill soil gaps of 720 hours or longer with donor-station regression.
 
-The 33-station workflow uses repaired long-gap outputs as the default input:
+The 33-station workflow requires validated long-gap outputs:
 
     output/Station{site}_filled_longgaps_repaired.csv
 
@@ -37,19 +37,17 @@ DEFAULT_PARAMS = ALL_SOIL_PARAMS
 
 
 def input_path_for(station_id: str, directory=OUT_DIR) -> Path:
-    candidates = [
-        Path(directory) / f"Station{station_id}_filled_longgaps_repaired.csv",
-        Path(directory) / f"Station{station_id}_filled_longgaps.csv",
-        Path(directory) / f"Station{station_id}_filled_mediumgaps_repaired.csv",
-        Path(directory) / f"Station{station_id}_filled_mediumgaps.csv",
-    ]
-    return next((p for p in candidates if p.exists()), candidates[0])
+    path = Path(directory) / f"Station{station_id}_filled_longgaps_repaired.csv"
+    if not path.is_file():
+        raise FileNotFoundError(
+            f"VeryLongGaps.py requires validated long-gap input for Station{station_id}: "
+            f"{path}. Run validate_longgaps.py --write-repaired first."
+        )
+    return path
 
 
 def load_stage_data(station_id: str, directory=OUT_DIR) -> pd.DataFrame:
     filename = input_path_for(station_id, directory)
-    if not filename.exists():
-        raise FileNotFoundError(f"No staged input found for Station{station_id}")
     df = pd.read_csv(filename, parse_dates=[0], index_col=0)
     df.index = pd.DatetimeIndex(df.index)
     return ensure_hourly_regular_index(df)
@@ -75,10 +73,10 @@ def filter_very_long_gaps(df_missing: pd.DataFrame, parameter: str, min_gap=720)
 
 
 def discover_stations() -> List[str]:
-    pat = re.compile(r"Station(.+)_filled_longgaps(?:_repaired)?\.csv")
+    pat = re.compile(r"Station(.+)_filled_longgaps_repaired\.csv")
     stations = {
         m.group(1)
-        for f in OUT_DIR.glob("Station*_filled_longgaps*.csv")
+        for f in OUT_DIR.glob("Station*_filled_longgaps_repaired.csv")
         if (m := pat.match(f.name))
     }
     return sorted(stations)
@@ -351,7 +349,7 @@ def main() -> None:
     stations = args.station if args.station else donor_pool
     params = args.param if args.param else DEFAULT_PARAMS
     if not stations:
-        print("No staged long-gap files found in ./output, abort.", file=sys.stderr)
+        print("No validated long-gap files found in ./output, abort.", file=sys.stderr)
         sys.exit(1)
 
     all_data = {station: load_stage_data(station) for station in donor_pool}

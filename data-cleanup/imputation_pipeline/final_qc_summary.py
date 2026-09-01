@@ -1,7 +1,7 @@
 """Build final QC summaries after staged soil-gap filling.
 
-This script does not modify station data. It audits the latest repaired output
-files, reports residual issues, and joins the recorded review decisions for
+This script does not modify station data. It audits an explicitly selected
+pipeline stage, reports residual issues, and joins the recorded review decisions for
 unavailable sensors, bound values, near-zero/flat sensors, and screened
 very-long-gap segments.
 """
@@ -21,6 +21,7 @@ BASE_DIR = Path(__file__).resolve().parent
 OUT_DIR = BASE_DIR / "output"
 REPORT_DIR = BASE_DIR / "final_qc_reports"
 REVIEW_DECISIONS = BASE_DIR / "soil_qc_review_decisions.csv"
+MANUAL_QC_MASKS = BASE_DIR / "manual_qc_masks.csv"
 
 PARAM_SUMMARY_COLUMNS = [
     "Station", "Parameter", "Input File", "Start", "End", "Total Hours",
@@ -37,6 +38,12 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser("Summarize final QC issues after gap filling.")
     parser.add_argument("--station", type=str, nargs="*", help="Station IDs/site codes to audit.")
     parser.add_argument("--param", type=str, nargs="*", help="Parameters to audit.")
+    parser.add_argument(
+        "--input-stage",
+        choices=["verylong-repaired", "post-qc", "final"],
+        default="final",
+        help="Exact pipeline stage to audit; inputs never fall back to another stage.",
+    )
     parser.add_argument("--report-dir", type=Path, default=REPORT_DIR, help="Directory for QC report CSVs.")
     parser.add_argument("--swc-near-zero", type=float, default=0.01)
     parser.add_argument("--swc-flat-range", type=float, default=0.01)
@@ -46,38 +53,53 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def latest_path_for(station: str) -> Path:
-    candidates = [
-        OUT_DIR / f"Station{station}_filled_final.csv",
-        OUT_DIR / f"Station{station}_filled_manual_qc.csv",
-        OUT_DIR / f"Station{station}_filled_sensor_qc.csv",
-        OUT_DIR / f"Station{station}_filled_verylonggaps_repaired.csv",
-        OUT_DIR / f"Station{station}_filled_verylonggaps.csv",
-        OUT_DIR / f"Station{station}_filled_longgaps_repaired.csv",
-        OUT_DIR / f"Station{station}_filled_longgaps.csv",
-        OUT_DIR / f"Station{station}_filled_mediumgaps_repaired.csv",
-        OUT_DIR / f"Station{station}_filled_mediumgaps.csv",
-        OUT_DIR / f"Station{station}_filled_shortgaps.csv",
-        BASE_DIR / "cleaned_data" / f"Station{station}_cleaned_data.csv",
-    ]
-    return next((p for p in candidates if p.exists()), candidates[0])
+def manual_qc_stations(path: Path = MANUAL_QC_MASKS) -> set[str]:
+    if not path.is_file():
+        raise FileNotFoundError(f"Manual QC decision file not found: {path}")
+    masks = pd.read_csv(path)
+    required = {"Station", "Decision"}
+    missing = required - set(masks.columns)
+    if missing:
+        raise ValueError(f"Manual QC decision file is missing columns: {sorted(missing)}")
+    selected = masks[masks["Decision"].eq("mask_and_refill")].copy()
+    return set(selected["Station"].astype(str))
+
+
+def input_path_for(
+    station: str,
+    input_stage: str,
+    stations_with_manual_qc: set[str] | None = None,
+    directory: Path = OUT_DIR,
+) -> Path:
+    if input_stage == "verylong-repaired":
+        suffix = "filled_verylonggaps_repaired.csv"
+    elif input_stage == "final":
+        suffix = "filled_final.csv"
+    elif input_stage == "post-qc":
+        if stations_with_manual_qc is None:
+            raise ValueError("post-qc input requires the manual-QC station decision set")
+        suffix = (
+            "filled_manual_qc.csv"
+            if station in stations_with_manual_qc
+            else "filled_sensor_qc.csv"
+        )
+    else:
+        raise ValueError(f"Unsupported final QC input stage: {input_stage}")
+
+    path = Path(directory) / f"Station{station}_{suffix}"
+    if not path.is_file():
+        raise FileNotFoundError(
+            f"final_qc_summary.py requires {input_stage} input for Station{station}: {path}"
+        )
+    return path
 
 
 def discover_stations() -> List[str]:
     pat = re.compile(r"Station(.+)_filled_verylonggaps_repaired\.csv")
-    stations = [
+    return sorted(
         m.group(1)
         for path in OUT_DIR.glob("Station*_filled_verylonggaps_repaired.csv")
         if (m := pat.match(path.name))
-    ]
-    if stations:
-        return sorted(stations)
-
-    fallback_pat = re.compile(r"Station(.+)_filled_verylonggaps\.csv")
-    return sorted(
-        m.group(1)
-        for path in OUT_DIR.glob("Station*_filled_verylonggaps.csv")
-        if (m := fallback_pat.match(path.name))
     )
 
 
@@ -372,6 +394,14 @@ def main() -> None:
     args = parse_args()
     stations = args.station if args.station else discover_stations()
     params = args.param if args.param else ALL_SOIL_PARAMS
+    if not stations:
+        raise FileNotFoundError(
+            "No validated very-long-gap station cohort was found; specify --station "
+            "or run validate_verylonggaps.py --write-repaired first."
+        )
+    stations_with_manual_qc = (
+        manual_qc_stations() if args.input_stage == "post-qc" else set()
+    )
 
     overview_rows: List[dict] = []
     param_rows: List[dict] = []
@@ -380,10 +410,7 @@ def main() -> None:
     suspicious_rows: List[dict] = []
 
     for station in stations:
-        path = latest_path_for(station)
-        if not path.exists():
-            overview_rows.append({"Station": station, "Input File": str(path), "Status": "missing_input"})
-            continue
+        path = input_path_for(station, args.input_stage, stations_with_manual_qc)
         df = read_station(path)
         station_nan = 0
 

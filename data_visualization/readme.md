@@ -18,8 +18,9 @@ data-cleanup/imputation_pipeline/met_output/Station{site}_met_filled_complete.cs
 The soil file supplies soil moisture and soil temperature. The MET complete
 file supplies `Ppt`, `Tair`, `RH`, `Srad`, `Wind speed`, and `Wind direction`.
 The merge happens only in memory for plotting; the notebook does not create or
-modify a delivery CSV. If a final soil or MET file is unavailable, the loader
-uses the latest available pipeline stage and leaves its remaining gaps visible.
+modify a delivery CSV. The loader requires paired final Soil and final MET files
+and fails clearly when either product is unavailable; it never substitutes an
+earlier pipeline stage.
 
 From the repository root:
 

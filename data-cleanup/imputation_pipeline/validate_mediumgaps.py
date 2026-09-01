@@ -68,6 +68,19 @@ def read_series_file(path: Path) -> pd.DataFrame:
     return df.sort_index()
 
 
+def required_input_path(station: str, stage: str) -> Path:
+    suffix_by_stage = {
+        "short": "filled_shortgaps.csv",
+        "medium": "filled_mediumgaps.csv",
+    }
+    path = OUT_DIR / f"Station{station}_{suffix_by_stage[stage]}"
+    if not path.is_file():
+        raise FileNotFoundError(
+            f"validate_mediumgaps.py requires {stage}-gap input for Station{station}: {path}"
+        )
+    return path
+
+
 def load_expected_segments(stations: Iterable[str], params: Iterable[str]) -> Dict[SegmentKey, int]:
     selected_stations = set(stations)
     selected_params = set(params)
@@ -127,9 +140,7 @@ def load_filled_segments(stations: Iterable[str], params: Iterable[str]) -> Dict
 
 
 def training_observed_hours(station: str, param: str, start: pd.Timestamp) -> Optional[int]:
-    short_path = OUT_DIR / f"Station{station}_filled_shortgaps.csv"
-    if not short_path.exists():
-        return None
+    short_path = required_input_path(station, "short")
     short = read_series_file(short_path)
     if param not in short.columns:
         return None
@@ -244,6 +255,10 @@ def build_summary(args: argparse.Namespace) -> Tuple[pd.DataFrame, Dict[SegmentK
     stations = args.station if args.station else discover_stations()
     params = args.param if args.param else ALL_SOIL_PARAMS
 
+    for station in stations:
+        required_input_path(station, "short")
+        required_input_path(station, "medium")
+
     expected = load_expected_segments(stations, params)
     filled = load_filled_segments(stations, params)
     all_keys = sorted(
@@ -268,11 +283,11 @@ def build_summary(args: argparse.Namespace) -> Tuple[pd.DataFrame, Dict[SegmentK
         if key in filled:
             if key.station not in medium_cache:
                 medium_cache[key.station] = read_series_file(
-                    OUT_DIR / f"Station{key.station}_filled_mediumgaps.csv"
+                    required_input_path(key.station, "medium")
                 )
             if key.station not in short_cache:
                 short_cache[key.station] = read_series_file(
-                    OUT_DIR / f"Station{key.station}_filled_shortgaps.csv"
+                    required_input_path(key.station, "short")
                 )
             status, reason, metrics = segment_metrics(
                 key, filled[key], medium_cache[key.station], short_cache[key.station], args
@@ -316,9 +331,7 @@ def write_repaired_outputs(
         accepted_by_station.setdefault(key.station, []).append(detail)
 
     for station in stations:
-        medium_path = OUT_DIR / f"Station{station}_filled_mediumgaps.csv"
-        if not medium_path.exists():
-            continue
+        medium_path = required_input_path(station, "medium")
         repaired = read_series_file(medium_path)
         for key in rejected_keys:
             if key.station != station or key.parameter not in repaired.columns:
@@ -360,6 +373,10 @@ def write_summaries(summary: pd.DataFrame, report_dir: Path) -> None:
 def main() -> None:
     args = parse_args()
     stations = args.station if args.station else discover_stations()
+    if not stations:
+        raise FileNotFoundError(
+            "No medium-gap outputs found. Run Mediumgaps.py before validation."
+        )
 
     summary, accepted_details = build_summary(args)
     if summary.empty:

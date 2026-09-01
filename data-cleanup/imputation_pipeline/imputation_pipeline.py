@@ -213,8 +213,8 @@ def build_steps(args: argparse.Namespace, stages: Sequence[str], stations: Seque
     params_arg = args.param
     targeted = bool(stations_arg)
 
-    def final_qc_command(report_name: str) -> List[str]:
-        base = [py, "final_qc_summary.py"]
+    def final_qc_command(report_name: str, input_stage: str) -> List[str]:
+        base = [py, "final_qc_summary.py", "--input-stage", input_stage]
         if targeted:
             base.extend(["--report-dir", str(ROOT / "targeted_qc_reports" / report_name)])
         return command_with_selection(base, stations_arg, params_arg)
@@ -253,7 +253,7 @@ def build_steps(args: argparse.Namespace, stages: Sequence[str], stations: Seque
         "validate-long": validation_command("validate_longgaps.py", "long_validation"),
         "verylong": command_with_selection([py, "VeryLongGaps.py"], stations_arg, params_arg),
         "validate-verylong": validation_command("validate_verylonggaps.py", "verylong_validation"),
-        "qc-before-sensor": final_qc_command("before_sensor"),
+        "qc-before-sensor": final_qc_command("before_sensor", "verylong-repaired"),
         "sensor-decisions": [
             py,
             "sensor_qc_decisions.py",
@@ -273,9 +273,9 @@ def build_steps(args: argparse.Namespace, stages: Sequence[str], stations: Seque
             *(["--report-dir", str(manual_report_dir)] if targeted else []),
             *(["--station", *stations_arg] if stations_arg else []),
         ],
-        "qc-after-sensor": final_qc_command("after_sensor"),
+        "qc-after-sensor": final_qc_command("after_sensor", "post-qc"),
         "final": command_with_selection([py, "FinalResidualGaps.py"], stations_arg, params_arg),
-        "qc-final": final_qc_command("final"),
+        "qc-final": final_qc_command("final", "final"),
         "met": met_command(),
         "met-full": met_command("--full", "--repair-review"),
         "met-ppt": met_command("--ppt-full"),

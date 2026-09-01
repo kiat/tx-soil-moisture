@@ -434,36 +434,29 @@ def reconcile_station_ppt(
     )
 
 
-def contiguous_nan_runs(series: pd.Series) -> List[pd.DatetimeIndex]:
-    missing = series.isna().to_numpy()
+def contiguous_hourly_runs(index: pd.DatetimeIndex) -> List[pd.DatetimeIndex]:
+    """Split timestamps into runs whose adjacent values are exactly one hour apart."""
+    timestamps = pd.DatetimeIndex(index)
+    if len(timestamps) == 0:
+        return []
+
     runs: List[pd.DatetimeIndex] = []
-    i = 0
-    while i < len(missing):
-        if not missing[i]:
-            i += 1
-            continue
-        j = i
-        while j < len(missing) and missing[j]:
-            j += 1
-        runs.append(pd.DatetimeIndex(series.index[i:j]))
-        i = j
+    start = 0
+    for position in range(1, len(timestamps)):
+        if timestamps[position] - timestamps[position - 1] != pd.Timedelta(hours=1):
+            runs.append(timestamps[start:position])
+            start = position
+    runs.append(timestamps[start:])
     return runs
+
+
+def contiguous_nan_runs(series: pd.Series) -> List[pd.DatetimeIndex]:
+    return contiguous_hourly_runs(pd.DatetimeIndex(series.index[series.isna()]))
 
 
 def contiguous_true_runs(mask: pd.Series) -> List[pd.DatetimeIndex]:
-    values = mask.fillna(False).to_numpy(dtype=bool)
-    runs: List[pd.DatetimeIndex] = []
-    i = 0
-    while i < len(values):
-        if not values[i]:
-            i += 1
-            continue
-        j = i
-        while j < len(values) and values[j]:
-            j += 1
-        runs.append(pd.DatetimeIndex(mask.index[i:j]))
-        i = j
-    return runs
+    selected = mask.fillna(False).astype(bool)
+    return contiguous_hourly_runs(pd.DatetimeIndex(mask.index[selected]))
 
 
 def suspicious_low_scale_rh_mask(target: pd.Series) -> pd.Series:

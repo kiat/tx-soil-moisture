@@ -38,13 +38,27 @@ def pipeline_dir() -> Path:
 
 
 def discover_stations() -> list[str]:
-    cleaned_dir = pipeline_dir() / "cleaned_data"
-    stations = []
-    for path in cleaned_dir.glob("Station*_cleaned_data.csv"):
-        station = path.name.removeprefix("Station").removesuffix("_cleaned_data.csv")
-        if station and not station.isdigit():
-            stations.append(station)
-    return sorted(stations)
+    base = pipeline_dir()
+    soil_stations = {
+        path.name.removeprefix("Station").removesuffix("_filled_final.csv")
+        for path in (base / "output").glob("Station*_filled_final.csv")
+    }
+    met_stations = {
+        path.name.removeprefix("Station").removesuffix("_met_filled_complete.csv")
+        for path in (base / "met_output").glob("Station*_met_filled_complete.csv")
+    }
+    if not soil_stations and not met_stations:
+        raise FileNotFoundError(
+            "No final Soil or MET station files were found. Run the final Soil and MET stages first."
+        )
+    if soil_stations != met_stations:
+        missing_soil = sorted(met_stations - soil_stations)
+        missing_met = sorted(soil_stations - met_stations)
+        raise FileNotFoundError(
+            "Final visualization requires paired Soil and MET outputs for every station. "
+            f"Missing Soil: {missing_soil or 'none'}; missing MET: {missing_met or 'none'}."
+        )
+    return sorted(soil_stations)
 
 
 def read_time_series(path: Path) -> pd.DataFrame:
@@ -55,41 +69,29 @@ def read_time_series(path: Path) -> pd.DataFrame:
 
 
 def load_station_data(station_id: str) -> pd.DataFrame:
-    """Merge the latest soil result with the final MET result by timestamp."""
+    """Merge the final Soil and final MET products by timestamp."""
     base = pipeline_dir()
-    soil_candidates = [
-        base / "output" / f"Station{station_id}_filled_final.csv",
-        base / "output" / f"Station{station_id}_filled_manual_qc.csv",
-        base / "output" / f"Station{station_id}_filled_sensor_qc.csv",
-        base / "output" / f"Station{station_id}_filled_verylonggaps_repaired.csv",
-        base / "output" / f"Station{station_id}_filled_verylonggaps.csv",
-        base / "output" / f"Station{station_id}_filled_longgaps_repaired.csv",
-        base / "output" / f"Station{station_id}_filled_longgaps.csv",
-        base / "output" / f"Station{station_id}_filled_mediumgaps_repaired.csv",
-        base / "output" / f"Station{station_id}_filled_mediumgaps.csv",
-        base / "output" / f"Station{station_id}_filled_shortgaps.csv",
-        base / "cleaned_data" / f"Station{station_id}_cleaned_data.csv",
-    ]
-    soil_path = next(
-        (candidate for candidate in soil_candidates if candidate.exists()),
-        None,
-    )
-    if soil_path is None:
-        raise FileNotFoundError(f"No pipeline output found for station {station_id}")
+    soil_path = base / "output" / f"Station{station_id}_filled_final.csv"
+    met_path = base / "met_output" / f"Station{station_id}_met_filled_complete.csv"
+    missing = [str(path) for path in (soil_path, met_path) if not path.is_file()]
+    if missing:
+        raise FileNotFoundError(
+            f"Final visualization inputs are missing for Station{station_id}: "
+            + ", ".join(missing)
+        )
 
-    combined = read_time_series(soil_path)
-    met_path = (
-        base / "met_output" / f"Station{station_id}_met_filled_complete.csv"
-    )
-    if not met_path.exists():
-        return combined
-
+    combined = read_time_series(soil_path).drop(columns=MET_COLS, errors="ignore")
     met = read_time_series(met_path)
+    missing_met_columns = [column for column in MET_COLS if column not in met.columns]
+    if missing_met_columns:
+        raise ValueError(
+            f"Final MET file for Station{station_id} is missing columns: "
+            + ", ".join(missing_met_columns)
+        )
     merged_index = combined.index.union(met.index).sort_values()
     combined = combined.reindex(merged_index)
     for column in MET_COLS:
-        if column in met.columns:
-            combined[column] = met[column].reindex(merged_index)
+        combined[column] = met[column].reindex(merged_index)
     return combined
 
 
