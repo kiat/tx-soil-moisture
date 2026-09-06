@@ -19,6 +19,8 @@ from typing import Dict, List
 
 import pandas as pd
 
+from time_index_utils import require_unique_datetime_index
+
 
 BASE_DIR = Path(__file__).resolve().parent
 OUT_DIR = BASE_DIR / "output"
@@ -39,6 +41,7 @@ def read_station(path: Path) -> pd.DataFrame:
     df = pd.read_csv(path, index_col=0, parse_dates=True)
     df.index = pd.DatetimeIndex(df.index)
     df.index.name = "Date"
+    require_unique_datetime_index(df, str(path))
     return df.sort_index()
 
 

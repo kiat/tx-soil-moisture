@@ -10,7 +10,7 @@ Examples:
     python imputation_pipeline.py --stage qc
     python imputation_pipeline.py --stage final
     python imputation_pipeline.py --stage all --dry-run
-    python imputation_pipeline.py --stage all --station CB01 FD08
+    python imputation_pipeline.py --stage medium --station CB01 FD08
     python imputation_pipeline.py --stage met --station FD02
     python imputation_pipeline.py --stage met-full --station FD02
     python imputation_pipeline.py --stage met-ppt --station FD02
@@ -30,6 +30,8 @@ from param_config import ALL_MET_PARAMS, ALL_SOIL_PARAMS
 
 ROOT = Path(__file__).resolve().parent
 DEFAULT_DATA_DIR = ROOT / ".." / ".." / "datasets" / "TxSON_data_2026-02-24"
+SENSOR_REPORT_DIR = ROOT / "sensor_qc_reports"
+BEFORE_SENSOR_REPORT_DIR = SENSOR_REPORT_DIR / "before_sensor"
 
 
 @dataclass(frozen=True)
@@ -76,6 +78,8 @@ STALE_PATTERNS_BY_STAGE = {
         "cleaned_data/Station*_cleaned_data.csv",
         "missing_data/Station*_missing_data.csv",
         "raw_merged_data/raw_merged_station_*.csv",
+        "duplicate_resolution_reports/Station*_duplicate_summary.csv",
+        "duplicate_resolution_reports/Station*_duplicate_conflicts.csv",
     ],
     "short": [
         "output/Station*_filled_shortgaps.csv",
@@ -178,6 +182,25 @@ def discover_stations(soil_base_dir: Path) -> List[str]:
     return sorted(dict.fromkeys(stations))
 
 
+def validate_qc_scope(args: argparse.Namespace) -> None:
+    """Prevent filtered runs from publishing partial production QC artifacts."""
+    if args.stage not in {"qc", "final", "all", "soil"}:
+        return
+    selected = []
+    if args.station:
+        selected.append("--station")
+    if args.param:
+        selected.append("--param")
+    if selected:
+        raise ValueError(
+            f"Stage '{args.stage}' includes production QC and therefore requires "
+            "the full station cohort and all soil parameters. Filtered production "
+            f"QC is disabled ({', '.join(selected)} supplied). For a scoped, "
+            "read-only diagnostic, run final_qc_summary.py with --station/--param "
+            "and an explicit non-production --report-dir."
+        )
+
+
 def command_with_selection(base: Sequence[str], stations: Sequence[str] | None, params: Sequence[str] | None) -> List[str]:
     command = list(base)
     if stations:
@@ -213,15 +236,30 @@ def build_steps(args: argparse.Namespace, stages: Sequence[str], stations: Seque
     params_arg = args.param
     targeted = bool(stations_arg)
 
-    def final_qc_command(report_name: str, input_stage: str) -> List[str]:
+    def final_qc_command(
+        report_name: str,
+        input_stage: str,
+        report_dir: Path | None = None,
+    ) -> List[str]:
         base = [py, "final_qc_summary.py", "--input-stage", input_stage]
-        if targeted:
-            base.extend(["--report-dir", str(ROOT / "targeted_qc_reports" / report_name)])
+        destination = report_dir
+        if destination is None and targeted:
+            destination = ROOT / "targeted_qc_reports" / report_name
+        if destination is not None:
+            base.extend(["--report-dir", str(destination)])
         return command_with_selection(base, stations_arg, params_arg)
 
-    sensor_report_dir = ROOT / "targeted_qc_reports" / "sensor_qc"
+    sensor_report_dir = (
+        ROOT / "targeted_qc_reports" / "sensor_qc"
+        if targeted
+        else SENSOR_REPORT_DIR
+    )
     manual_report_dir = ROOT / "targeted_qc_reports" / "manual_qc"
-    before_sensor_dir = ROOT / "targeted_qc_reports" / "before_sensor"
+    before_sensor_dir = (
+        ROOT / "targeted_qc_reports" / "before_sensor"
+        if targeted
+        else BEFORE_SENSOR_REPORT_DIR
+    )
 
     def validation_command(script: str, report_name: str) -> List[str]:
         base = [py, script, "--write-repaired"]
@@ -253,11 +291,18 @@ def build_steps(args: argparse.Namespace, stages: Sequence[str], stations: Seque
         "validate-long": validation_command("validate_longgaps.py", "long_validation"),
         "verylong": command_with_selection([py, "VeryLongGaps.py"], stations_arg, params_arg),
         "validate-verylong": validation_command("validate_verylonggaps.py", "verylong_validation"),
-        "qc-before-sensor": final_qc_command("before_sensor", "verylong-repaired"),
+        "qc-before-sensor": final_qc_command(
+            "before_sensor",
+            "verylong-repaired",
+            before_sensor_dir,
+        ),
         "sensor-decisions": [
             py,
             "sensor_qc_decisions.py",
-            *(["--input-dir", str(before_sensor_dir), "--report-dir", str(sensor_report_dir)] if targeted else []),
+            "--input-dir",
+            str(before_sensor_dir),
+            "--report-dir",
+            str(sensor_report_dir),
         ],
         "sensor-mask": [
             py,
@@ -355,6 +400,7 @@ def main() -> None:
     args = parse_args()
     args.soil_base_dir = args.soil_base_dir.expanduser().resolve()
     args.met_base_dir = args.met_base_dir.expanduser().resolve()
+    validate_qc_scope(args)
 
     stages = list(STAGE_GROUPS[args.stage])
     if args.param:

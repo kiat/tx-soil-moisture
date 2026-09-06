@@ -15,6 +15,8 @@ from typing import Iterable, List, Tuple
 import pandas as pd
 
 from param_config import ALL_SOIL_PARAMS
+from sensor_qc_decisions import validate_candidate_authorizations
+from time_index_utils import require_unique_datetime_index
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -22,6 +24,7 @@ OUT_DIR = BASE_DIR / "output"
 REPORT_DIR = BASE_DIR / "final_qc_reports"
 REVIEW_DECISIONS = BASE_DIR / "soil_qc_review_decisions.csv"
 MANUAL_QC_MASKS = BASE_DIR / "manual_qc_masks.csv"
+SENSOR_CANDIDATES = BASE_DIR / "sensor_qc_reports" / "sensor_qc_decisions.csv"
 
 PARAM_SUMMARY_COLUMNS = [
     "Station", "Parameter", "Input File", "Start", "End", "Total Hours",
@@ -107,6 +110,7 @@ def read_station(path: Path) -> pd.DataFrame:
     df = pd.read_csv(path, index_col=0, parse_dates=True)
     df.index = pd.DatetimeIndex(df.index)
     df.index.name = "Date"
+    require_unique_datetime_index(df, str(path))
     return df.sort_index()
 
 
@@ -264,6 +268,34 @@ def load_review_decisions() -> pd.DataFrame:
     return decisions
 
 
+def load_sensor_candidate_status(
+    path: Path = SENSOR_CANDIDATES,
+    required: bool = False,
+) -> pd.DataFrame:
+    if not path.is_file():
+        if required:
+            raise FileNotFoundError(
+                f"Missing sensor candidate status file: {path}. Run the complete QC "
+                "stage before post-QC or final QC reporting."
+            )
+        return pd.DataFrame()
+    decisions = validate_candidate_authorizations(pd.read_csv(path), path.name)
+    return decisions.loc[
+        decisions["QC Decision"].eq("bad_sensor_candidate")
+    ].copy()
+
+
+def validate_diagnostic_scope(args: argparse.Namespace) -> None:
+    """Keep filtered diagnostics out of the production report directory."""
+    if not (args.station or args.param):
+        return
+    if args.report_dir.expanduser().resolve() == REPORT_DIR.resolve():
+        raise ValueError(
+            "Filtered final QC is diagnostic only. Supply an explicit non-production "
+            "--report-dir so global production QC reports are not overwritten."
+        )
+
+
 def attach_sensor_decisions(
     suspicious: pd.DataFrame,
     decisions: pd.DataFrame,
@@ -301,36 +333,58 @@ def attach_sensor_decisions(
 def unresolved_review_count(
     suspicious: pd.DataFrame,
     decisions: pd.DataFrame,
+    sensor_candidates: pd.DataFrame | None = None,
 ) -> int:
-    unresolved_sensor = int(
-        suspicious.get("Review Status", pd.Series(index=suspicious.index, dtype=object))
-        .fillna("unresolved")
-        .ne("closed")
-        .sum()
-    )
+    review_status = suspicious.get(
+        "Review Status",
+        pd.Series(index=suspicious.index, dtype=object),
+    ).fillna("unresolved")
+    unresolved_sensor_rows = suspicious.loc[review_status.ne("closed")]
+    if sensor_candidates is not None and not sensor_candidates.empty:
+        candidate_keys = set(
+            map(
+                tuple,
+                sensor_candidates[["Station", "Parameter"]].astype(str).to_numpy(),
+            )
+        )
+        unresolved_sensor_rows = unresolved_sensor_rows.loc[
+            ~unresolved_sensor_rows[["Station", "Parameter"]]
+            .astype(str)
+            .apply(tuple, axis=1)
+            .isin(candidate_keys)
+        ]
+    unresolved_sensor = int(len(unresolved_sensor_rows))
     review_path = BASE_DIR / "verylonggaps_review_segments.csv"
     if not review_path.exists():
-        return unresolved_sensor
-    current = pd.read_csv(review_path, parse_dates=["Start", "End"])
-    current = current.loc[current["Status"].eq("review")]
-    if current.empty:
-        return unresolved_sensor
-    if decisions.empty:
-        return unresolved_sensor + len(current)
-    verylong = decisions.loc[
-        decisions["Review Type"].eq("verylong_segment"),
-        ["Station", "Parameter", "Start", "End", "Status"],
-    ].rename(columns={"Status": "Review Status"})
-    closure = current.merge(
-        verylong,
-        on=["Station", "Parameter", "Start", "End"],
-        how="left",
-        validate="one_to_one",
-    )
-    unresolved_verylong = int(
-        closure["Review Status"].fillna("unresolved").ne("closed").sum()
-    )
-    return unresolved_sensor + unresolved_verylong
+        unresolved_verylong = 0
+    else:
+        current = pd.read_csv(review_path, parse_dates=["Start", "End"])
+        current = current.loc[current["Status"].eq("review")]
+        if current.empty:
+            unresolved_verylong = 0
+        elif decisions.empty:
+            unresolved_verylong = len(current)
+        else:
+            verylong = decisions.loc[
+                decisions["Review Type"].eq("verylong_segment"),
+                ["Station", "Parameter", "Start", "End", "Status"],
+            ].rename(columns={"Status": "Review Status"})
+            closure = current.merge(
+                verylong,
+                on=["Station", "Parameter", "Start", "End"],
+                how="left",
+                validate="one_to_one",
+            )
+            unresolved_verylong = int(
+                closure["Review Status"].fillna("unresolved").ne("closed").sum()
+            )
+
+    unresolved_candidates = 0
+    if sensor_candidates is not None and not sensor_candidates.empty:
+        unresolved_candidates = int(
+            sensor_candidates["Approval Status"].eq("pending").sum()
+        )
+    return unresolved_sensor + unresolved_verylong + unresolved_candidates
 
 
 def write_outputs(
@@ -342,6 +396,7 @@ def write_outputs(
     report_dir: Path,
     stations: Iterable[str],
     params: Iterable[str],
+    sensor_candidates: pd.DataFrame | None = None,
 ) -> int:
     report_dir.mkdir(parents=True, exist_ok=True)
     overview = pd.DataFrame(
@@ -376,6 +431,11 @@ def write_outputs(
     missing_columns.to_csv(report_dir / "final_qc_missing_sensor_columns.csv", index=False)
     suspicious.to_csv(report_dir / "final_qc_suspicious_sensors.csv", index=False)
     verylong_review.to_csv(report_dir / "final_qc_verylong_review_summary.csv", index=False)
+    if sensor_candidates is not None:
+        sensor_candidates.to_csv(
+            report_dir / "final_qc_sensor_candidate_status.csv",
+            index=False,
+        )
     if not decisions.empty:
         decisions.to_csv(report_dir / "final_qc_review_decisions.csv", index=False)
         (
@@ -387,11 +447,12 @@ def write_outputs(
             .reset_index()
             .to_csv(report_dir / "final_qc_review_closure_summary.csv", index=False)
         )
-    return unresolved_review_count(suspicious, decisions)
+    return unresolved_review_count(suspicious, decisions, sensor_candidates)
 
 
 def main() -> None:
     args = parse_args()
+    validate_diagnostic_scope(args)
     stations = args.station if args.station else discover_stations()
     params = args.param if args.param else ALL_SOIL_PARAMS
     if not stations:
@@ -402,6 +463,16 @@ def main() -> None:
     stations_with_manual_qc = (
         manual_qc_stations() if args.input_stage == "post-qc" else set()
     )
+    sensor_candidates = (
+        load_sensor_candidate_status(required=True)
+        if args.input_stage in {"post-qc", "final"}
+        else None
+    )
+    if sensor_candidates is not None and not sensor_candidates.empty:
+        sensor_candidates = sensor_candidates.loc[
+            sensor_candidates["Station"].astype(str).isin(stations)
+            & sensor_candidates["Parameter"].astype(str).isin(params)
+        ].copy()
 
     overview_rows: List[dict] = []
     param_rows: List[dict] = []
@@ -469,6 +540,7 @@ def main() -> None:
         args.report_dir,
         stations,
         params,
+        sensor_candidates,
     )
 
     remaining = pd.DataFrame(gap_rows)
@@ -481,6 +553,12 @@ def main() -> None:
     print(f"Remaining NaN hours: {int(remaining['Hours'].sum()) if not remaining.empty else 0}")
     print(f"Missing sensor columns: {len(missing_columns)}")
     print(f"Suspicious station/parameter rows: {len(suspicious)}")
+    pending_candidates = (
+        int(sensor_candidates["Approval Status"].eq("pending").sum())
+        if sensor_candidates is not None
+        else 0
+    )
+    print(f"Unresolved whole-sensor candidates: {pending_candidates}")
     print(f"Unresolved recorded review items: {unresolved_reviews}")
     print(f"Outputs written under: {args.report_dir}")
 

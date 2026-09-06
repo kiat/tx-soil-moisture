@@ -1,12 +1,11 @@
-"""Apply confirmed sensor-level QC masks to staged output files.
+"""Apply explicitly approved sensor-level QC masks to staged output files.
 
 The script writes a new non-destructive stage:
 
     output/Station{site}_filled_sensor_qc.csv
 
-By default it masks only rows classified as bad_sensor_candidate by
-sensor_qc_decisions.py. Other review categories remain unchanged until they are
-manually confirmed.
+Automatic candidates never authorize masking. A whole sensor is masked only
+when its candidate row contains a complete approved human decision.
 """
 from __future__ import annotations
 
@@ -16,6 +15,9 @@ from pathlib import Path
 from typing import Dict, List
 
 import pandas as pd
+
+from sensor_qc_decisions import validate_candidate_authorizations
+from time_index_utils import require_unique_datetime_index
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -60,6 +62,7 @@ def read_station(path: Path) -> pd.DataFrame:
     df = pd.read_csv(path, index_col=0, parse_dates=True)
     df.index = pd.DatetimeIndex(df.index)
     df.index.name = "Date"
+    require_unique_datetime_index(df, str(path))
     return df.sort_index()
 
 
@@ -67,7 +70,8 @@ def load_decisions(directory: Path = REPORT_DIR) -> pd.DataFrame:
     path = directory / "sensor_qc_decisions.csv"
     if not path.exists():
         raise FileNotFoundError(f"Missing {path}. Run sensor_qc_decisions.py first.")
-    return pd.read_csv(path)
+    decisions = pd.read_csv(path)
+    return validate_candidate_authorizations(decisions, path.name)
 
 
 def mask_for_row(df: pd.DataFrame, row: pd.Series, mask_localized_bound_values: bool) -> pd.Series:
@@ -76,7 +80,10 @@ def mask_for_row(df: pd.DataFrame, row: pd.Series, mask_localized_bound_values: 
     if param not in df.columns:
         return pd.Series(False, index=df.index)
 
-    if decision == "bad_sensor_candidate":
+    if (
+        decision == "bad_sensor_candidate"
+        and row.get("Approval Status") == "approved"
+    ):
         return df[param].notna()
 
     if decision == "localized_bound_values_review" and mask_localized_bound_values:
@@ -100,6 +107,10 @@ def main() -> None:
     decisions = load_decisions(args.decision_dir)
     decisions["Station"] = decisions["Station"].astype(str)
     selected = decisions[decisions["Station"].isin(stations)]
+    unresolved = selected[
+        selected["QC Decision"].eq("bad_sensor_candidate")
+        & selected["Approval Status"].eq("pending")
+    ]
 
     detail_rows: List[Dict[str, object]] = []
     station_rows: List[Dict[str, object]] = []
@@ -154,6 +165,7 @@ def main() -> None:
     print("Sensor QC mask step complete.")
     print(f"Stations processed: {len(station_rows)}")
     print(f"Newly masked hours: {sum(row['Newly Masked Hours'] for row in station_rows)}")
+    print(f"Unresolved whole-sensor candidates left unmasked: {len(unresolved)}")
     print(f"Reports written under: {args.report_dir}")
     if args.write:
         print("Station files written to output/*_filled_sensor_qc.csv")

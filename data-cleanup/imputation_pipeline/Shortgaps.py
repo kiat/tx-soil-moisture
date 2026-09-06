@@ -23,6 +23,7 @@ import numpy as np
 from pathlib import Path
 
 from param_config import ALL_SOIL_PARAMS, short_interp_for
+from time_index_utils import require_unique_datetime_index
 
 # Path 
 BASE_DIR  = Path(__file__).resolve().parent
@@ -36,6 +37,7 @@ def load_cleaned_data(station_id, directory=CLEAN_DIR):
     filename = Path(directory) / f"Station{station_id}_cleaned_data.csv"
     df = pd.read_csv(filename, parse_dates=True, index_col=0)
     df.index = pd.DatetimeIndex(df.index)
+    require_unique_datetime_index(df, str(filename))
     df.index.freq = "h"
     return df
 

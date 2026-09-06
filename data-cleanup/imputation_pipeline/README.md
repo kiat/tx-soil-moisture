@@ -26,10 +26,10 @@ same cleaned hourly input but write separate outputs.
 
 | Part | Verified result |
 |---|---|
-| Stage 0 cleaning | 33 station files parsed and standardized to hourly data |
-| Soil moisture and soil temperature | 33 final files; 0 NaNs and 0 bound violations in source-present columns |
-| Soil QC | 89/89 recorded review items closed; 0 unresolved |
-| Soil model comparison | Four seeds and independent confirmation complete; exact production-adapter testing retained the current 32-entry method map |
+| Stage 0 cleaning | Duplicate policy corrected; the 33 existing generated files predate this correction and have not been regenerated |
+| Soil moisture and soil temperature | 33 legacy final files exist; they have not been reverified under the new duplicate and sensor-authorization rules |
+| Soil QC | 89 segment/local review items closed; 9 whole-sensor candidates pending and unapproved |
+| Soil model comparison | Saved pre-authorization benchmark retained the current method map; revalidation depends on the nine pending sensor decisions |
 | Non-Ppt MET | All internal gaps filled for the six dedicated-MET stations; 50/50 flags reviewed |
 | MET model robustness | Four-seed benchmark, independent confirmation, and all-gap deployment coverage audit complete; all current methods retained |
 | Ppt | MET-first source reconciliation and model filling completed for 33 stations; 0 NaNs |
@@ -38,6 +38,12 @@ Non-Ppt MET values outside a station's retained post-QC coverage are not
 extrapolated.
 The 10 low-confidence Ppt segments are retained with caveats; external rainfall
 comparison is optional and does not block the pipeline.
+
+The September 2026 correctness pass intentionally did not regenerate the full
+dataset. Existing generated soil files include the former behavior that treated
+sensor candidates as approved masks. They must not be presented as outputs of
+the corrected authorization workflow until the nine candidates are reviewed and
+the affected stages are rerun.
 
 ## Quick Links
 
@@ -98,8 +104,18 @@ Run a smaller target when testing:
 
 ```bash
 python imputation_pipeline.py --stage medium --station CB01
-python imputation_pipeline.py --stage final --station CB19 FD24 --param SWC_5 SWC_10
+python imputation_pipeline.py --stage long --station CB19 FD24 --param SWC_5 SWC_10
 python imputation_pipeline.py --stage met-full --station CB04 --param Tair RH
+```
+
+`all`, `soil`, `qc`, and `final` are production QC routes and therefore reject
+`--station` or `--param`. Use an isolated stage such as `medium`, `long`, or
+`met-full` for write-based development tests. For a parameter-only read-only QC
+diagnostic, use a separate report directory:
+
+```bash
+python final_qc_summary.py --input-stage verylong-repaired --param SWC_5 \
+  --report-dir targeted_qc_reports/swc5_before_sensor
 ```
 
 The runner removes stale downstream outputs for the selected stage. Use
@@ -109,7 +125,7 @@ The runner removes stale downstream outputs for the selected stage. Use
 
 | Stage | What it runs |
 |---|---|
-| `clean` | Parse raw files, aggregate sub-hourly records, build the hourly timeline, and flag invalid values |
+| `clean` | Parse raw files, resolve/report duplicate timestamps, aggregate sub-hourly records, build the hourly timeline, and flag invalid values |
 | `short` | Fill soil gaps shorter than 24 hours |
 | `medium` | Fill and validate 24-167 hour soil gaps |
 | `long` | Fill and validate 168-719 hour soil gaps |
@@ -125,12 +141,12 @@ The runner removes stale downstream outputs for the selected stage. Use
 
 ```mermaid
 flowchart TD
-    A[Raw TxSON .dat files] --> B[Stage 0 hourly cleaning]
+    A[Raw TxSON .dat files] --> B[Stage 0 duplicate resolution + hourly cleaning]
     B --> C[Short soil gaps]
     C --> D[Medium soil gaps + validation]
     D --> E[Long soil gaps + validation]
     E --> F[Very-long soil gaps + validation]
-    F --> G[Sensor QC + manual masks]
+    F --> G[Sensor candidates + explicit human authorization + manual masks]
     G --> H[Final residual fill + final QC]
     H --> I["output/Station{site}_filled_final.csv"]
 
@@ -190,13 +206,16 @@ lengths across Tair, RH, Srad, Wind speed, and Wind direction; all eight tests
 retained the current method. Reports and the 300-DPI overview are in
 `model_comparison_reports/met_robustness/deployment_coverage/`.
 
-The soil benchmark uses all 33 stations and 242 QC-eligible, source-present
-soil sensor columns. Before sampling, it excludes 709,166 observed hours from
-confirmed bad-sensor and manual-QC periods. Across seeds 42, 7, 21, and 84 it
-evaluated 3,872 gaps and 19,424 model results; 19,340 completed. Of 32
-parameter-gap rankings, 27 were stable in at least three seeds and three
-seasons. Reports and publication figures are under
-`model_comparison_reports/soil/`.
+The saved soil benchmark used all 33 stations and 242 source-present sensor
+columns after excluding 709,166 observed hours from the nine automatic sensor
+candidates and the manual-QC periods. Those candidates were treated as
+exclusions by the former workflow, not approved human decisions. Across seeds
+42, 7, 21, and 84 the saved run evaluated 3,872 gaps and 19,424 model results;
+19,340 completed. Of 32 parameter-gap rankings, 27 were stable in at least
+three seeds and three seasons. Corrected benchmark code excludes only approved
+whole-sensor decisions. The saved reports under `model_comparison_reports/soil/`
+therefore remain historical until the nine reviews are resolved; rerunning is
+needed if the approved set differs from the former candidate set.
 
 A separate seed-126 confirmation then tested the 17 stable winners that differ
 from the current production map. It used one paired artificial gap per season
@@ -275,8 +294,14 @@ zero fills at CB19 and FD24 were replaced with positive donor support.
 ## Validation and Review
 
 - Medium, long, and very-long soil fills each pass a separate validator.
-- Sensor and manual masks are applied before the final residual fill.
-- Every soil review item has a recorded closed decision.
+- Automatic sensor candidates never authorize masking. Whole-sensor masking
+  requires an `approved` row in `sensor_qc_review_decisions.csv` with reviewer,
+  review date, and reason.
+- Candidate detection always reads the dedicated pre-sensor report under
+  `sensor_qc_reports/before_sensor/`, not a later final-QC report.
+- The nine current whole-sensor candidates are pending and remain unmasked.
+- Approved sensor masks and manual interval masks run before final residual fill.
+- The separate 89 segment/local soil review items have recorded closed decisions.
 - Every flagged non-Ppt MET segment has a recorded decision: 50/50 closed.
 - Every flagged Ppt segment has a recorded decision; 10 retain an optional
   external-validation caveat.
@@ -314,8 +339,10 @@ reuse their detail reports and take seconds.
 
 ## Publication Follow-up
 
-The operational pipeline is complete. Work that strengthens a paper, but is
-not required to produce the current dataset:
+Model development is complete, but a corrected production soil delivery now
+requires human decisions for the nine pending sensor candidates and a targeted
+then full rerun under the duplicate-resolution policy. Publication follow-up
+also includes:
 
 - optionally investigate the five soil parameter-gap rankings that remain
   seasonally or seed unstable;

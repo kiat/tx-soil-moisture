@@ -2,12 +2,12 @@
 
 ## Zun Cao
 
-This file records the implemented methods, verified batch results, and known
+This file records the implemented methods, existing batch results, and known
 limits. Run instructions are kept in [README.md](README.md).
 
 ## Contents
 
-- [Verified Batch](#verified-batch)
+- [Existing Generated Batch](#existing-generated-batch)
 - [Current Pipeline Map](#current-pipeline-map)
 - [Inputs and Stage 0](#inputs-and-stage-0)
 - [Gap Classes](#gap-classes)
@@ -22,7 +22,12 @@ limits. Run instructions are kept in [README.md](README.md).
 - [Provenance Files](#provenance-files)
 - [Known Limits](#known-limits)
 
-## Verified Batch
+## Existing Generated Batch
+
+The counts below describe the saved batch produced before the September 2026
+duplicate-resolution and sensor-authorization corrections. That batch has not
+been regenerated. In particular, its final soil files include nine automatic
+whole-sensor candidate masks that the corrected workflow no longer authorizes.
 
 | Check | Result |
 |---|---:|
@@ -33,7 +38,8 @@ limits. Run instructions are kept in [README.md](README.md).
 | Final soil NaN hours | 0 |
 | Final soil physical-bound violations | 0 |
 | Missing source sensor columns | 12 |
-| Recorded soil QC decisions | 89 closed, 0 unresolved |
+| Segment/local soil QC decisions | 89 closed |
+| Whole-sensor candidates | 9 pending, 0 approved, 0 rejected |
 | Non-Ppt MET internal hours filled | 109,863 |
 | Non-Ppt MET failed segments | 0 |
 | Non-Ppt MET NaNs outside retained post-QC coverage | 473,355 |
@@ -69,7 +75,7 @@ limits. Run instructions are kept in [README.md](README.md).
 
 ```mermaid
 flowchart LR
-    A["Raw .dat files"] --> B["Stage 0<br/>datacleaning.py"]
+    A["Raw .dat files"] --> B["Stage 0<br/>duplicate resolution + datacleaning.py"]
     B --> C["Final Soil branch"]
     B --> D["Final MET branch"]
     C --> E["Station{site}_filled_final.csv"]
@@ -90,8 +96,11 @@ flowchart TD
     E --> F["validate_longgaps.py<br/>output/*_filled_longgaps_repaired.csv<br/>longgaps_validation_*.csv"]
     F --> G["VeryLongGaps.py<br/>output/*_filled_verylonggaps.csv<br/>output/*_verylonggap_fill_detail.csv"]
     G --> H["validate_verylonggaps.py<br/>output/*_filled_verylonggaps_repaired.csv<br/>verylonggaps_validation_*.csv"]
-    H --> I["Sensor QC<br/>final_qc_summary.py<br/>sensor_qc_decisions.py<br/>apply_sensor_qc_masks.py"]
-    I --> J["output/*_filled_sensor_qc.csv<br/>sensor_qc_reports/*.csv"]
+    H --> HP["Pre-sensor final_qc_summary.py<br/>sensor_qc_reports/before_sensor/"]
+    HP --> I["Sensor candidate detection<br/>sensor_qc_decisions.py"]
+    I --> IA["Human authorization<br/>sensor_qc_review_decisions.csv"]
+    IA --> IB["apply_sensor_qc_masks.py<br/>approved candidates only"]
+    IB --> J["output/*_filled_sensor_qc.csv<br/>sensor_qc_reports/*.csv"]
     J --> K["apply_manual_qc_masks.py<br/>output/*_filled_manual_qc.csv<br/>manual_qc_reports/*.csv"]
     J --> L["FinalResidualGaps.py"]
     K --> L
@@ -124,11 +133,11 @@ flowchart TD
 
 | Stage | Main data, report, and decision files |
 |---|---|
-| Stage 0 | `cleaned_data/Station{site}_cleaned_data.csv`, `missing_data/Station{site}_missing_data.csv`, `raw_merged_data/raw_merged_station_{site}.csv` |
+| Stage 0 | `cleaned_data/Station{site}_cleaned_data.csv`, `missing_data/Station{site}_missing_data.csv`, `raw_merged_data/raw_merged_station_{site}.csv`, `duplicate_resolution_reports/Station{site}_duplicate_{summary,conflicts}.csv` |
 | Medium validation | `mediumgaps_validation_summary.csv`, `mediumgaps_rejected_segments.csv`, `mediumgaps_validation_station_summary.csv` |
 | Long validation | `longgaps_validation_summary.csv`, `longgaps_rejected_segments.csv`, `longgaps_validation_station_summary.csv` |
 | Very-long validation | `verylonggaps_validation_summary.csv`, `verylonggaps_review_segments.csv`, `verylonggaps_repaired_points.csv`, `verylonggaps_validation_station_summary.csv` |
-| Sensor/manual QC | `sensor_qc_reports/*.csv`, `manual_qc_reports/*.csv`, `manual_qc_masks.csv` |
+| Sensor/manual QC | `sensor_qc_reports/before_sensor/*.csv`, `sensor_qc_reports/*.csv`, `sensor_qc_review_decisions.csv`, `manual_qc_reports/*.csv`, `manual_qc_masks.csv` |
 | Final soil QC | `final_qc_reports/{final_qc_overview.csv, final_qc_station_parameter_summary.csv, final_qc_missing_sensor_columns.csv, final_qc_suspicious_sensors.csv, final_qc_review_closure_summary.csv}` |
 | MET audit/fill | `met_qc_reports/met_station_parameter_summary.csv`, `met_gap_inventory.csv`, `met_selected_method_map.csv`, `model_fill/*.csv`, `ppt_model_fill/*.csv` |
 | Model comparison | `model_comparison_reports/` for MET; `model_comparison_reports/soil/` for soil |
@@ -159,7 +168,11 @@ follow the same path.
 
 Stage 0 does the following:
 
-- parses timestamps and keeps one final record for duplicate timestamps;
+- classifies duplicate timestamps before hourly aggregation;
+- collapses exact duplicates and merges complementary rows column-wise;
+- sets conflicting measurements to NaN and records every source row involved;
+- reports Flag-only conflicts and sets the ambiguous Flag to NaN because the
+  repository does not document a severity or bit ordering;
 - combines soil and MET data when a MET file exists;
 - aggregates sub-hourly data to hourly data;
 - sums Ppt within an hour, averages numeric measurements, and keeps the final
@@ -185,7 +198,16 @@ Main Stage 0 outputs:
 cleaned_data/Station{site}_cleaned_data.csv
 missing_data/Station{site}_missing_data.csv
 raw_merged_data/raw_merged_station_{site}.csv
+duplicate_resolution_reports/Station{site}_duplicate_summary.csv
+duplicate_resolution_reports/Station{site}_duplicate_conflicts.csv
 ```
+
+A read-only scan of the current 39 raw files found 94,976 duplicate timestamp
+groups: 94,873 exact groups, no complementary groups, 63 measurement-conflict
+groups, and 40 Flag-only conflict groups. The production resolver records these
+counts per station/source. Every stage after Stage 0 now treats any remaining
+duplicate timestamp as an invariant violation instead of choosing a first or
+last row.
 
 ## Gap Classes
 
@@ -271,8 +293,9 @@ repaired isolated model jump:                  1
 
 ## Soil Sensor and Manual QC
 
-Automatic sensor QC masks measurements judged to represent bad sensors rather
-than ordinary gaps. The current full-sensor candidates are:
+Automatic sensor QC detects measurements that may represent bad sensors rather
+than ordinary gaps. Detection creates candidates only. The current candidates
+are:
 
 ```text
 WC05 SWC_20, SWC_50
@@ -283,7 +306,19 @@ CB15 SWC_10
 FD11 SWC_10
 ```
 
-This stage masked 766,651 values without changing the earlier very-long files.
+All nine candidates are pending. `sensor_qc_review_decisions.csv` currently has
+no approved or rejected rows, so the corrected workflow masks none of them.
+Whole-sensor approval requires station, parameter, `approved` or `rejected`,
+reviewer, review date, and reason. The generated candidate table and final QC
+both report unresolved candidates.
+
+Candidate detection consumes the dedicated very-long-repaired audit in
+`sensor_qc_reports/before_sensor/`. Later post-QC and final reports cannot
+overwrite this input or change the candidate cohort on a standalone rerun.
+
+The earlier generated batch automatically masked 766,651 values from these nine
+columns. That number is retained only as legacy provenance; it is not an
+authorized result under the corrected workflow.
 
 `manual_qc_masks.csv` records visual decisions that cannot be expressed as a
 general sensor rule:
@@ -334,9 +369,10 @@ actions:
 - the 898-hour CB15 `SWC_50` flat run was retained because it is source data
   and the full sensor is not flat or near-zero dominated.
 
-Together with the 82 very-long decisions, the soil decision table contains 89
-closed items and no unresolved item. Four source-observation warnings remain
-visible in `final_qc_suspicious_sensors.csv`; each has a closed keep decision.
+Together with the 82 very-long decisions, the segment/local soil decision table
+contains 89 closed items. This count is separate from the nine unresolved
+whole-sensor candidates. Final QC reports both categories rather than treating
+the candidates as closed decisions.
 
 Final QC outputs:
 
@@ -345,6 +381,7 @@ final_qc_reports/final_qc_overview.csv
 final_qc_reports/final_qc_station_parameter_summary.csv
 final_qc_reports/final_qc_missing_sensor_columns.csv
 final_qc_reports/final_qc_suspicious_sensors.csv
+final_qc_reports/final_qc_sensor_candidate_status.csv
 final_qc_reports/final_qc_review_closure_summary.csv
 soil_qc_review_decisions.csv
 ```
@@ -594,9 +631,13 @@ are under `model_comparison_reports/met_robustness/`.
 ### Soil benchmark
 
 `Soil_Gap_Filling_Model_Comparison.ipynb` evaluates all 33 stations without
-modifying production files. Before sampling, it applies the confirmed sensor
-and manual QC exclusions, removing 709,166 rejected observed hours. This leaves
-242 eligible station-parameter combinations. It hides one complete observed
+modifying production files. The saved benchmark applied the nine automatic
+sensor candidates plus manual QC masks as exclusions, removing 709,166 observed
+hours and leaving 242 eligible station-parameter combinations. The sensor
+candidates had not received human approval, so these saved benchmark results
+predate the corrected authorization rule. Current code excludes only approved
+whole-sensor decisions; the benchmark must be rerun if the final approved set
+differs from the former nine-candidate set. It hides one complete observed
 segment for each combination and gap class. The benchmark short range is 6-23
 hours to avoid letting trivial one-hour gaps dominate, and its very-long range
 is bounded at 720-1,440 hours.
@@ -768,5 +809,6 @@ tables are the reproducible source files.
 - External Ppt validation is optional and currently lacks verified TxSON 33
   station coordinates.
 
-None of these items prevents the current soil or Ppt delivery files from being
-generated. They describe where interpretation should remain cautious.
+The nine pending whole-sensor decisions block a newly verified soil delivery
+under the corrected workflow. Existing generated outputs remain available as
+legacy artifacts but have not been reproduced with the new policy.

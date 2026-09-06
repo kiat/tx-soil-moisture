@@ -35,6 +35,7 @@ except Exception:
 
 from datacleaning import load_met_data, load_soil_data
 from param_config import ALL_MET_PARAMS, short_interp_for
+from time_index_utils import require_unique_datetime_index
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -303,7 +304,8 @@ def read_cleaned_station(station: str, directory: Path = CLEAN_DIR) -> pd.DataFr
     df = pd.read_csv(path, index_col=0, parse_dates=True)
     df.index = pd.DatetimeIndex(df.index)
     df.index.name = "Date"
-    df = df[~df.index.duplicated(keep="first")].sort_index()
+    require_unique_datetime_index(df, str(path))
+    df = df.sort_index()
     if df.empty:
         return df
     return df.reindex(pd.date_range(df.index.min(), df.index.max(), freq="h", name="Date"))
@@ -320,7 +322,8 @@ def preserve_unselected_output(
     existing = pd.read_csv(output_path, index_col=0, parse_dates=True, low_memory=False)
     existing.index = pd.DatetimeIndex(existing.index)
     existing.index.name = "Date"
-    existing = existing[~existing.index.duplicated(keep="first")].sort_index()
+    require_unique_datetime_index(existing, str(output_path))
+    existing = existing.sort_index()
     merged = existing.reindex(result.index).copy()
     for parameter in selected:
         if parameter in result:
@@ -1568,7 +1571,8 @@ def met_delivery_base(station: str, cleaned: pd.DataFrame) -> pd.DataFrame:
         frame = pd.read_csv(path, index_col=0, parse_dates=True, low_memory=False)
         frame.index = pd.DatetimeIndex(frame.index)
         frame.index.name = "Date"
-        frame = frame[~frame.index.duplicated(keep="first")].sort_index()
+        require_unique_datetime_index(frame, str(path))
+        frame = frame.sort_index()
         return frame.reindex(cleaned.index)
 
     available = [parameter for parameter in ALL_MET_PARAMS if parameter in cleaned]

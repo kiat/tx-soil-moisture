@@ -7,9 +7,11 @@ Examples:
 
 import argparse
 import io
+import json
 import os
 import re
 import warnings
+from dataclasses import dataclass, field
 from pathlib import Path
 
 import numpy as np
@@ -56,6 +58,23 @@ TOA5_MET_RENAME = {
     "WindDir_D1_WVT": "Wind direction",
     "SlrW_Avg": "Srad",
 }
+
+DUPLICATE_SUMMARY_COLUMNS = [
+    "Station", "Source", "Duplicate Timestamp Groups", "Duplicate Input Rows",
+    "Rows Removed", "Exact Duplicate Groups", "Complementary Groups",
+    "Measurement Conflict Groups", "Flag-Only Conflict Groups",
+]
+
+DUPLICATE_CONFLICT_COLUMNS = [
+    "Station", "Source", "Timestamp", "Conflict Type", "Row Count",
+    "Conflicting Parameters", "Source Rows",
+]
+
+
+@dataclass
+class DuplicateAudit:
+    summaries: list[dict] = field(default_factory=list)
+    conflicts: list[dict] = field(default_factory=list)
 
 
 def station_key(station_id):
@@ -129,8 +148,116 @@ def finalize_datetime_index(df):
         raise ValueError("Expected a Date column after parsing station data.")
     df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
     df = df.dropna(subset=["Date"]).set_index("Date")
-    df = df[~df.index.duplicated(keep="last")].sort_index()
-    return df
+    return df.sort_index(kind="stable")
+
+
+def _json_value(value):
+    if pd.isna(value):
+        return None
+    if isinstance(value, np.generic):
+        return value.item()
+    if isinstance(value, pd.Timestamp):
+        return value.isoformat()
+    return value
+
+
+def resolve_duplicate_timestamps(
+    df: pd.DataFrame,
+    station: str,
+    source: str,
+) -> tuple[pd.DataFrame, dict, list[dict]]:
+    """Resolve raw duplicate timestamps without relying on source row order."""
+    if not isinstance(df.index, pd.DatetimeIndex):
+        raise TypeError("Duplicate resolution requires a DatetimeIndex.")
+
+    duplicate_mask = df.index.duplicated(keep=False)
+    duplicate_rows = df.loc[duplicate_mask]
+    summary = {
+        "Station": station_key(station),
+        "Source": source,
+        "Duplicate Timestamp Groups": 0,
+        "Duplicate Input Rows": int(len(duplicate_rows)),
+        "Rows Removed": 0,
+        "Exact Duplicate Groups": 0,
+        "Complementary Groups": 0,
+        "Measurement Conflict Groups": 0,
+        "Flag-Only Conflict Groups": 0,
+    }
+    if duplicate_rows.empty:
+        return df.sort_index(kind="stable"), summary, []
+
+    resolved_rows = []
+    conflict_rows = []
+    for timestamp, group in duplicate_rows.groupby(level=0, sort=True):
+        summary["Duplicate Timestamp Groups"] += 1
+        summary["Rows Removed"] += len(group) - 1
+        values = group.reset_index(drop=True)
+        conflicting = [
+            column
+            for column in values.columns
+            if values[column].dropna().nunique() > 1
+        ]
+
+        if len(values.drop_duplicates()) == 1:
+            conflict_type = "exact_duplicate"
+            summary["Exact Duplicate Groups"] += 1
+        elif not conflicting:
+            conflict_type = "complementary"
+            summary["Complementary Groups"] += 1
+        elif set(conflicting) == {"Flag"}:
+            conflict_type = "flag_only_conflict"
+            summary["Flag-Only Conflict Groups"] += 1
+        else:
+            conflict_type = "measurement_conflict"
+            summary["Measurement Conflict Groups"] += 1
+
+        resolved = {}
+        for column in values.columns:
+            nonmissing = values[column].dropna().drop_duplicates()
+            resolved[column] = nonmissing.iloc[0] if len(nonmissing) == 1 else np.nan
+        resolved_rows.append(pd.Series(resolved, name=timestamp))
+
+        if conflicting:
+            source_rows = [
+                {column: _json_value(value) for column, value in row.items()}
+                for row in values.to_dict(orient="records")
+            ]
+            conflict_rows.append(
+                {
+                    "Station": station_key(station),
+                    "Source": source,
+                    "Timestamp": timestamp,
+                    "Conflict Type": conflict_type,
+                    "Row Count": int(len(values)),
+                    "Conflicting Parameters": ";".join(conflicting),
+                    "Source Rows": json.dumps(
+                        source_rows,
+                        sort_keys=True,
+                        separators=(",", ":"),
+                    ),
+                }
+            )
+
+    nonduplicates = df.loc[~duplicate_mask]
+    resolved_duplicates = pd.DataFrame(resolved_rows)
+    resolved_duplicates.index = pd.DatetimeIndex(resolved_duplicates.index, name=df.index.name)
+    result = pd.concat([nonduplicates, resolved_duplicates]).sort_index(kind="stable")
+    if result.index.has_duplicates:
+        raise ValueError("Duplicate resolution failed to produce a unique timestamp index.")
+    return result, summary, conflict_rows
+
+
+def record_duplicate_audit(
+    df: pd.DataFrame,
+    station: str,
+    source: str,
+    audit: DuplicateAudit | None,
+) -> pd.DataFrame:
+    resolved, summary, conflicts = resolve_duplicate_timestamps(df, station, source)
+    if audit is not None:
+        audit.summaries.append(summary)
+        audit.conflicts.extend(conflicts)
+    return resolved
 
 
 def repair_concatenated_toa5_records(text):
@@ -138,7 +265,7 @@ def repair_concatenated_toa5_records(text):
     return re.sub(r'(?<=[0-9])"(?=\d{4}-\d{2}-\d{2} )', '\n"', text)
 
 
-def load_soil_data(station_id, base_dir):
+def load_soil_data(station_id, base_dir, duplicate_audit=None):
     """Load old SM_N.dat or new SITE.dat soil data."""
     file_path = resolve_station_file(
         base_dir,
@@ -152,10 +279,11 @@ def load_soil_data(station_id, base_dir):
     df = pd.read_csv(file_path, sep=",", skiprows=header_row)
     df = finalize_datetime_index(df)
     df = coerce_numeric(df, SOIL_NUMERIC_COLUMNS)
+    df = record_duplicate_audit(df, station_id, "soil", duplicate_audit)
     return aggregate_observations_to_hourly(df)
 
 
-def load_met_data(station_id, base_dir):
+def load_met_data(station_id, base_dir, duplicate_audit=None):
     """Load old MET_N.dat or new SITE_met.dat MET data.
 
     Missing MET files are allowed because most new 33-station files are soil-only.
@@ -174,6 +302,7 @@ def load_met_data(station_id, base_dir):
         df = pd.read_csv(file_path, sep=",", skiprows=old_header_row)
         df = finalize_datetime_index(df)
         df = coerce_numeric(df, MET_NUMERIC_COLUMNS)
+        df = record_duplicate_audit(df, station_id, "met", duplicate_audit)
         return aggregate_observations_to_hourly(df)
 
     toa5_header_row = find_header_row(file_path, '"TIMESTAMP"')
@@ -193,13 +322,14 @@ def load_met_data(station_id, base_dir):
     df = df[keep_cols]
     df = finalize_datetime_index(df)
     df = coerce_numeric(df, MET_NUMERIC_COLUMNS)
+    df = record_duplicate_audit(df, station_id, "met", duplicate_audit)
     return aggregate_observations_to_hourly(df)
 
 
-def merge_raw_data(station_id, soil_base_dir, met_base_dir):
+def merge_raw_data(station_id, soil_base_dir, met_base_dir, duplicate_audit=None):
     """Merge MET onto the complete hourly soil-coverage timeline."""
-    df_soil = load_soil_data(station_id, soil_base_dir)
-    df_met = load_met_data(station_id, met_base_dir)
+    df_soil = load_soil_data(station_id, soil_base_dir, duplicate_audit)
+    df_met = load_met_data(station_id, met_base_dir, duplicate_audit)
     if df_met.empty:
         return df_soil
 
@@ -226,6 +356,23 @@ def merge_raw_data(station_id, soil_base_dir, met_base_dir):
         merged.drop(columns=["Ppt_soil", "Ppt_met"], inplace=True)
 
     return merged
+
+
+def write_duplicate_reports(audit: DuplicateAudit, station_id, output_dir) -> tuple[Path, Path]:
+    output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    station = station_key(station_id)
+    summary_path = output_dir / f"Station{station}_duplicate_summary.csv"
+    conflict_path = output_dir / f"Station{station}_duplicate_conflicts.csv"
+    pd.DataFrame(audit.summaries, columns=DUPLICATE_SUMMARY_COLUMNS).to_csv(
+        summary_path,
+        index=False,
+    )
+    pd.DataFrame(audit.conflicts, columns=DUPLICATE_CONFLICT_COLUMNS).to_csv(
+        conflict_path,
+        index=False,
+    )
+    return summary_path, conflict_path
 
 
 def save_merged_data(df, station_id, output_dir):
@@ -385,13 +532,32 @@ def main():
     parser.add_argument("--soil-base-dir", type=str, default=str(DEFAULT_TXSON_DATA_DIR), help="Path to soil .dat files.")
     parser.add_argument("--met-base-dir", type=str, default=str(DEFAULT_TXSON_DATA_DIR), help="Path to MET .dat files.")
     parser.add_argument("--raw-output-dir", type=str, default="raw_merged_data", help="Directory for merged CSVs.")
+    parser.add_argument(
+        "--duplicate-report-dir",
+        type=str,
+        default="duplicate_resolution_reports",
+        help="Directory for per-station duplicate-resolution reports.",
+    )
     parser.add_argument("--missing-output", type=str, default=None, help="Filename for missing/invalid summary CSV.")
     parser.add_argument("--cleaned-output", type=str, default=None, help="Filename for cleaned full-timeline CSV.")
     args = parser.parse_args()
 
     station_id = args.station
 
-    merged_df = merge_raw_data(station_id, args.soil_base_dir, args.met_base_dir)
+    duplicate_audit = DuplicateAudit()
+    merged_df = merge_raw_data(
+        station_id,
+        args.soil_base_dir,
+        args.met_base_dir,
+        duplicate_audit,
+    )
+    duplicate_summary, duplicate_conflicts = write_duplicate_reports(
+        duplicate_audit,
+        station_id,
+        args.duplicate_report_dir,
+    )
+    print(f"Duplicate summary saved to: {duplicate_summary}")
+    print(f"Duplicate conflicts saved to: {duplicate_conflicts}")
     raw_path = save_merged_data(merged_df, station_id, args.raw_output_dir)
     print(f"Saved merged data to: {raw_path}")
 

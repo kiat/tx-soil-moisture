@@ -31,6 +31,7 @@ import pandas as pd
 from sklearn.linear_model import LinearRegression
 
 from param_config import ALL_SOIL_PARAMS
+from time_index_utils import require_unique_datetime_index
 
 
 warnings.filterwarnings("ignore")
@@ -76,7 +77,8 @@ def read_station(path: Path) -> pd.DataFrame:
 
 
 def ensure_hourly_regular_index(df: pd.DataFrame) -> pd.DataFrame:
-    df = df[~df.index.duplicated(keep="first")].sort_index()
+    require_unique_datetime_index(df, "FinalResidualGaps input")
+    df = df.sort_index()
     if df.empty:
         return df
     full_idx = pd.date_range(df.index.min(), df.index.max(), freq="h")
@@ -509,7 +511,7 @@ def fill_station(
                 continue
 
             preds = pd.concat(pred_parts).sort_index()
-            preds = preds[~preds.index.duplicated(keep="first")]
+            require_unique_datetime_index(preds, "FinalResidualGaps predictions")
             if refill_method == "donor_mean":
                 preds["Filled"] = apply_physical_bounds(preds["Filled"], param)
                 boundary_adjustment = "skipped_manual_donor_mean_override"

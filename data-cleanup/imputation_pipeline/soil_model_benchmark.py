@@ -20,6 +20,8 @@ from sklearn.pipeline import make_pipeline
 from statsmodels.tools.sm_exceptions import ConvergenceWarning
 from statsmodels.tsa.statespace.sarimax import SARIMAX
 
+from sensor_qc_decisions import validate_candidate_authorizations
+
 try:
     from xgboost import XGBRegressor
 except Exception:
@@ -142,7 +144,11 @@ def load_benchmark_exclusions(base_dir: Path) -> pd.DataFrame:
         )
 
     sensor = pd.read_csv(sensor_path)
-    sensor = sensor[sensor["QC Decision"].eq("bad_sensor_candidate")].copy()
+    sensor = validate_candidate_authorizations(sensor, sensor_path.name)
+    sensor = sensor[
+        sensor["QC Decision"].eq("bad_sensor_candidate")
+        & sensor["Approval Status"].eq("approved")
+    ].copy()
     sensor["Source"] = "sensor_qc_decisions"
     sensor["Reason"] = sensor["Decision Reason"]
 

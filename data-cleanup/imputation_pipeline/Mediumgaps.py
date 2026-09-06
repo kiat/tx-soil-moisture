@@ -24,6 +24,7 @@ from statsmodels.stats.diagnostic import acorr_ljungbox
 from pmdarima import auto_arima
 
 from param_config import ALL_SOIL_PARAMS, exog_for
+from time_index_utils import require_unique_datetime_index
 
 warnings.filterwarnings("ignore")
 
@@ -247,7 +248,8 @@ def ensure_hourly_regular_index(df: pd.DataFrame) -> pd.DataFrame:
     if not isinstance(df.index, pd.DatetimeIndex):
         df = df.copy()
         df.index = pd.DatetimeIndex(df.index)
-    df = df[~df.index.duplicated(keep='first')].sort_index()
+    require_unique_datetime_index(df, "Mediumgaps input")
+    df = df.sort_index()
     if len(df.index) == 0:
         return df
     full_idx = pd.date_range(df.index.min(), df.index.max(), freq="h")

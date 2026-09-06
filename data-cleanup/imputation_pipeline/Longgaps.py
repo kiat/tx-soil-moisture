@@ -20,6 +20,7 @@ import pandas as pd
 from xgboost import XGBRegressor
 
 from param_config import ALL_SOIL_PARAMS
+from time_index_utils import require_unique_datetime_index
 
 warnings.filterwarnings("ignore")
 
@@ -53,7 +54,8 @@ def load_missing_data(station_id, directory=MISS_DIR):
 
 
 def ensure_hourly_regular_index(df: pd.DataFrame) -> pd.DataFrame:
-    df = df[~df.index.duplicated(keep="first")].sort_index()
+    require_unique_datetime_index(df, "Longgaps input")
+    df = df.sort_index()
     if df.empty:
         return df
     full_idx = pd.date_range(df.index.min(), df.index.max(), freq="h")

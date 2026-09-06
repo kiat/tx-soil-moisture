@@ -16,6 +16,7 @@ from typing import Dict, Iterable, List, Optional, Tuple
 import pandas as pd
 
 from param_config import ALL_SOIL_PARAMS
+from time_index_utils import require_unique_datetime_index
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -65,6 +66,7 @@ def parse_args() -> argparse.Namespace:
 def read_series_file(path: Path) -> pd.DataFrame:
     df = pd.read_csv(path, index_col=0, parse_dates=True)
     df.index = pd.DatetimeIndex(df.index)
+    require_unique_datetime_index(df, str(path))
     return df.sort_index()
 
 
