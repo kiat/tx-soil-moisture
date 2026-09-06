@@ -1,1 +1,9 @@
 Station,Parameter,Decision,Reviewer,Review Date,Reason
+WC05,SWC_50,rejected,Zun Cao,2026-09-06,"Whole-sensor mask rejected: early responsive data exists; the later 16045-hour constant interval requires separate interval-specific review."
+WC05,SWC_20,rejected,Zun Cao,2026-09-06,"Whole-sensor mask rejected: despite low magnitude, the sensor shows sustained synchronous behavior with other depths, especially SWC_10."
+FD11,SWC_10,rejected,Zun Cao,2026-09-06,"Whole-sensor mask rejected: sustained multi-year level and daily-change synchronization with SWC_5 indicates a responsive low-valued signal."
+FD22,SWC_20,rejected,Zun Cao,2026-09-06,"Whole-sensor mask rejected: the sensor has a strong and persistent level and daily-change relationship with SWC_10."
+FD22,SWC_50,rejected,Zun Cao,2026-09-06,"Whole-sensor mask rejected: early responsive data exists; the 2021-08-04 to 2022-11-21 constant behavior requires separate interval-specific review."
+FD22,SWC_5,rejected,Zun Cao,2026-09-06,"Whole-sensor mask rejected: only 18 localized elevated observations occur around 2023-11-05 to 2023-11-09, which does not justify whole-history removal."
+FD16,SWC_5,rejected,Zun Cao,2026-09-06,"Whole-sensor mask rejected: only two localized high observations were found, which does not justify whole-history removal."
+FD08,SWC_5,rejected,Zun Cao,2026-09-06,"Whole-sensor mask rejected: 19 elevated observations occur in six short episodes, which does not justify whole-history removal."
