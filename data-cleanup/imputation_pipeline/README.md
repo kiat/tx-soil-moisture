@@ -24,20 +24,20 @@ same cleaned hourly input but write separate outputs.
 
 ## Current Status
 
-| Part | Verified result |
+| Part | Current status |
 |---|---|
 | Stage 0 cleaning | Rebuilt from all 39 raw Soil/MET files on 2026-09-06; 33 stations independently verified; 2,720,775 hourly rows |
-| Soil moisture and soil temperature | 33 legacy final files exist; they have not been reverified under the new duplicate and sensor-authorization rules |
-| Soil QC | Human sensor/manual decisions are recorded; their application to the new Stage 0 baseline awaits downstream regeneration |
-| Soil model comparison | Saved benchmark retained the current method map; results predate the corrected Stage 0 baseline |
-| Non-Ppt MET | All internal gaps filled for the six dedicated-MET stations; 50/50 flags reviewed |
-| MET model robustness | Four-seed benchmark, independent confirmation, and all-gap deployment coverage audit complete; all current methods retained |
-| Ppt | MET-first source reconciliation and model filling completed for 33 stations; 0 NaNs |
+| Soil moisture and soil temperature | 33 legacy final files exist; they have not been reverified under the new duplicate, source-coverage, sensor/manual-QC, and missing-driver rules |
+| Soil QC | Eight whole-sensor masks rejected, one candidate pending, and 33 manual mask rows recorded; application to the new Stage 0 baseline awaits regeneration |
+| Soil model comparison | Legacy benchmark retained the current method map; its saved results predate the corrected Stage 0 baseline and QC decisions |
+| Non-Ppt MET | Legacy batch filled all internal gaps for the six dedicated-MET stations and reviewed 50/50 flags; regeneration is pending |
+| MET model robustness | Legacy four-seed benchmark, independent confirmation, and deployment audit retained the current method map; regeneration is pending |
+| Ppt | Stage 0 MET-first reconciliation is authoritative; the saved 33-station model-filled delivery with 0 NaNs is legacy and must be regenerated |
 
-Non-Ppt MET values outside a station's retained post-QC coverage are not
-extrapolated.
-The 10 low-confidence Ppt segments are retained with caveats; external rainfall
-comparison is optional and does not block the pipeline.
+Under the current policy, non-Ppt MET values outside a station's retained
+post-QC coverage are not extrapolated. The legacy Ppt review retained 10
+low-confidence segments with caveats; optional external rainfall comparison
+does not block regeneration.
 
 Only Stage 0 has been regenerated. All downstream soil, MET, QC, final, and
 benchmark counts above describe the preserved historical batch, not results
@@ -51,6 +51,13 @@ and last finite source-derived Stage 0 value, before any imputation or later QC.
 All five Soil filling stages and their gap reports exclude timestamps outside
 that interval. Missing/never-observed columns have no filling coverage. The
 helper verifies the cleaned baseline against its Stage 0 SHA-256 manifest.
+
+Before building that union, Stage 0 collapses exact duplicate rows, merges
+nonconflicting complementary rows, and records conflicts while setting only the
+conflicting values to NaN. It then aggregates each source hourly: precipitation
+is summed, ordinary numeric measurements are averaged, and flags/metadata are
+not numerically averaged. Each station manifest records source bounds and
+SHA-256 hashes for raw inputs, Stage 0 code, and generated outputs.
 
 The 33-station coverage check found 2,402,450 internal Soil NaN hours and
 269,064 out-of-coverage Soil NaN hours; all internal gaps retain their original
@@ -71,7 +78,7 @@ for the archived previous outputs, per-station differences, and all 33 verificat
 | [MET robustness notebook](MET_Model_Robustness.ipynb) | Four-seed, seasonal, and station-level validation of non-Ppt MET methods |
 | [Soil model comparison notebook](Soil_Gap_Filling_Model_Comparison.ipynb) | Soil artificial-gap benchmark and publication figure |
 | [MET QC review notebook](MET_QC_Review.ipynb) | Review the 50 flagged MET segments and their decisions |
-| [Dynamic visualization notebook](../../data_visualization/Dynamic_Data_Visualization_TxSON33.ipynb) | Inspect the final Soil + MET view by station, year, and parameter |
+| [Dynamic visualization notebook](../../data_visualization/Dynamic_Data_Visualization_TxSON33.ipynb) | After regeneration, inspect paired final Soil + MET files by station, year, and parameter |
 
 ## Setup
 
@@ -146,6 +153,9 @@ python final_qc_summary.py --input-stage verylong-repaired --param SWC_5 \
 
 The runner removes stale downstream outputs for the selected stage. Use
 `--no-clean-stale` only when deliberately preserving an earlier batch.
+Every Soil stage requires its exact predecessor output, including each
+validator's repaired file. Missing prerequisites cause a clear failure; no
+stage silently substitutes an earlier, unvalidated file.
 
 ## Stage Names
 
@@ -194,6 +204,21 @@ flowchart TD
 Ppt is handled separately with a two-part Random Forest: rain occurrence is
 classified first, then positive rainfall amount is estimated.
 
+For Medium Soil gaps, a candidate driver is used only when it is complete over
+both the seven-day training window and prediction interval. Incomplete drivers
+are excluded; if none remain, the existing univariate SARIMA path is used.
+Missing `Ppt`, `Tair`, or `Srad` is never converted to a physical zero, and the
+selected driver mode, used/excluded drivers, and missing counts are logged.
+Long-gap driver features likewise preserve missing environmental values as NaN;
+they are not forward-filled, backward-filled, or zero-filled, and XGBoost
+handles them through its native missing-value routing. Soil-temperature models
+use independent `Tair` when it has observations and construct the existing
+mean-soil-temperature proxy only when independent `Tair` is wholly unavailable.
+
+Non-Ppt MET gaps are segmented by actual hourly timestamp adjacency. Missing
+rows separated by more than one hour are never grouped merely because they are
+adjacent in a filtered list of NaNs.
+
 The saved expanded MET benchmark sampled five artificial gaps per station,
 parameter, and gap class: 720 hidden gaps and 4,440 candidate-model fits.
 Of those fits, 4,416 completed; 24 SARIMAX fits reported non-convergence and
@@ -221,12 +246,12 @@ was changed. A separate 96-case medium-gap SARIMAX screen completed but had
 higher matched normalized RMSE than the best standard method for every tested
 parameter.
 
-The final deployment audit compared all 2,665 actual internal non-Ppt MET gaps
-(109,863 hours) with the benchmark lengths. Every medium and long gap was
-inside the tested range. The 1,697 gaps below the benchmark sampling minimum
-were only 1-5 hours, so they are shorter interpolation cases rather than
-longer-horizon extrapolations. Eight very-long gaps exceeded the 1,440-hour
-benchmark maximum. Exact deployment-length tests compared the current method
+The saved legacy deployment audit compared all 2,665 then-current internal
+non-Ppt MET gaps (109,863 hours) with the benchmark lengths. Every medium and
+long gap was inside the tested range. The 1,697 gaps below the benchmark
+sampling minimum were only 1-5 hours, so they are shorter interpolation cases
+rather than longer-horizon extrapolations. Eight very-long gaps exceeded the
+1,440-hour benchmark maximum. Exact deployment-length tests compared the current method
 with the strongest complete alternative at all eight over-range segment
 lengths across Tair, RH, Srad, Wind speed, and Wind direction; all eight tests
 retained the current method. Reports and the 300-DPI overview are in
@@ -240,8 +265,10 @@ exclusions by the former workflow, not approved human decisions. Across seeds
 19,340 completed. Of 32 parameter-gap rankings, 27 were stable in at least
 three seeds and three seasons. Corrected benchmark code excludes only approved
 whole-sensor decisions. The saved reports under `model_comparison_reports/soil/`
-therefore remain historical until the nine reviews are resolved; rerunning is
-needed if the approved set differs from the former candidate set.
+therefore remain historical. Eight whole-sensor masks have since been rejected
+and one candidate remains pending, so the corrected exclusion set differs from
+the former candidate set and the benchmark must be regenerated before it can be
+treated as current.
 
 A separate seed-126 confirmation then tested the 17 stable winners that differ
 from the current production map. It used one paired artificial gap per season
@@ -275,6 +302,11 @@ policy was approved by the project lead in August 2026.
 
 ## Main Outputs
 
+The paths below are the canonical output locations. Until the pending
+downstream regeneration finishes, Soil, MET, QC, final, and benchmark files
+already present at these paths are legacy artifacts rather than products of the
+authoritative Stage 0 baseline.
+
 | Output | Path |
 |---|---|
 | Final soil station data | `output/Station{site}_filled_final.csv` |
@@ -293,10 +325,13 @@ policy was approved by the project lead in August 2026.
 | Soil independent confirmation | `model_comparison_reports/soil/targeted_confirmation/` |
 | Soil exact production-adapter decision | `model_comparison_reports/soil/targeted_confirmation/production_adapter_four_season/` |
 
-The current dynamic notebook merges the final soil file and complete MET file
-by timestamp in memory. It does not create a third combined CSV or modify either
-delivery file. See the [technical pipeline map](TECHNICAL_NOTES_TxSON33.md#current-pipeline-map)
-for every intermediate output and report.
+The dynamic notebook requires the exact final soil file and complete MET file
+for every displayed station, then merges them by timestamp in memory. It fails
+clearly when either final product is missing and never substitutes an earlier
+stage. It does not create a third combined CSV or modify either delivery file.
+Use it as a final-data review tool only after downstream regeneration. See the
+[technical pipeline map](TECHNICAL_NOTES_TxSON33.md#current-pipeline-map) for
+every intermediate output and report.
 
 Generated station data and report folders can be large. Review them locally,
 but do not add them to Git unless the project explicitly requests a release
@@ -313,9 +348,10 @@ CB07, CB26, FD03, FD18, FD21, FD24
 These 12 station-parameter columns are unavailable sensors, not failed fills.
 The pipeline skips them and does not invent full sensor histories.
 
-The final QC retained localized source-observed zero values at CB27, FD03, and
-FD12. It also retained a source-observed CB15 `SWC_50` flat run. Model-created
-zero fills at CB19 and FD24 were replaced with positive donor support.
+In the legacy batch, final QC retained localized source-observed zero values at
+CB27, FD03, and FD12. It also retained a source-observed CB15 `SWC_50` flat run.
+Model-created zero fills at CB19 and FD24 were replaced with positive donor
+support. These outcomes require confirmation in the regenerated batch.
 
 ## Validation and Review
 
@@ -325,12 +361,20 @@ zero fills at CB19 and FD24 were replaced with positive donor support.
   review date, and reason.
 - Candidate detection always reads the dedicated pre-sensor report under
   `sensor_qc_reports/before_sensor/`, not a later final-QC report.
-- The nine current whole-sensor candidates are pending and remain unmasked.
+- Eight current candidates have explicit `rejected` decisions and one,
+  `CB15 SWC_10`, remains pending. The sensor-candidate workflow masks no whole
+  column. Separately approved manual interval/point masks still apply. Here,
+  `rejected` means reject whole-column masking; it does not certify the sensor
+  as perfect.
 - Approved sensor masks and manual interval masks run before final residual fill.
+- Manual masks apply only to their inclusive approved start/end timestamps.
+  A refill override is split at the mask boundary and cannot expand to the rest
+  of a larger contiguous NaN run.
 - The separate 89 segment/local soil review items have recorded closed decisions.
-- Every flagged non-Ppt MET segment has a recorded decision: 50/50 closed.
-- Every flagged Ppt segment has a recorded decision; 10 retain an optional
-  external-validation caveat.
+- In the legacy MET review, every flagged non-Ppt segment had a recorded
+  decision: 50/50 closed.
+- In the legacy Ppt review, every flagged segment had a recorded decision; 10
+  retained an optional external-validation caveat.
 
 Open the notebooks through the links above for visual review. The notebooks do
 not change production CSV files.
@@ -338,8 +382,9 @@ not change production CSV files.
 ## Runtime
 
 The medium soil stage is usually the slowest because it fits many SARIMAX
-models. A complete 33-station rerun can take hours on a laptop. Test one station
-first, then run the full batch only after the targeted output looks correct.
+models. A complete serial 33-station rerun can take several days and may approach
+a week on the development laptop. Test one station first, then run the full batch
+only after the targeted output looks correct.
 
 The expanded MET model-comparison notebook took about 3 hours 48 minutes on the
 development Mac. It is a research benchmark and is not required for a normal
@@ -365,10 +410,11 @@ reuse their detail reports and take seconds.
 
 ## Publication Follow-up
 
-Model development is complete, but a corrected production soil delivery now
-requires human decisions for the nine pending sensor candidates and a targeted
-then full rerun under the duplicate-resolution policy. Publication follow-up
-also includes:
+Model development is complete, but a corrected production delivery still
+requires authoritative downstream Soil and MET regeneration from the rebuilt
+Stage 0 baseline. Eight whole-sensor masks are rejected; `CB15 SWC_10` remains
+pending and will stay unmasked and explicitly reported unless a later human
+decision changes it. Publication follow-up also includes:
 
 - optionally investigate the five soil parameter-gap rankings that remain
   seasonally or seed unstable;
@@ -377,14 +423,16 @@ also includes:
 - optionally compare the 10 low-confidence Ppt segments with an independent
   rainfall source after verified TxSON coordinates are available.
 
-The four-seed MET robustness benchmark, independent Wind speed confirmation,
-and full deployment-gap coverage audit are complete. Exact-length tests of all
-eight over-range segments across five non-Ppt parameters retained the current
-MET production map.
-The four-seed soil comparison is complete as a robustness benchmark. Its 27
+The saved four-seed MET robustness benchmark, independent Wind speed
+confirmation, and deployment-gap coverage audit are complete as historical
+method-selection evidence. Exact-length tests of all eight over-range segments
+across five non-Ppt parameters retained the current MET production map.
+The saved four-seed soil comparison is complete as a historical robustness
+benchmark. Its 27
 stable rankings produced 17 possible changes; 11 passed an independent
 four-season confirmation, but none passed the complete exact-production
-adoption sequence. The existing soil methods and final CSV files remain
-unchanged. This completed selection funnel, including rejected candidates, is
-the reproducible result to report rather than selecting from proxy-model scores
-alone.
+adoption sequence. The production soil method map remains unchanged. Existing
+final CSV files are legacy artifacts and must be replaced by the pending
+regeneration. The completed selection funnel, including rejected method
+candidates, is the reproducible result to report rather than selecting from
+proxy-model scores alone.

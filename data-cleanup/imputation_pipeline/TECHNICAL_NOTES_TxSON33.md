@@ -43,7 +43,7 @@ whole-sensor candidate masks that the corrected workflow no longer authorizes.
 | Final soil physical-bound violations | 0 |
 | Missing source sensor columns | 12 |
 | Segment/local soil QC decisions | 89 closed |
-| Whole-sensor candidates | 9 pending, 0 approved, 0 rejected |
+| Whole-sensor status at legacy batch time | 9 pending, 0 approved, 0 rejected |
 | Non-Ppt MET internal hours filled | 109,863 |
 | Non-Ppt MET failed segments | 0 |
 | Non-Ppt MET NaNs outside retained post-QC coverage | 473,355 |
@@ -73,6 +73,11 @@ whole-sensor candidate masks that the corrected workflow no longer authorizes.
 | Exact four-season production trial | 40 fits; 38 completed, 2 timed out |
 | Verified soil production-method changes | 0 / 32; current map retained |
 
+The current version-controlled decision state is different from this historical
+snapshot: eight whole-sensor masks are rejected, one candidate remains pending,
+and none is approved. The downstream products in this table have not yet been
+regenerated with those decisions.
+
 ## Current Pipeline Map
 
 ### Overview
@@ -88,6 +93,10 @@ flowchart LR
     E --> G["Dynamic notebook<br/>timestamp merge in memory"]
     F --> G
 ```
+
+This flow describes the authoritative implementation. The existing files at
+the final Soil and MET paths are legacy artifacts until both downstream branches
+are regenerated from the current Stage 0 baseline.
 
 ### Soil File Flow
 
@@ -116,6 +125,9 @@ flowchart TD
 Only stations listed in `manual_qc_masks.csv` receive a
 `*_filled_manual_qc.csv`; all other stations go directly from sensor QC to the
 final residual stage.
+Each Soil stage requires its exact predecessor output, including each
+validator's repaired file. A missing prerequisite causes a clear error; no
+stage silently substitutes an earlier or unvalidated file.
 
 ### MET File Flow
 
@@ -252,8 +264,9 @@ Total cleaned rows increase from 2,685,804 to 2,720,775. WC05 gains 17,501
 timeline rows, including 1,012 hours with no MET source record. Twenty-nine
 stations change in values or coverage; FD17, FD21, FD23, and FD28 retain identical
 cleaned values and coverage. Duplicate processing collapses 178,546 excess rows
-and reports all 63 measurement-conflict and 40 Flag-only conflict groups.
-No duplicate policy or downstream model methodology changed during this rebuild.
+and reports all 63 measurement-conflict and 40 Flag-only conflict groups. The
+authoritative duplicate policy is the explicit policy above; downstream model
+methodology was not changed during the Stage 0 rebuild.
 
 Full per-parameter differences, source counts, 33-station checks, and the old
 99-file archive are in the [Stage 0 rebuild package](../../review_only/stage0_lineage_2026-09-06/README.md).
@@ -322,6 +335,10 @@ The code uses non-overlapping boundaries everywhere:
 | Long | `168-719` |
 | Very long | `>=720` |
 
+Every stage consumes only its exact predecessor and fails clearly if that file
+is unavailable. Validation cannot be bypassed by silently reading an earlier
+stage.
+
 ## Soil Filling
 
 The soil pipeline covers:
@@ -341,9 +358,15 @@ exist on both sides; edge extrapolation is not used.
 
 `Mediumgaps.py` fits SARIMAX models with local context and optional available
 drivers. Soil moisture can use Ppt; soil temperature can use Tair or Srad. The
-validator checks missing predictions, physical bounds, and boundary jumps.
+validator checks missing predictions, physical bounds, and boundary jumps. A
+driver is used only when every value needed in both the seven-day training
+window and prediction interval is present. Incomplete drivers are excluded. If
+no candidate driver remains, the existing univariate SARIMA path is used.
+Missing `Ppt`, `Tair`, or `Srad` is never encoded as a physical zero. Fill-detail
+records log the driver mode, used and excluded drivers, and train/prediction
+missing counts.
 
-Full validation result:
+Legacy full-batch validation result, pending regeneration:
 
 ```text
 accepted: 877 segments
@@ -357,9 +380,14 @@ Rejected fills are restored to NaN before the next stage.
 
 `Longgaps.py` uses rolling XGBoost predictions with time features, target
 history, and available environmental drivers. The validator applies the same
-basic completeness, bounds, and connection checks.
+basic completeness, bounds, and connection checks. Missing `Ppt`, `Tair`, and
+`Srad` remain NaN; environmental drivers are not forward-filled,
+backward-filled, or replaced with zero. XGBoost uses its native missing-value
+routing. For soil-temperature targets, independent `Tair` is used when that
+column has observations. Only when independent `Tair` is wholly unavailable is
+the existing mean-soil-temperature proxy constructed.
 
-Full validation result:
+Legacy full-batch validation result, pending regeneration:
 
 ```text
 accepted: 257 segments
@@ -368,12 +396,15 @@ rejected:   1 segment
 
 ### Very-long gaps
 
-`VeryLongGaps.py` selects a correlated donor station, fits a linear mapping
-when target/donor overlap is sufficient, and falls back to a donor mean. The
-validator repairs bad points instead of rejecting an otherwise useful
-months-long or years-long segment.
+`VeryLongGaps.py` selects one correlated donor for each station-parameter using
+all paired finite values available in that stage input. The same selected donor
+is then used for every very-long gap in that station-parameter; donor selection
+is not repeated per gap. The method fits a linear mapping when target/donor
+overlap is sufficient and falls back to a donor mean. The validator repairs bad
+points instead of rejecting an otherwise useful months-long or years-long
+segment.
 
-Initial validation result:
+Legacy initial validation result, pending regeneration:
 
 ```text
 accepted: 163 segments
@@ -408,11 +439,14 @@ CB15 SWC_10
 FD11 SWC_10
 ```
 
-All nine candidates are pending. `sensor_qc_review_decisions.csv` currently has
-no approved or rejected rows, so the corrected workflow masks none of them.
-Whole-sensor approval requires station, parameter, `approved` or `rejected`,
-reviewer, review date, and reason. The generated candidate table and final QC
-both report unresolved candidates.
+Eight candidates have explicit `rejected` decisions and `CB15 SWC_10` remains
+pending. None is approved, so the sensor-candidate workflow masks none of the
+nine as a whole column; separately approved manual interval/point masks still
+apply. Here, `rejected` means reject whole-column masking; it does not certify
+the sensor as fully valid. Every formal `approved` or `rejected` decision
+requires station, parameter, reviewer, review date, and an evidence-based
+reason. Candidates without a complete decision remain pending. The generated
+candidate table and final QC both report unresolved candidates.
 
 Candidate detection consumes the dedicated very-long-repaired audit in
 `sensor_qc_reports/before_sensor/`. Later post-QC and final reports cannot
@@ -431,14 +465,27 @@ CB15 T_10: one isolated model jump at 2019-12-03 13:00
 CB19 SWC_5 and SWC_10: 2019-07 through 2022-10
 CB20 SWC_5: 2017-01 through 2022-11
 CB20 SWC_50: 2017-01 through 2023-03, donor-mean override
+WC05 SWC_50: 2021-08-12 12:00 through 2023-06-12 00:00 sensor freeze
+FD22 SWC_50: 2021-08-04 10:00 through 2022-11-21 03:00 sensor freeze
+FD22 SWC_5: 18 individually approved points from 2023-11-05 through 2023-11-09
+FD16 SWC_5: 2 individually approved points in 2021-10
+FD08 SWC_5: 5 individually approved points in 2022-07 through 2022-09
 ```
 
-Manual masks cover 200,994 values across three stations.
+The six legacy rows masked 200,994 values across three stations in the
+historical batch. The current table contains 33 rows across seven stations. Its
+27 newly reviewed rows cover exactly 27,440 approved timestamp-hours: two
+continuous freeze intervals and 25 individual points. Actual masked-value counts
+for the new baseline will be reported by regeneration rather than inferred from
+the legacy outputs. Every mask is inclusive of its configured start/end only;
+an individual point uses equal start and end. FinalResidual splits larger NaN
+runs at refill-override boundaries, so a manual method cannot expand outside its
+approved interval.
 
 ## Final Soil Fill and QC
 
-`FinalResidualGaps.py` fills NaNs left by validation and sensor masking in this
-order:
+`FinalResidualGaps.py` fills eligible internal NaNs left by validation and
+sensor/manual masking in this order:
 
 1. linear donor regression when enough target/donor overlap exists;
 2. donor mean where the selected donor is missing;
@@ -448,7 +495,7 @@ order:
 For model-created SWC predictions clipped to exactly zero, a positive donor
 mean or climatology is used instead. This does not alter source observations.
 
-Current fill-detail counts:
+Legacy fill-detail counts, pending regeneration:
 
 ```text
 donor_mean_no_target_training:           859,660
@@ -460,8 +507,8 @@ donor_climatology_no_timestamp_donor:        748
 total:                                  1,034,709
 ```
 
-The seven final sensor flags and the related very-long review led to these
-actions:
+In that legacy batch, seven final sensor flags and the related very-long review
+led to these actions:
 
 - 142 model-created SWC zero fills at CB19 and FD24 were replaced;
 - one isolated CB15 `T_10` jump was replaced through the separate very-long
@@ -471,10 +518,16 @@ actions:
 - the 898-hour CB15 `SWC_50` flat run was retained because it is source data
   and the full sensor is not flat or near-zero dominated.
 
-Together with the 82 very-long decisions, the segment/local soil decision table
-contains 89 closed items. This count is separate from the nine unresolved
-whole-sensor candidates. Final QC reports both categories rather than treating
-the candidates as closed decisions.
+Together with the 82 very-long decisions, the legacy segment/local soil decision
+table contains 89 closed items. This count is separate from whole-sensor
+authorization. Final QC reports approved, rejected, and unresolved candidates
+without treating a candidate as an authorization; the current unresolved count
+is one.
+
+FinalResidual uses the shared Soil source-coverage mask and cannot fill outside
+it. Final QC reports outside-coverage NaNs separately from true internal
+residual gaps, leaves absent sensors unfilled, and reports unresolved sensor
+candidates explicitly.
 
 Final QC outputs:
 
@@ -509,12 +562,15 @@ CB01, CB04, CB06, FD02, FD03, WC05
 
 The MET workflow is isolated in `MetGaps.py`. It fills internal gaps only;
 leading or trailing periods outside retained post-QC coverage remain NaN.
+Sparse missing timestamps are grouped only when their actual timestamps are
+exactly one hour apart; adjacent positions in a filtered NaN array do not make
+widely separated observations one gap.
 Sensor QC targets confirmed Tair and RH faults before model filling. Coverage
 is recalculated after those masks, so a rejected endpoint is not extrapolated.
-For example, the final CB04 Tair point at `2024-05-27 16:00` was masked because
-55.28 C disagreed strongly with concurrent network support (median 37.97 C). It
-is the trailing edge after QC and intentionally remains NaN rather than being
-reported as a failed internal fill.
+For example, in the legacy batch the final CB04 Tair point at
+`2024-05-27 16:00` was masked because 55.28 C disagreed strongly with concurrent
+network support (median 37.97 C). It was the trailing edge after QC and remained
+NaN rather than being reported as a failed internal fill.
 
 The expanded five-gap artificial-gap benchmark selected this production map:
 
@@ -526,7 +582,7 @@ The expanded five-gap artificial-gap benchmark selected this production map:
 | Wind speed | XGBoost | XGBoost | XGBoost | Donor regression |
 | Wind direction | Random Forest | Random Forest | Random Forest | XGBoost |
 
-Current batch result:
+Legacy batch result, pending regeneration:
 
 ```text
 internal hours filled: 109,863
@@ -536,15 +592,16 @@ accepted decisions: 45
 accepted-with-caveat decisions: 5
 ```
 
-The current delivery combines the original full-parameter batch with the
+The legacy delivery combines the original full-parameter batch with the
 benchmark-driven Wind direction rerun. That rerun changed only missing Wind
 direction values; all direct observations, Ppt, and other MET columns were
-unchanged. Its 15 Wind direction flags replace 13 flags from the earlier model,
-giving 50 current decisions. The five caveats are method-confidence notes, not
+unchanged. Its 15 Wind direction flags replaced 13 flags from the earlier model,
+giving 50 legacy decisions. The five caveats are method-confidence notes, not
 open data failures. Original screening statuses remain unchanged so the
 decision layer can be audited. Use `met_qc_reports/met_selected_method_map.csv`
-as the canonical current map; the copy under `model_fill/` records the earlier
-full batch before the targeted Wind direction update.
+as the canonical method map; the copy under `model_fill/` records the earlier
+full batch before the targeted Wind direction update. These result files remain
+historical until the MET branch is regenerated.
 
 ## Precipitation
 
@@ -576,7 +633,7 @@ hour/day-of-year cycles and robust concurrent donor-network aggregates. The
 rain threshold is chosen per station from out-of-bag predictions by CSI, with
 0.5 as fallback.
 
-Current 33-station result:
+Legacy 33-station result, pending regeneration:
 
 ```text
 source-missing hours filled: 295,752
@@ -587,26 +644,31 @@ direct observations changed:           0
 failed segments:                       0
 ```
 
-All 104 screening flags have decisions:
+In the legacy batch, all 104 screening flags had decisions:
 
 ```text
-accepted for current pipeline:                 46
+accepted in legacy batch:                      46
 accepted with no-concurrent-donor caveat:      46
 accepted with spatial-disagreement caveat:      2
 optional external comparison:                  10
 ```
 
-The 10 external comparisons are optional. Their current model values remain in
-the delivery files. Independent checking would first require a verified
-latitude/longitude table for the 33 station codes, which is not present in the
-repository.
+The 10 external comparisons are optional. Their legacy model values remain in
+the historical delivery files. Independent checking would first require a
+verified latitude/longitude table for the 33 station codes, which is not present
+in the repository.
 
 ## Model Comparison Notebooks
+
+All saved numerical benchmark results in this section predate the authoritative
+Stage 0 rebuild and are historical evidence. The production method maps they
+supported remain current, but the benchmarks must be regenerated before their
+saved scores are attributed to the new baseline and QC decisions.
 
 ### MET benchmark
 
 `Gap_Filling_Model_Comparison.ipynb` hides complete observed segments and
-scores each model against the hidden truth. The current saved run uses:
+scores each model against the hidden truth. The legacy saved run uses:
 
 ```text
 six MET stations
@@ -738,11 +800,11 @@ sensor candidates plus manual QC masks as exclusions, removing 709,166 observed
 hours and leaving 242 eligible station-parameter combinations. The sensor
 candidates had not received human approval, so these saved benchmark results
 predate the corrected authorization rule. Current code excludes only approved
-whole-sensor decisions; the benchmark must be rerun if the final approved set
-differs from the former nine-candidate set. It hides one complete observed
-segment for each combination and gap class. The benchmark short range is 6-23
-hours to avoid letting trivial one-hour gaps dominate, and its very-long range
-is bounded at 720-1,440 hours.
+whole-sensor decisions. The current approved set is empty and therefore differs
+from the former nine-candidate exclusion set, so the benchmark must be rerun. It
+hides one complete observed segment for each combination and gap class. The
+benchmark short range is 6-23 hours to avoid letting trivial one-hour gaps
+dominate, and its very-long range is bounded at 720-1,440 hours.
 
 The main comparison uses the same 968 hidden segments for interpolation,
 monthly-hour climatology, donor regression, Random Forest, and XGBoost. Of
@@ -861,17 +923,25 @@ complete file replaces the plot-time copies of `Ppt`, `Tair`, `RH`, `Srad`,
 `Wind speed`, and `Wind direction`. This ensures that a MET plot is not reading
 the older MET columns carried through the soil branch. No combined CSV is
 written; the two delivery products and their provenance remain separate.
+The loader requires the exact paired final files and fails clearly if either is
+missing. It never falls back to Short, Medium, Long, VeryLong, or cleaned data.
+Files currently present at these paths belong to the legacy batch, so the
+notebook becomes an authoritative final-data review only after regeneration.
 
 ## Provenance Files
 
 The compact files needed to understand a batch are:
 
 ```text
+stage0_reports/Station{site}_provenance.json
+final_qc_reports/final_qc_soil_source_coverage.csv
 output/Station{site}_shortgap_fill_detail.csv
 output/Station{site}_mediumgap_fill_detail_repaired.csv
 output/Station{site}_longgap_fill_detail_repaired.csv
 output/Station{site}_verylonggap_fill_detail_repaired.csv
 output/Station{site}_final_residual_fill_detail.csv
+sensor_qc_review_decisions.csv
+manual_qc_masks.csv
 soil_qc_review_decisions.csv
 met_qc_review_decisions.csv
 met_qc_reports/model_fill/met_model_fill_segment_detail.csv
@@ -890,8 +960,9 @@ tables are the reproducible source files.
   station-parameter combinations.
 - Non-Ppt MET is not extrapolated outside each station's retained post-QC
   observed coverage.
-- Full-sensor soil replacements rely heavily on donor means and should retain
-  their provenance in downstream analysis.
+- The legacy batch's unauthorized automatic full-sensor replacements relied
+  heavily on donor means. Current code permits a whole-sensor replacement only
+  after explicit approval and preserves its provenance.
 - The non-Ppt MET robustness benchmark uses four seeds and all six stations
   with dedicated MET records. Seasons are midpoint strata rather than
   independent year-based holdout folds. Twelve rankings remain unstable. The
@@ -911,6 +982,10 @@ tables are the reproducible source files.
 - External Ppt validation is optional and currently lacks verified TxSON 33
   station coordinates.
 
-The nine pending whole-sensor decisions block a newly verified soil delivery
-under the corrected workflow. Existing generated outputs remain available as
-legacy artifacts but have not been reproduced with the new policy.
+Eight whole-sensor masks are rejected and `CB15 SWC_10` remains pending. A
+pending candidate stays unmasked and is reported explicitly; it is not an
+authorization. Existing downstream Soil, MET, QC, final, and benchmark outputs
+remain available as legacy artifacts but have not been reproduced from the
+authoritative Stage 0 baseline with the current source-coverage, sensor/manual
+QC, and missing-driver rules. Authoritative downstream regeneration is the
+remaining production step.
