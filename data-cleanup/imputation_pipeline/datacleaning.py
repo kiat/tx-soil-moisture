@@ -6,6 +6,7 @@ Examples:
 """
 
 import argparse
+import hashlib
 import io
 import json
 import os
@@ -13,9 +14,12 @@ import re
 import warnings
 from dataclasses import dataclass, field
 from pathlib import Path
+from datetime import datetime, timezone
 
 import numpy as np
 import pandas as pd
+
+from time_index_utils import require_unique_datetime_index
 
 warnings.filterwarnings("ignore")
 
@@ -75,6 +79,7 @@ DUPLICATE_CONFLICT_COLUMNS = [
 class DuplicateAudit:
     summaries: list[dict] = field(default_factory=list)
     conflicts: list[dict] = field(default_factory=list)
+    source_coverage: dict = field(default_factory=dict)
 
 
 def station_key(station_id):
@@ -116,6 +121,11 @@ def coerce_numeric(df, columns):
 
 def aggregate_observations_to_hourly(df):
     """Collapse sub-hourly observations to their hour without inventing empty hours."""
+    require_unique_datetime_index(df, "source after duplicate resolution")
+    df = df.copy()
+    if "Ppt" in df:
+        # Invalid rain must not cancel a valid sub-hour total or block Soil fallback.
+        df["Ppt"] = df["Ppt"].where(np.isfinite(df["Ppt"]) & df["Ppt"].ge(0))
     if df.empty:
         return df
     aligned_to_hour = (
@@ -257,6 +267,12 @@ def record_duplicate_audit(
     if audit is not None:
         audit.summaries.append(summary)
         audit.conflicts.extend(conflicts)
+        audit.source_coverage[source] = {
+            "raw_rows": len(df), "resolved_timestamps": len(resolved),
+            "start": str(resolved.index.min()), "end": str(resolved.index.max()),
+            "invalid_ppt_before_hourly": int((resolved.Ppt.notna() &
+                (~np.isfinite(resolved.Ppt) | resolved.Ppt.lt(0))).sum()) if "Ppt" in resolved else 0,
+        }
     return resolved
 
 
@@ -327,35 +343,43 @@ def load_met_data(station_id, base_dir, duplicate_audit=None):
 
 
 def merge_raw_data(station_id, soil_base_dir, met_base_dir, duplicate_audit=None):
-    """Merge MET onto the complete hourly soil-coverage timeline."""
+    """Merge the union of source coverage with valid MET-first precipitation."""
     df_soil = load_soil_data(station_id, soil_base_dir, duplicate_audit)
     df_met = load_met_data(station_id, met_base_dir, duplicate_audit)
+    return merge_hourly_sources(df_soil, df_met)
+
+
+def merge_hourly_sources(df_soil, df_met):
+    """Keep all source hours, including MET-only hours outside Soil coverage."""
+    for source, frame in [("soil", df_soil), ("met", df_met)]:
+        if not frame.empty:
+            require_unique_datetime_index(frame, f"hourly {source} merge input")
+            if not frame.index.equals(frame.index.floor("h")):
+                raise ValueError(f"Hourly {source} merge input contains sub-hourly timestamps.")
     if df_met.empty:
-        return df_soil
-
-    # Preserve MET observations at hours where the entire soil record is
-    # absent, without extending soil data beyond its actual coverage period.
-    soil_timeline = pd.date_range(
-        df_soil.index.min(),
-        df_soil.index.max(),
-        freq="h",
-        name=df_soil.index.name or "Date",
-    )
-    df_soil = df_soil.reindex(soil_timeline)
-
-    merged = pd.merge(
-        df_soil,
-        df_met,
-        how="left",
-        left_index=True,
-        right_index=True,
-        suffixes=("_soil", "_met"),
-    )
+        merged = df_soil.copy()
+    elif df_soil.empty:
+        merged = df_met.copy()
+    else:
+        merged = df_soil.join(df_met, how="outer", lsuffix="_soil", rsuffix="_met")
+    for col in ["Ppt", "Ppt_soil", "Ppt_met"]:
+        if col in merged:
+            merged[col] = merged[col].where(np.isfinite(merged[col]) & merged[col].ge(0))
     if "Ppt_soil" in merged.columns and "Ppt_met" in merged.columns:
         merged["Ppt"] = merged["Ppt_met"].combine_first(merged["Ppt_soil"])
         merged.drop(columns=["Ppt_soil", "Ppt_met"], inplace=True)
 
-    return merged
+    return complete_hourly_timeline(merged)
+
+
+def complete_hourly_timeline(df):
+    require_unique_datetime_index(df, "Stage 0 merged data")
+    if df.empty:
+        raise ValueError("Stage 0 has no valid source timestamps.")
+    if not df.index.equals(df.index.floor("h")):
+        raise ValueError("Stage 0 merged data must already be hourly.")
+    timeline = pd.date_range(df.index.min(), df.index.max(), freq="h", name="Date")
+    return df.reindex(timeline)
 
 
 def write_duplicate_reports(audit: DuplicateAudit, station_id, output_dir) -> tuple[Path, Path]:
@@ -519,9 +543,14 @@ def inject_manual_gaps(station_id, summary_df: pd.DataFrame) -> pd.DataFrame:
 
 
 def build_hourly_cleaned_data(merged_df):
-    full_idx = pd.date_range(start=merged_df.index.min(), end=merged_df.index.max(), freq="h")
-    full_df = merged_df.reindex(full_idx)
+    full_df = complete_hourly_timeline(merged_df)
     return find_and_replace_wrong_data(full_df)
+
+
+def file_fingerprint(path):
+    path = Path(path).resolve()
+    return {"path": str(path), "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+            "bytes": path.stat().st_size}
 
 
 def main():
@@ -540,6 +569,7 @@ def main():
     )
     parser.add_argument("--missing-output", type=str, default=None, help="Filename for missing/invalid summary CSV.")
     parser.add_argument("--cleaned-output", type=str, default=None, help="Filename for cleaned full-timeline CSV.")
+    parser.add_argument("--provenance-dir", default="stage0_reports", help="Directory for per-station source/code/output manifests.")
     args = parser.parse_args()
 
     station_id = args.station
@@ -576,6 +606,26 @@ def main():
     os.makedirs(Path(clean_out).parent, exist_ok=True)
     cleaned_df.to_csv(clean_out, na_rep="NaN")
     print(f"Cleaned full-timeline data saved to: {clean_out}")
+
+    sources = [resolve_station_file(args.soil_base_dir, station_id, ["SM_{station}.dat", "{station}.dat"]),
+               resolve_station_file(args.met_base_dir, station_id, ["MET_{station}.dat", "{station}_met.dat"], required=False)]
+    manifest = {
+        "station": station_key(station_id),
+        "generated_utc": datetime.now(timezone.utc).isoformat(),
+        "coverage_policy": "complete hourly union of Soil and MET source timestamps",
+        "ppt_policy": "finite nonnegative MET first; finite nonnegative Soil fallback; otherwise NaN",
+        "duplicate_policy": "exact collapse; complementary merge; conflicting cells missing and reported",
+        "code": [file_fingerprint(__file__), file_fingerprint(Path(__file__).with_name("time_index_utils.py"))],
+        "sources": [file_fingerprint(path) for path in sources if path is not None],
+        "source_coverage": duplicate_audit.source_coverage,
+        "outputs": [file_fingerprint(path) for path in [raw_path, clean_out, miss_out, duplicate_summary, duplicate_conflicts]],
+        "rows": len(cleaned_df), "start": str(cleaned_df.index.min()), "end": str(cleaned_df.index.max()),
+        "missing_by_parameter": {col: int(cleaned_df[col].isna().sum()) for col in cleaned_df},
+        "range_rejected_by_parameter": {col: len(times) for col, times in wrong.items()},
+    }
+    provenance_dir = Path(args.provenance_dir)
+    provenance_dir.mkdir(parents=True, exist_ok=True)
+    (provenance_dir / f"Station{station_id}_provenance.json").write_text(json.dumps(manifest, indent=2) + "\n")
 
 
 if __name__ == "__main__":
