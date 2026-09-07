@@ -21,6 +21,7 @@ from xgboost import XGBRegressor
 
 from param_config import ALL_SOIL_PARAMS
 from time_index_utils import require_unique_datetime_index
+from soil_source_coverage import load_soil_coverage
 
 warnings.filterwarnings("ignore")
 
@@ -47,10 +48,10 @@ def load_medium_data(station_id, directory=OUT_DIR):
     df = ensure_hourly_regular_index(df)
     return df
 
-def load_missing_data(station_id, directory=MISS_DIR):
+def load_missing_data(station_id, directory=MISS_DIR, coverage=None):
     filename = Path(directory) / f"Station{station_id}_missing_data.csv"
     df = pd.read_csv(filename, parse_dates=["Start Timestamp", "End Timestamp"])
-    return df
+    return (coverage or load_soil_coverage(station_id)).restrict_gaps(df)
 
 
 def ensure_hourly_regular_index(df: pd.DataFrame) -> pd.DataFrame:
@@ -187,7 +188,10 @@ def apply_physical_bounds(values, param):
     return values
 
 
-def fill_long_gaps_xgb_drift(df, gaps, param, station_id):
+def fill_long_gaps_xgb_drift(df, gaps, param, station_id, coverage=None):
+    coverage = coverage or load_soil_coverage(station_id)
+    for _, gap in gaps.iterrows():
+        coverage.require_interval(gap["Start Timestamp"], gap["End Timestamp"], param)
     model = train_xgb(df.copy(), param)
     work = df.copy()
     filled = work[param].copy()
@@ -222,8 +226,10 @@ def process_station(station, params):
     print(f"\n=== Station {station} ===")
 
     df = load_medium_data(station)
+    coverage = load_soil_coverage(station)
+    coverage.assert_frame(df)
     ensure_driver_columns(df)
-    miss_tbl = load_missing_data(station)
+    miss_tbl = load_missing_data(station, coverage=coverage)
 
     log_all = []
     for p in params:
@@ -237,7 +243,7 @@ def process_station(station, params):
 
         print(f"  {p}: filling {len(gaps)} long gap(s)…")
         try:
-            filled, log = fill_long_gaps_xgb_drift(df.copy(), gaps, p, station_id=station)
+            filled, log = fill_long_gaps_xgb_drift(df.copy(), gaps, p, station_id=station, coverage=coverage)
         except Exception as exc:
             print(f"  {p}: skip long gaps ({exc})")
             continue
@@ -248,6 +254,7 @@ def process_station(station, params):
     # write results
     out_clean = OUT_DIR / f"Station{station}_filled_longgaps.csv"
     output_df = df.drop(columns=["Ppt_model", "Tair_model", "Srad_model"], errors="ignore")
+    coverage.assert_frame(output_df)
     output_df.to_csv(out_clean)
     print("  • written:", out_clean)
 

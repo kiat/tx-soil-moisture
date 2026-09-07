@@ -17,6 +17,7 @@ import pandas as pd
 from param_config import ALL_SOIL_PARAMS
 from sensor_qc_decisions import validate_candidate_authorizations
 from time_index_utils import require_unique_datetime_index
+from soil_source_coverage import load_soil_coverage
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -34,6 +35,8 @@ PARAM_SUMMARY_COLUMNS = [
     "Exact Lower Bound Count", "Exact Upper Bound Count", "SWC Near-Zero Count",
     "SWC Near-Zero Fraction", "Longest Constant Run Hours",
     "Longest Constant Run Value",
+    "Source Coverage Status", "Source Start", "Source End", "Inside Source Coverage Hours",
+    "Outside Source Coverage NaN Hours", "Coverage Baseline SHA256",
 ]
 
 
@@ -124,32 +127,11 @@ def gap_category(hours: int) -> str:
     return "verylong_>=720h"
 
 
-def nan_runs(df: pd.DataFrame, station: str, param: str) -> List[dict]:
-    if param not in df.columns:
-        return []
-    missing = df[param].isna().to_numpy()
-    rows: List[dict] = []
-    i = 0
-    while i < len(missing):
-        if not missing[i]:
-            i += 1
-            continue
-        j = i
-        while j < len(missing) and missing[j]:
-            j += 1
-        hours = j - i
-        rows.append(
-            {
-                "Station": station,
-                "Parameter": param,
-                "Start": df.index[i],
-                "End": df.index[j - 1],
-                "Hours": hours,
-                "Category": gap_category(hours),
-            }
-        )
-        i = j
-    return rows
+def nan_runs(df: pd.DataFrame, station: str, param: str, coverage=None) -> List[dict]:
+    coverage = coverage or load_soil_coverage(station)
+    return [{"Station": station, "Parameter": param, "Start": run[0], "End": run[-1],
+             "Hours": len(run), "Category": gap_category(len(run))}
+            for run in coverage.nan_runs(df, param)]
 
 
 def longest_equal_run(series: pd.Series) -> Tuple[int, object]:
@@ -397,6 +379,7 @@ def write_outputs(
     stations: Iterable[str],
     params: Iterable[str],
     sensor_candidates: pd.DataFrame | None = None,
+    coverage_rows: List[dict] | None = None,
 ) -> int:
     report_dir.mkdir(parents=True, exist_ok=True)
     overview = pd.DataFrame(
@@ -428,6 +411,8 @@ def write_outputs(
     overview.to_csv(report_dir / "final_qc_overview.csv", index=False)
     param_summary.to_csv(report_dir / "final_qc_station_parameter_summary.csv", index=False)
     remaining_gaps.to_csv(report_dir / "final_qc_remaining_nan_runs.csv", index=False)
+    if coverage_rows is not None:
+        pd.DataFrame(coverage_rows).to_csv(report_dir / "final_qc_soil_source_coverage.csv", index=False)
     missing_columns.to_csv(report_dir / "final_qc_missing_sensor_columns.csv", index=False)
     suspicious.to_csv(report_dir / "final_qc_suspicious_sensors.csv", index=False)
     verylong_review.to_csv(report_dir / "final_qc_verylong_review_summary.csv", index=False)
@@ -479,10 +464,15 @@ def main() -> None:
     gap_rows: List[dict] = []
     missing_column_rows: List[dict] = []
     suspicious_rows: List[dict] = []
+    coverage_rows: List[dict] = []
 
     for station in stations:
         path = input_path_for(station, args.input_stage, stations_with_manual_qc)
         df = read_station(path)
+        coverage = load_soil_coverage(station)
+        coverage.assert_frame(df)
+        source_records = {row["Parameter"]: row for row in coverage.records(df)}
+        coverage_rows.extend(source_records[param] for param in params)
         station_nan = 0
 
         for param in params:
@@ -490,13 +480,13 @@ def main() -> None:
                 missing_column_rows.append({"Station": station, "Parameter": param, "Reason": "column_missing"})
                 continue
 
-            runs = nan_runs(df, station, param)
+            runs = nan_runs(df, station, param, coverage)
             gap_rows.extend(runs)
             nan_hours = sum(int(r["Hours"]) for r in runs)
             station_nan += nan_hours
             run_counts = pd.Series([r["Category"] for r in runs]).value_counts().to_dict() if runs else {}
 
-            flags, metrics = sensor_flags(param, df[param], args)
+            flags, metrics = sensor_flags(param, df.loc[coverage.contains(df.index, param), param], args)
             summary = {
                 "Station": station,
                 "Parameter": param,
@@ -513,6 +503,7 @@ def main() -> None:
                 "Flags": ";".join(flags),
             }
             summary.update(metrics)
+            summary.update(source_records[param])
             param_rows.append(summary)
 
             if flags:
@@ -541,6 +532,7 @@ def main() -> None:
         stations,
         params,
         sensor_candidates,
+        coverage_rows,
     )
 
     remaining = pd.DataFrame(gap_rows)

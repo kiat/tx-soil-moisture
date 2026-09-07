@@ -10,6 +10,7 @@ limits. Run instructions are kept in [README.md](README.md).
 - [Existing Generated Batch](#existing-generated-batch)
 - [Current Pipeline Map](#current-pipeline-map)
 - [Inputs and Stage 0](#inputs-and-stage-0)
+- [Soil Source Coverage](#soil-source-coverage)
 - [Gap Classes](#gap-classes)
 - [Soil Filling](#soil-filling)
 - [Soil Sensor and Manual QC](#soil-sensor-and-manual-qc)
@@ -26,7 +27,10 @@ limits. Run instructions are kept in [README.md](README.md).
 
 The counts below describe the saved batch produced before the September 2026
 duplicate-resolution and sensor-authorization corrections. That batch has not
-been regenerated. In particular, its final soil files include nine automatic
+been regenerated downstream. Stage 0 alone was rebuilt on 2026-09-06; its
+current verification is documented under [Inputs and Stage 0](#inputs-and-stage-0).
+The table below remains a historical snapshot, including its old review status.
+In particular, its final soil files include nine automatic
 whole-sensor candidate masks that the corrected workflow no longer authorizes.
 
 | Check | Result |
@@ -76,6 +80,7 @@ whole-sensor candidate masks that the corrected workflow no longer authorizes.
 ```mermaid
 flowchart LR
     A["Raw .dat files"] --> B["Stage 0<br/>duplicate resolution + datacleaning.py"]
+    B --> P["stage0_reports/Station{site}_provenance.json<br/>source/code/output SHA-256 + source bounds"]
     B --> C["Final Soil branch"]
     B --> D["Final MET branch"]
     C --> E["Station{site}_filled_final.csv"]
@@ -133,7 +138,7 @@ flowchart TD
 
 | Stage | Main data, report, and decision files |
 |---|---|
-| Stage 0 | `cleaned_data/Station{site}_cleaned_data.csv`, `missing_data/Station{site}_missing_data.csv`, `raw_merged_data/raw_merged_station_{site}.csv`, `duplicate_resolution_reports/Station{site}_duplicate_{summary,conflicts}.csv` |
+| Stage 0 | `cleaned_data/Station{site}_cleaned_data.csv`, `missing_data/Station{site}_missing_data.csv`, `raw_merged_data/raw_merged_station_{site}.csv`, `duplicate_resolution_reports/Station{site}_duplicate_{summary,conflicts}.csv`, `stage0_reports/Station{site}_provenance.json` |
 | Medium validation | `mediumgaps_validation_summary.csv`, `mediumgaps_rejected_segments.csv`, `mediumgaps_validation_station_summary.csv` |
 | Long validation | `longgaps_validation_summary.csv`, `longgaps_rejected_segments.csv`, `longgaps_validation_station_summary.csv` |
 | Very-long validation | `verylonggaps_validation_summary.csv`, `verylonggaps_review_segments.csv`, `verylonggaps_repaired_points.csv`, `verylonggaps_validation_station_summary.csv` |
@@ -173,13 +178,23 @@ Stage 0 does the following:
 - sets conflicting measurements to NaN and records every source row involved;
 - reports Flag-only conflicts and sets the ambiguous Flag to NaN because the
   repository does not document a severity or bit ordering;
-- combines soil and MET data when a MET file exists;
-- aggregates sub-hourly data to hourly data;
+- aggregates each duplicate-resolved source to hourly data before merging;
+- rejects nonfinite/negative source Ppt before summing, so an invalid sample
+  cannot cancel valid sub-hourly rain or block the valid alternate source;
 - sums Ppt within an hour, averages numeric measurements, and keeps the final
   Flag or other metadata value rather than averaging a QC flag;
-- creates the complete hourly index between the first and last timestamp;
+- outer-merges Soil and MET and creates the complete hourly index over their
+  combined start/end bounds, preserving every MET-only hour;
+- selects valid MET Ppt first, then valid Soil Ppt, leaving NaN only if neither
+  source supplies valid precipitation;
 - converts invalid measurements to NaN;
-- writes cleaned data and a gap inventory.
+- writes cleaned data, a matching gap inventory, duplicate reports, and a
+  manifest with source coverage plus raw input/code/output hashes.
+
+`raw_merged_data` is an hourly source-resolved intermediate, not a byte-for-byte
+raw archive. It already includes duplicate resolution, Ppt validity/source
+selection, and timestamp completion; the original `.dat` files remain unchanged.
+Other physical-range checks occur when producing `cleaned_data`.
 
 Physical checks are:
 
@@ -200,6 +215,7 @@ missing_data/Station{site}_missing_data.csv
 raw_merged_data/raw_merged_station_{site}.csv
 duplicate_resolution_reports/Station{site}_duplicate_summary.csv
 duplicate_resolution_reports/Station{site}_duplicate_conflicts.csv
+stage0_reports/Station{site}_provenance.json
 ```
 
 A read-only scan of the current 39 raw files found 94,976 duplicate timestamp
@@ -208,6 +224,92 @@ groups, and 40 Flag-only conflict groups. The production resolver records these
 counts per station/source. Every stage after Stage 0 now treats any remaining
 duplicate timestamp as an invariant violation instead of choosing a first or
 last row.
+
+### Authoritative baseline rebuilt 2026-09-06
+
+The 33 stations have now been regenerated with this implementation. An
+independent vectorized reference parsed the 39 original files, resolved their
+duplicate cells, aggregated hourly values, applied source priority and physical
+ranges, and matched every regenerated raw/cleaned value. All 33 indexes are
+unique, monotonic, hourly, and cover the raw-source union. Every missing-summary
+interval exactly matches the cleaned NaNs. There were no invalid raw dates.
+
+The old implementation/output lineage mixed Soil-only merges with later MET
+reconciliation. Even the pre-fix code still clipped MET to Soil bounds.
+The new baseline restores 13,578 Ppt observations inside the previous coverage
+and 33,959 outside it, preserving 47,537 MET-only hours in total. Two previous
+Ppt values (FD22 and FD29) become NaN because their raw duplicates conflict.
+
+| Station | Previous cleaned rows | New cleaned rows | Restored internal Ppt hours | Added valid Ppt hours outside old bounds |
+|---|---:|---:|---:|---:|
+| CB04 | 94,562 | 99,914 | 1,206 | 5,352 |
+| CB06 | 93,580 | 94,037 | 0 | 457 |
+| FD02 | 93,605 | 99,914 | 2 | 6,309 |
+| FD03 | 82,631 | 87,983 | 12,368 | 5,352 |
+| WC05 | 82,458 | 99,959 | 2 | 16,489 |
+
+Total cleaned rows increase from 2,685,804 to 2,720,775. WC05 gains 17,501
+timeline rows, including 1,012 hours with no MET source record. Twenty-nine
+stations change in values or coverage; FD17, FD21, FD23, and FD28 retain identical
+cleaned values and coverage. Duplicate processing collapses 178,546 excess rows
+and reports all 63 measurement-conflict and 40 Flag-only conflict groups.
+No duplicate policy or downstream model methodology changed during this rebuild.
+
+Full per-parameter differences, source counts, 33-station checks, and the old
+99-file archive are in the [Stage 0 rebuild package](../../review_only/stage0_lineage_2026-09-06/README.md).
+Downstream and benchmark files were preserved and must be regenerated before
+being attributed to this baseline. In particular, added MET-only boundary hours
+create structural Soil NaNs, whose source coverage is explicitly recorded in
+each provenance manifest. The shared coverage mechanism below now enforces
+parameter-level observational support during Soil filling and gap reporting.
+
+## Soil Source Coverage
+
+`soil_source_coverage.py` is the single coverage definition for Short, Medium,
+Long, VeryLong, FinalResidual, the three validators, and final QC reports.
+For each Soil parameter, coverage is the closed hourly interval between its
+first and last finite value in the hash-verified Stage 0 cleaned baseline.
+These are source observations after duplicate/hourly/range cleaning, before
+any imputation or sensor/manual masks. No imputed or post-QC values define or
+extend coverage; masking the whole supported interval does not erase coverage.
+
+This is an observational-support rule, not a claim to know installation dates.
+The raw files have fixed sensor columns but no explicit per-sensor deployment
+calendar. Direct inspection of all 33 Soil sources, using Stage 0 hourly
+alignment, found that all 252 present sensor columns share their station's
+Soil start/end. The other 12 columns are absent. There are no present columns
+with zero finite source support in this dataset. A parameter-level rule also
+protects later-starting, earlier-ending, or entirely empty sensors in other
+inputs without incorrectly borrowing a neighboring sensor's coverage.
+
+The original `missing_data` files remain complete inventories of all NaNs.
+Before assigning a Soil gap class, every loader/validator intersects those
+intervals with source coverage and recalculates their lengths. Internal gaps
+remain eligible, including long internal outages. FinalResidual scans only
+eligible NaNs before applying any manual refill override or donor fallback.
+Stage output checks reject nonmissing values outside coverage; donor cohorts
+are checked before VeryLong/FinalResidual write any station. Donor ranking,
+regression, fallback methods, and gap-length thresholds are unchanged.
+
+Final QC's `NaN Hours`, gap classes, and residual totals describe internal
+missing data. `Outside Source Coverage NaN Hours` is recorded separately,
+with source bounds/status and the baseline hash, in the parameter summary and
+`final_qc_soil_source_coverage.csv`. Absent columns are listed without inventing
+values or counting a nonexistent column as a failed residual gap. Coverage
+provenance remains recoverable from the fixed baseline and its manifest at
+every intermediate stage.
+
+The read-only 33-station inventory found **2,402,450 internal** and **269,064
+outside-coverage** Soil NaN cells (station-parameter-hours). All outside hours
+are excluded from all five stages and all original internal gap intervals and
+lengths are unchanged. Protected outside hours are CB04 42,816; CB06 3,656;
+FD02 50,472; FD03 32,112; WC05 140,008. Absent source columns are counted
+separately and are not part of those NaN-cell totals.
+
+See the [coverage verification package](../../review_only/soil_source_coverage_2026-09-06/README.md)
+for per-parameter provenance, stage eligibility checks, and three real
+in-memory short-gap interpolation samples. The 52 targeted/existing tests pass;
+no downstream production outputs were regenerated during this coverage pass.
 
 ## Gap Classes
 

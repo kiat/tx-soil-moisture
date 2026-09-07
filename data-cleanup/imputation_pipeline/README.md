@@ -26,10 +26,10 @@ same cleaned hourly input but write separate outputs.
 
 | Part | Verified result |
 |---|---|
-| Stage 0 cleaning | Duplicate policy corrected; the 33 existing generated files predate this correction and have not been regenerated |
+| Stage 0 cleaning | Rebuilt from all 39 raw Soil/MET files on 2026-09-06; 33 stations independently verified; 2,720,775 hourly rows |
 | Soil moisture and soil temperature | 33 legacy final files exist; they have not been reverified under the new duplicate and sensor-authorization rules |
-| Soil QC | 89 segment/local review items closed; 9 whole-sensor candidates pending and unapproved |
-| Soil model comparison | Saved pre-authorization benchmark retained the current method map; revalidation depends on the nine pending sensor decisions |
+| Soil QC | Human sensor/manual decisions are recorded; their application to the new Stage 0 baseline awaits downstream regeneration |
+| Soil model comparison | Saved benchmark retained the current method map; results predate the corrected Stage 0 baseline |
 | Non-Ppt MET | All internal gaps filled for the six dedicated-MET stations; 50/50 flags reviewed |
 | MET model robustness | Four-seed benchmark, independent confirmation, and all-gap deployment coverage audit complete; all current methods retained |
 | Ppt | MET-first source reconciliation and model filling completed for 33 stations; 0 NaNs |
@@ -39,11 +39,28 @@ extrapolated.
 The 10 low-confidence Ppt segments are retained with caveats; external rainfall
 comparison is optional and does not block the pipeline.
 
-The September 2026 correctness pass intentionally did not regenerate the full
-dataset. Existing generated soil files include the former behavior that treated
-sensor candidates as approved masks. They must not be presented as outputs of
-the corrected authorization workflow until the nine candidates are reviewed and
-the affected stages are rerun.
+Only Stage 0 has been regenerated. All downstream soil, MET, QC, final, and
+benchmark counts above describe the preserved historical batch, not results
+derived from the new baseline. Existing soil files also include the former
+automatic candidate-masking behavior. Downstream regeneration is still required.
+
+Stage 0 now covers the complete hourly union of Soil and MET source timestamps.
+This preserves MET-only records within and outside Soil coverage. The shared
+`soil_source_coverage.py` helper fixes each Soil parameter's coverage to its first
+and last finite source-derived Stage 0 value, before any imputation or later QC.
+All five Soil filling stages and their gap reports exclude timestamps outside
+that interval. Missing/never-observed columns have no filling coverage. The
+helper verifies the cleaned baseline against its Stage 0 SHA-256 manifest.
+
+The 33-station coverage check found 2,402,450 internal Soil NaN hours and
+269,064 out-of-coverage Soil NaN hours; all internal gaps retain their original
+lengths. Final QC reports the latter separately in
+`final_qc_soil_source_coverage.csv`, not as failed residual gaps.
+See the [coverage check](../../review_only/soil_source_coverage_2026-09-06/README.md).
+No downstream production files have been regenerated yet.
+
+See the [Stage 0 rebuild report](../../review_only/stage0_lineage_2026-09-06/README.md)
+for the archived previous outputs, per-station differences, and all 33 verification results.
 
 ## Quick Links
 
@@ -76,6 +93,15 @@ datasets/TxSON_data_2026-02-24/
 Python 3.11 is the tested version.
 
 ## Run the Pipeline
+
+To regenerate only one station's Stage 0, from this directory:
+
+```bash
+python datacleaning.py --station CB04
+```
+
+This writes only Stage 0 outputs and provenance. The commands below also run
+downstream stages; they were not run as part of the Stage 0 baseline rebuild.
 
 Preview a run first:
 

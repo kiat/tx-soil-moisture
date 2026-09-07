@@ -16,6 +16,7 @@ import pandas as pd
 
 from param_config import ALL_SOIL_PARAMS
 from time_index_utils import require_unique_datetime_index
+from soil_source_coverage import load_soil_coverage
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -99,6 +100,7 @@ def load_expected_segments(stations: Iterable[str], params: Iterable[str]) -> Di
             continue
 
         miss = pd.read_csv(miss_path, parse_dates=["Start Timestamp", "End Timestamp"])
+        miss = load_soil_coverage(station).restrict_gaps(miss)
         if miss.empty or "Number Missing" not in miss.columns:
             continue
         miss["Number Missing"] = pd.to_numeric(miss["Number Missing"], errors="coerce")
@@ -136,9 +138,13 @@ def load_filled_segments(stations: Iterable[str], params: Iterable[str]) -> Dict
             detail["Station"].isin(selected_stations)
             & detail["Parameter"].isin(selected_params)
         ]
+        coverage = load_soil_coverage(station_from_name)
         for (station, param, start, end), group in detail.groupby(
             ["Station", "Parameter", "Start", "End"], sort=True
         ):
+            coverage.require_interval(start, end, param)
+            if not coverage.contains(pd.DatetimeIndex(group["Timestamp"]), param).all():
+                raise ValueError(f"Station{station}: fill log contains timestamps outside Soil source coverage.")
             filled[SegmentKey(str(station), param, start, end)] = group.sort_values("Timestamp").copy()
     return filled
 
@@ -312,6 +318,7 @@ def write_repaired_outputs(
     for station in stations:
         long_path = long_output_path_for(station)
         repaired = read_series_file(long_path)
+        load_soil_coverage(station).assert_frame(repaired)
         for key in rejected_keys:
             if key.station != station or key.parameter not in repaired.columns:
                 continue

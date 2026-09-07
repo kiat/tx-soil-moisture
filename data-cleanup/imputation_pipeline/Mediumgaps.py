@@ -25,6 +25,7 @@ from pmdarima import auto_arima
 
 from param_config import ALL_SOIL_PARAMS, exog_for
 from time_index_utils import require_unique_datetime_index
+from soil_source_coverage import load_soil_coverage
 
 warnings.filterwarnings("ignore")
 
@@ -42,10 +43,10 @@ def load_cleaned_data(station_id):
     df.index = pd.DatetimeIndex(df.index)
     return ensure_hourly_regular_index(df)
 
-def load_missing_data(station_id):
+def load_missing_data(station_id, coverage=None):
     filename = MISS_DIR / f"Station{station_id}_missing_data.csv"
     df = pd.read_csv(filename, parse_dates=["Start Timestamp", "End Timestamp"])
-    return df
+    return (coverage or load_soil_coverage(station_id)).restrict_gaps(df)
 
 
 
@@ -145,11 +146,13 @@ def sarima_forecast(
 
 
 # Iterate through each medium gap, fit SARIMAX, and write predictions back
-def fill_medium_gaps(series, gaps, exog, gap_log, station, param, ctx_days=7):
+def fill_medium_gaps(series, gaps, exog, gap_log, station, param, ctx_days=7, coverage=None):
+    coverage = coverage or load_soil_coverage(station)
     filled = series.copy()
     for _, row in gaps.iterrows():
         s_ts = row["Start Timestamp"]
         e_ts = row["End Timestamp"]
+        coverage.require_interval(s_ts, e_ts, param)
         idx = pd.date_range(s_ts, e_ts, freq="h")
 
         fc, _ = sarima_forecast(filled, s_ts, e_ts, exog, ctx_days)
@@ -206,7 +209,9 @@ def apply_physical_bounds(fc, param):
 # Fill medium gaps for each SWC parameter and save outputs
 def process_station(station, params):
     df = load_cleaned_data(station)
-    miss_tbl = load_missing_data(station)
+    coverage = load_soil_coverage(station)
+    coverage.assert_frame(df)
+    miss_tbl = load_missing_data(station, coverage=coverage)
 
     # Regularize indices to avoid frequency issues
     df = ensure_hourly_regular_index(df)
@@ -226,10 +231,11 @@ def process_station(station, params):
 
         print(f"  {p}: filling {len(mgaps)} gaps")
         before = len(log)
-        df[p] = fill_medium_gaps(df[p], mgaps, exog, log, station, p)
+        df[p] = fill_medium_gaps(df[p], mgaps, exog, log, station, p, coverage=coverage)
         filled_count += len(log) - before
 
     OUT_DIR.mkdir(exist_ok=True)
+    coverage.assert_frame(df)
     df.to_csv(OUT_DIR / f"Station{station}_filled_mediumgaps.csv")
     if log:
         pd.DataFrame(log).to_csv(

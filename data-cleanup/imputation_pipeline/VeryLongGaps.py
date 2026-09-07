@@ -27,6 +27,7 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error
 
 from param_config import ALL_SOIL_PARAMS
 from time_index_utils import require_unique_datetime_index
+from soil_source_coverage import load_soil_coverage
 
 
 warnings.filterwarnings("ignore")
@@ -54,9 +55,10 @@ def load_stage_data(station_id: str, directory=OUT_DIR) -> pd.DataFrame:
     return ensure_hourly_regular_index(df)
 
 
-def load_missing_data(station_id: str, directory=MISS_DIR) -> pd.DataFrame:
+def load_missing_data(station_id: str, directory=MISS_DIR, coverage=None) -> pd.DataFrame:
     filename = Path(directory) / f"Station{station_id}_missing_data.csv"
-    return pd.read_csv(filename, parse_dates=["Start Timestamp", "End Timestamp"])
+    table = pd.read_csv(filename, parse_dates=["Start Timestamp", "End Timestamp"])
+    return (coverage or load_soil_coverage(station_id)).restrict_gaps(table)
 
 
 def ensure_hourly_regular_index(df: pd.DataFrame) -> pd.DataFrame:
@@ -222,8 +224,10 @@ def fill_station(
 ) -> None:
     print(f"\n=== Station {station} | very-long gap filling ===")
     df_target = all_data[station].copy()
+    coverage = load_soil_coverage(station)
+    coverage.assert_frame(df_target)
     donors = {sid: df for sid, df in all_data.items() if sid != station}
-    missing = load_missing_data(station)
+    missing = load_missing_data(station, coverage=coverage)
     detail_rows = []
 
     for param in params:
@@ -318,10 +322,12 @@ def fill_station(
                 })
 
         filled_count = before_count - int(df_target[param].isna().sum())
-        print(f"    filled {filled_count} hours; NaN left {int(df_target[param].isna().sum())}")
+        remaining = sum(len(run) for run in coverage.nan_runs(df_target, param))
+        print(f"    filled {filled_count} hours; internal NaN left {remaining}")
 
     filled_csv = OUT_DIR / f"Station{station}_filled_verylonggaps.csv"
     df_target.index.name = "Date"
+    coverage.assert_frame(df_target)
     df_target.to_csv(filled_csv, na_rep="NaN")
     print(f"  written: {filled_csv}")
 
@@ -355,6 +361,8 @@ def main() -> None:
         sys.exit(1)
 
     all_data = {station: load_stage_data(station) for station in donor_pool}
+    for station, frame in all_data.items():
+        load_soil_coverage(station).assert_frame(frame)
     OUT_DIR.mkdir(exist_ok=True)
     for station in stations:
         fill_station(station, params, all_data, args.min_overlap, args.min_abs_corr)

@@ -32,6 +32,7 @@ from sklearn.linear_model import LinearRegression
 
 from param_config import ALL_SOIL_PARAMS
 from time_index_utils import require_unique_datetime_index
+from soil_source_coverage import load_soil_coverage
 
 
 warnings.filterwarnings("ignore")
@@ -325,22 +326,8 @@ def prediction_frame(
     )
 
 
-def nan_runs(df: pd.DataFrame, param: str) -> List[pd.DatetimeIndex]:
-    if param not in df.columns:
-        return []
-    mask = df[param].isna().to_numpy()
-    runs: List[pd.DatetimeIndex] = []
-    i = 0
-    while i < len(mask):
-        if not mask[i]:
-            i += 1
-            continue
-        j = i
-        while j < len(mask) and mask[j]:
-            j += 1
-        runs.append(pd.DatetimeIndex(df.index[i:j]))
-        i = j
-    return runs
+def nan_runs(df: pd.DataFrame, param: str, coverage) -> List[pd.DatetimeIndex]:
+    return coverage.nan_runs(df, param)
 
 
 def load_manual_masks(path: Path = MANUAL_QC_MASKS) -> pd.DataFrame:
@@ -411,6 +398,8 @@ def fill_station(
 ) -> None:
     print(f"\n=== Station {station} | final residual filling ===")
     target_df = all_data[station].copy()
+    coverage = load_soil_coverage(station)
+    coverage.assert_frame(target_df)
     donors = {sid: df for sid, df in all_data.items() if sid != station}
     detail_rows: List[Dict[str, object]] = []
 
@@ -419,7 +408,7 @@ def fill_station(
             print(f"  {param}: column missing, skip.")
             continue
 
-        runs = nan_runs(target_df, param)
+        runs = nan_runs(target_df, param, coverage)
         if not runs:
             print(f"  {param}: no residual NaN.")
             continue
@@ -551,9 +540,11 @@ def fill_station(
                     "Refill Override": refill_method,
                 })
 
-        print(f"    filled {filled_count} hours; NaN left {int(target_df[param].isna().sum())}")
+        remaining = sum(len(run) for run in nan_runs(target_df, param, coverage))
+        print(f"    filled {filled_count} hours; internal NaN left {remaining}")
 
     target_df.index.name = "Date"
+    coverage.assert_frame(target_df)
     output_path = OUT_DIR / f"Station{station}_filled_final.csv"
     target_df.to_csv(output_path, na_rep="NaN")
     print(f"  written: {output_path}")
@@ -595,6 +586,8 @@ def main() -> None:
         for station in load_stations
     }
     refill_overrides = load_manual_refill_overrides(manual_masks)
+    for station, frame in all_data.items():
+        load_soil_coverage(station).assert_frame(frame)
     OUT_DIR.mkdir(exist_ok=True)
     for station in stations:
         fill_station(station, params, all_data, args.min_overlap, args.min_abs_corr, refill_overrides)

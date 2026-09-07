@@ -24,6 +24,7 @@ from pathlib import Path
 
 from param_config import ALL_SOIL_PARAMS, short_interp_for
 from time_index_utils import require_unique_datetime_index
+from soil_source_coverage import load_soil_coverage
 
 # Path 
 BASE_DIR  = Path(__file__).resolve().parent
@@ -41,10 +42,10 @@ def load_cleaned_data(station_id, directory=CLEAN_DIR):
     df.index.freq = "h"
     return df
 
-def load_missing_data(station_id, directory=MISS_DIR):
+def load_missing_data(station_id, directory=MISS_DIR, coverage=None):
     filename = Path(directory) / f"Station{station_id}_missing_data.csv"
     df = pd.read_csv(filename, parse_dates=["Start Timestamp", "End Timestamp"])
-    return df
+    return (coverage or load_soil_coverage(station_id)).restrict_gaps(df)
 
 # 2.Filter Short gap data (Hours to Days) (<24 hours)
 def filter_short_gaps(gap_df, parameter, max_gap = 24):
@@ -71,11 +72,13 @@ def wind_direction_interpolate(series, start_ts, end_ts):
     return pd.Series(angles, index=idx)
 
 # 4. Fill short gaps
-def fill_short_gaps(series, gap_df, gap_log, *, station_id, param, interp_method="pchip"):
+def fill_short_gaps(series, gap_df, gap_log, *, station_id, param, interp_method="pchip", coverage=None):
+    coverage = coverage or load_soil_coverage(station_id)
     filled = series.copy()
     for _, row in gap_df.iterrows():
         start_ts = pd.to_datetime(row["Start Timestamp"])
         end_ts   = pd.to_datetime(row["End Timestamp"])
+        coverage.require_interval(start_ts, end_ts, param)
         idx      = pd.date_range(start_ts, end_ts, freq="h")
 
         left_ts = start_ts - pd.Timedelta(hours=1)
@@ -117,7 +120,9 @@ def fill_short_gaps(series, gap_df, gap_log, *, station_id, param, interp_method
 # 5. Process
 def process_station(station_id, parameters):
     df        = load_cleaned_data(station_id)
-    gap_table = load_missing_data(station_id)
+    coverage = load_soil_coverage(station_id)
+    coverage.assert_frame(df)
+    gap_table = load_missing_data(station_id, coverage=coverage)
     gap_log   = []                              
 
     any_filled = False
@@ -135,11 +140,12 @@ def process_station(station_id, parameters):
         before = len(gap_log)
         df[param] = fill_short_gaps(
             df[param], sgaps, gap_log,
-            station_id=station_id, param=param, interp_method=interp_method
+            station_id=station_id, param=param, interp_method=interp_method, coverage=coverage
         )
         any_filled = any_filled or len(gap_log) > before
 
     OUT_DIR.mkdir(exist_ok=True)
+    coverage.assert_frame(df)
     filled_csv = OUT_DIR / f"Station{station_id}_filled_shortgaps.csv"
     df.to_csv(filled_csv)
 
