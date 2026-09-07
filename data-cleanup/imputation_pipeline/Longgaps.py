@@ -9,6 +9,7 @@ are treated as strings, so both site codes (CB01) and old numeric IDs can be
 used.
 """
 import argparse
+import json
 import re
 import sys
 import warnings
@@ -63,27 +64,68 @@ def ensure_hourly_regular_index(df: pd.DataFrame) -> pd.DataFrame:
     return df.reindex(full_idx)
 
 
-def ensure_driver_columns(df: pd.DataFrame) -> None:
-    """Create model-only driver columns without changing source MET values."""
+def ensure_driver_columns(df: pd.DataFrame) -> dict[str, str]:
+    """Create model-only drivers while preserving unavailable values as NaN."""
+    sources = {}
     if "Ppt" in df.columns:
-        df["Ppt_model"] = df["Ppt"].reindex(df.index).fillna(0.0)
+        df["Ppt_model"] = pd.to_numeric(df["Ppt"], errors="coerce")
+        sources["Ppt"] = "Ppt"
     else:
-        df["Ppt_model"] = 0.0
+        df["Ppt_model"] = pd.Series(np.nan, index=df.index)
+        sources["Ppt"] = "unavailable"
 
     if "Tair" in df.columns and df["Tair"].notna().any():
-        tair = df["Tair"]
+        tair = pd.to_numeric(df["Tair"], errors="coerce")
+        sources["Tair"] = "Tair"
     else:
         temp_cols = [c for c in ["T_5", "T_10", "T_20", "T_50"] if c in df.columns]
         if temp_cols:
-            tair = df[temp_cols].mean(axis=1)
+            tair = df[temp_cols].apply(pd.to_numeric, errors="coerce").mean(axis=1)
+            sources["Tair"] = "soil_temperature_proxy"
         else:
             tair = pd.Series(np.nan, index=df.index)
-    df["Tair_model"] = tair.ffill().bfill().fillna(0.0)
+            sources["Tair"] = "unavailable"
+    df["Tair_model"] = tair
 
-    if "Srad" in df.columns and df["Srad"].notna().any():
-        df["Srad_model"] = df["Srad"].fillna(0.0)
+    if "Srad" in df.columns:
+        df["Srad_model"] = pd.to_numeric(df["Srad"], errors="coerce")
+        sources["Srad"] = "Srad" if df["Srad_model"].notna().any() else "unavailable"
     else:
-        df["Srad_model"] = 0.0
+        df["Srad_model"] = pd.Series(np.nan, index=df.index)
+        sources["Srad"] = "unavailable"
+    df.attrs["soil_driver_sources"] = sources
+    return sources
+
+
+def _complete_sum(values: pd.Series):
+    if values.empty or values.isna().any():
+        return np.nan
+    return values.sum()
+
+
+def _complete_mean(values: pd.Series):
+    if values.empty or values.isna().any():
+        return np.nan
+    return values.mean()
+
+
+def driver_window_missing_counts(df, index, window=168):
+    """Count feature rows whose environmental lookback contains missing data."""
+    counts = {}
+    for driver in ["Ppt", "Tair", "Srad"]:
+        column = f"{driver}_model"
+        values = (
+            df[column]
+            if column in df.columns
+            else pd.Series(np.nan, index=df.index)
+        )
+        prior_missing = values.isna().shift(1).rolling(
+            window, min_periods=1
+        ).max().fillna(driver == "Ppt").astype(bool)
+        counts[driver] = int(
+            prior_missing.reindex(index, fill_value=True).sum()
+        )
+    return counts
 
 def filter_long_gaps(df_missing, parameter, min_gap=168, max_gap=720):
     df_missing["Number Missing"] = pd.to_numeric(df_missing["Number Missing"], errors="coerce")
@@ -101,6 +143,7 @@ def make_features(df, ts, param, window=168):
     ppt = hist["Ppt_model"] if "Ppt_model" in hist.columns else pd.Series(dtype=float)
     tair = hist["Tair_model"] if "Tair_model" in hist.columns else pd.Series(dtype=float)
     srad = hist["Srad_model"] if "Srad_model" in hist.columns else pd.Series(dtype=float)
+    ppt_last6h = _complete_sum(ppt.tail(6))
 
     feat = {
         "last": target_hist.ffill().iloc[-1] if target_hist.notna().any() else np.nan,
@@ -108,13 +151,15 @@ def make_features(df, ts, param, window=168):
         "std": target_hist.std(),
         "min": target_hist.min(),
         "max": target_hist.max(),
-        "ppt_sum7d":  ppt.sum(),
-        "ppt_sum24h": ppt.tail(24).sum(),
-        "ppt_last3h": ppt.tail(3).sum(),
-        "ppt_flag": int(ppt.tail(6).sum() > 0) if len(ppt) else 0,
-        "temp_mean": tair.mean(),
-        "temp_last": tair.ffill().iloc[-1] if tair.notna().any() else np.nan,
-        "srad_mean": srad.mean(),
+        "ppt_sum7d":  _complete_sum(ppt),
+        "ppt_sum24h": _complete_sum(ppt.tail(24)),
+        "ppt_last3h": _complete_sum(ppt.tail(3)),
+        "ppt_flag": (
+            int(ppt_last6h > 0) if pd.notna(ppt_last6h) else np.nan
+        ),
+        "temp_mean": _complete_mean(tair),
+        "temp_last": tair.iloc[-1] if len(tair) else np.nan,
+        "srad_mean": _complete_mean(srad),
         "doy": ts.dayofyear,
         "hour": ts.hour,
         "sin_hour": np.sin(2 * np.pi * ts.hour / 24),
@@ -192,6 +237,9 @@ def fill_long_gaps_xgb_drift(df, gaps, param, station_id, coverage=None):
     coverage = coverage or load_soil_coverage(station_id)
     for _, gap in gaps.iterrows():
         coverage.require_interval(gap["Start Timestamp"], gap["End Timestamp"], param)
+    training_missing = driver_window_missing_counts(
+        df, df[param].dropna().index
+    )
     model = train_xgb(df.copy(), param)
     work = df.copy()
     filled = work[param].copy()
@@ -201,6 +249,18 @@ def fill_long_gaps_xgb_drift(df, gaps, param, station_id, coverage=None):
         start = g["Start Timestamp"]
         end = g["End Timestamp"]
         idx = pd.date_range(start, end, freq="h")
+        prediction_missing = driver_window_missing_counts(df, idx)
+        handling = (
+            "xgboost_native_missing"
+            if any(training_missing.values()) or any(prediction_missing.values())
+            else "complete_environmental_drivers"
+        )
+        driver_sources = df.attrs.get("soil_driver_sources", {})
+        if handling == "xgboost_native_missing":
+            print(
+                "  -> driver fallback: XGBoost native missing-value routing "
+                f"for {start}-{end}"
+            )
         preds = rolling_fill(model, work, idx, param)
         preds = correct_boundary_drift(preds, filled, start, end)
         preds = apply_physical_bounds(preds, param)
@@ -214,7 +274,15 @@ def fill_long_gaps_xgb_drift(df, gaps, param, station_id, coverage=None):
                 "Start":     start,
                 "End":       end,
                 "Timestamp": ts,
-                "Filled":    val
+                "Filled":    val,
+                "Driver Handling": handling,
+                "Driver Sources": json.dumps(driver_sources, sort_keys=True),
+                "Training Feature Rows With Missing Drivers": json.dumps(
+                    training_missing, sort_keys=True
+                ),
+                "Prediction Feature Rows With Missing Drivers": json.dumps(
+                    prediction_missing, sort_keys=True
+                ),
             })
     return filled, pd.DataFrame(log)
 

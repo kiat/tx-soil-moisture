@@ -61,6 +61,53 @@ def filter_medium_gaps(df_missing, parameter="SWC_5", min_gap=24, max_gap=168):
 
 
 # Fit SARIMAX model and predict missing values
+def prepare_exog(exog, train_index, pred_index):
+    """Use only drivers that are complete for this model fit and forecast."""
+    report = {
+        "Driver Mode": "univariate_no_available_drivers",
+        "Drivers Available": "",
+        "Drivers Used": "",
+        "Drivers Excluded": "",
+        "Driver Missing Training": "",
+        "Driver Missing Prediction": "",
+    }
+    if exog is None or exog.empty:
+        return None, None, report
+
+    train = exog.reindex(train_index)
+    pred = exog.reindex(pred_index)
+    available = list(exog.columns)
+    missing_train = {col: int(train[col].isna().sum()) for col in available}
+    missing_pred = {col: int(pred[col].isna().sum()) for col in available}
+    used = [
+        col for col in available
+        if missing_train[col] == 0 and missing_pred[col] == 0
+    ]
+    excluded = [col for col in available if col not in used]
+
+    if used:
+        mode = "complete_exogenous" if not excluded else "partial_exogenous"
+        X_train = train[used]
+        X_pred = pred[used]
+    else:
+        mode = "univariate_missing_drivers"
+        X_train = X_pred = None
+
+    report.update({
+        "Driver Mode": mode,
+        "Drivers Available": "+".join(available),
+        "Drivers Used": "+".join(used),
+        "Drivers Excluded": "+".join(excluded),
+        "Driver Missing Training": ";".join(
+            f"{col}={missing_train[col]}" for col in available
+        ),
+        "Driver Missing Prediction": ";".join(
+            f"{col}={missing_pred[col]}" for col in available
+        ),
+    })
+    return X_train, X_pred, report
+
+
 def sarima_forecast(
     y, s_ts, e_ts, exog, ctx_days=7, max_pq=3, max_PQ=2,
     _previous_spec=None,
@@ -80,12 +127,16 @@ def sarima_forecast(
     y_train.index = pd.DatetimeIndex(y_train.index, freq="h")
 
     # Prepare exogenous data
-    X_train = X_pred = None
-    if exog is not None:
-        exog_window = exog.loc[train_start:train_end]
-        X_train = exog_window.reindex(y_train.index).fillna(0)
-        pred_index = pd.date_range(s_ts, e_ts, freq="h")
-        X_pred = exog.reindex(pred_index).fillna(0)
+    pred_index = pd.date_range(s_ts, e_ts, freq="h")
+    X_train, X_pred, driver_report = prepare_exog(
+        exog, y_train.index, pred_index
+    )
+    if driver_report["Drivers Excluded"]:
+        print(
+            "  -> driver fallback: "
+            f"{driver_report['Driver Mode']} "
+            f"(excluded {driver_report['Drivers Excluded']})"
+        )
 
     # Automatic model order selection with daily seasonality
     try:
@@ -155,6 +206,11 @@ def fill_medium_gaps(series, gaps, exog, gap_log, station, param, ctx_days=7, co
         coverage.require_interval(s_ts, e_ts, param)
         idx = pd.date_range(s_ts, e_ts, freq="h")
 
+        train_index = filled.loc[
+            s_ts - timedelta(days=ctx_days):s_ts - timedelta(hours=1)
+        ].index
+        pred_index = pd.date_range(s_ts, e_ts, freq="h")
+        _, _, driver_report = prepare_exog(exog, train_index, pred_index)
         fc, _ = sarima_forecast(filled, s_ts, e_ts, exog, ctx_days)
         if fc is None:
             continue
@@ -165,7 +221,8 @@ def fill_medium_gaps(series, gaps, exog, gap_log, station, param, ctx_days=7, co
         gap_log.extend({
             "Station": station, "Parameter": param,
             "Start": s_ts, "End": e_ts,
-            "Timestamp": t, "Filled": v
+            "Timestamp": t, "Filled": v,
+            **driver_report,
         } for t, v in fc.items())
     return filled
 
@@ -276,9 +333,7 @@ def get_exog(df: pd.DataFrame, prefer=()):
             exog_series.append(s.rename(col))
     if not exog_series:
         return None
-    X = pd.concat(exog_series, axis=1).reindex(df.index)
-    X = X.fillna(0.0)
-    return X
+    return pd.concat(exog_series, axis=1).reindex(df.index)
 
 
 # --------------- CLI helpers ---------------------------
