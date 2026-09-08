@@ -4,6 +4,8 @@ import csv
 import numpy as np
 from sklearn.metrics import mean_squared_error, mean_absolute_error, mean_absolute_percentage_error
 from scipy.stats import pearsonr
+import json
+from datetime import datetime
 
 # This module contains evaluation functions for machine learning models.
 
@@ -48,73 +50,172 @@ def evaluate_model(model, X_test, y_test):
     return final_results
 
 
+def create_run_id(station, model_name, window_size, offset):
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H%M%S")
+    return f"{timestamp}_{model_name}_ws{window_size}_off{offset}_{station}"
 
+def write_loss_history_to_csv(station, model_name, window_size, offset, history, feature_str, label_str, run_id=None):
+    """Save loss history inside a unique run folder."""
 
-def write_loss_history_to_csv(station, model_name, window_size, offset, history, feature_str, label_str):
-    """Saves loss history to a unique CSV file including offset and feature set."""
-    
-     # Ensure the results directory exists
-    results_dir = "results"
-    os.makedirs(results_dir, exist_ok=True)
- 
-    # Define loss history file path inside the results folder
-    loss_file = os.path.join(results_dir, f"loss_history_ws{window_size}_offset{offset}_{feature_str}-{label_str}.csv")
-    
-    # Check if the file already exists
-    file_exists = os.path.isfile(loss_file)
-    
-    # Define CSV headers
-    headers = ["Station", "Model", "Features", "Labels", "Offset", "Epoch", "Loss", "Validation Loss"]
+    if run_id is None:
+        run_id = create_run_id(station, model_name, window_size, offset)
 
-    # Open in write mode if file exists (reset each run)
-    mode = "a" if file_exists else "w"
+    run_dir = os.path.join("results", "runs", run_id)
+    os.makedirs(run_dir, exist_ok=True)
 
-    with open(loss_file, mode=mode, newline="") as file:
+    loss_file = os.path.join(run_dir, "loss_history.csv")
+
+    headers = ["Station", "Model", "Features", "Labels", "Window Size", "Offset", "Epoch", "Loss", "Validation Loss"]
+
+    with open(loss_file, mode="w", newline="") as file:
         writer = csv.writer(file)
-        
-        # Write headers only if file is new
-        if not file_exists:
-            writer.writerow(headers)  
+        writer.writerow(headers)
 
-        # Write training history
         for epoch, (loss, val_loss) in enumerate(zip(history["loss"], history["val_loss"])):
-            writer.writerow([station, model_name, feature_str, label_str, offset, epoch + 1, loss, val_loss])
+            writer.writerow([
+                station, model_name, feature_str, label_str,
+                window_size, offset, epoch + 1, loss, val_loss
+            ])
 
-    print(f"Saved loss history for {model_name} (ws={window_size}, offset={offset}, features={feature_str}, labels={label_str}) on {station} to {loss_file}")
-
-###############################################################################
-###############################################################################
-
+    print(f"Saved loss history to {loss_file}")
+    return run_id
     
-def write_model_results_to_csv(station, model_name, window_size, offset, performance, feature_str):
+def write_model_results_to_csv(station, model_name, window_size, offset, performance, feature_str, label_str=None, run_id=None, epochs=None, patience=None):
+    """Save metrics inside a unique run folder and append summary to master experiment log."""
 
-    # Ensure the results directory exists
+    if run_id is None:
+        run_id = create_run_id(station, model_name, window_size, offset)
+
     results_dir = "results"
-    os.makedirs(results_dir, exist_ok=True)
+    runs_dir = os.path.join(results_dir, "runs")
+    run_dir = os.path.join(runs_dir, run_id)
 
-    results_file = os.path.join(results_dir, f"results_ws{window_size}_offset{offset}_{feature_str}.csv")
+    os.makedirs(run_dir, exist_ok=True)
 
-    file_exists = os.path.isfile(results_file)
-    headers = ["Station", "Model", "Features", "Offset", "MSE", "MAE", "MAPE", "SMAPE", "RSE", "CORR"]
-    
-    # Open in write mode if file exists (reset each run)
-    mode = "a" if file_exists else "w"
-    
-    with open(results_file, mode=mode, newline="") as file:
+    metrics_file = os.path.join(run_dir, "metrics.csv")
+    config_file = os.path.join(run_dir, "config.json")
+    experiment_log = os.path.join(results_dir, "experiment_log.csv")
+
+    metrics_headers = ["Station", "Model", "Features", "Labels", "Window Size", "Offset", "MSE", "MAE", "MAPE", "SMAPE", "RSE", "CORR"]
+
+    row = [
+        station,
+        model_name,
+        feature_str,
+        label_str,
+        window_size,
+        offset,
+        performance.get("MSE"),
+        performance.get("MAE"),
+        performance.get("MAPE"),
+        performance.get("SMAPE"),
+        performance.get("RSE"),
+        performance.get("CORR")
+    ]
+
+    # Save metrics for this specific run
+    with open(metrics_file, mode="w", newline="") as file:
         writer = csv.writer(file)
-        if not file_exists:
-            writer.writerow(headers)
-        writer.writerow([
-            station, model_name, feature_str, offset,
-            performance.get("MSE"),
-            performance.get("MAE"),
-            performance.get("MAPE"),
-            performance.get("SMAPE"),
-            performance.get("RSE"),
-            performance.get("CORR")
-        ])
-    print(f"Saved model results for {model_name} on {station} with {len(feature_str.split('_'))} features to {results_file}")
+        writer.writerow(metrics_headers)
+        writer.writerow(row)
 
+    # Save config for this run
+    config = {
+        "run_id": run_id,
+        "station": station,
+        "model": model_name,
+        "window_size": window_size,
+        "offset": offset,
+        "epochs": epochs,
+        "patience": patience,
+        "features": feature_str,
+        "labels": label_str,
+        "run_dir": run_dir
+    }
 
-###############################################################################
-###############################################################################
+    with open(config_file, mode="w") as file:
+        json.dump(config, file, indent=4)
+
+    # Append to master experiment log
+    log_exists = os.path.isfile(experiment_log)
+
+    log_headers = ["Run ID", "Date", "Station", "Model", "Features", "Labels", "Window Size", "Offset", "MSE", "MAE", "MAPE", "SMAPE", "RSE", "CORR", "Run Directory"]
+
+    log_row = [
+        run_id,
+        datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        station,
+        model_name,
+        feature_str,
+        label_str,
+        window_size,
+        offset,
+        performance.get("MSE"),
+        performance.get("MAE"),
+        performance.get("MAPE"),
+        performance.get("SMAPE"),
+        performance.get("RSE"),
+        performance.get("CORR"),
+        run_dir
+    ]
+
+    with open(experiment_log, mode="a", newline="") as file:
+        writer = csv.writer(file)
+
+        if not log_exists:
+            writer.writerow(log_headers)
+
+        writer.writerow(log_row)
+
+    print(f"Saved metrics to {metrics_file}")
+    print(f"Updated master experiment log at {experiment_log}")
+
+    return run_id
+
+def save_experiment_results(
+    station,
+    model_name,
+    window_size,
+    offset,
+    history,
+    performance,
+    feature_str,
+    label_str,
+    epochs=None,
+    patience=None
+):
+    """
+    Save all experiment artifacts using one shared run_id:
+    - loss_history.csv
+    - metrics.csv
+    - config.json
+    - append row to experiment_log.csv
+    """
+
+    run_id = create_run_id(station, model_name, window_size, offset)
+
+    write_loss_history_to_csv(
+        station=station,
+        model_name=model_name,
+        window_size=window_size,
+        offset=offset,
+        history=history,
+        feature_str=feature_str,
+        label_str=label_str,
+        run_id=run_id
+    )
+
+    write_model_results_to_csv(
+        station=station,
+        model_name=model_name,
+        window_size=window_size,
+        offset=offset,
+        performance=performance,
+        feature_str=feature_str,
+        label_str=label_str,
+        run_id=run_id,
+        epochs=epochs,
+        patience=patience
+    )
+
+    return run_id
