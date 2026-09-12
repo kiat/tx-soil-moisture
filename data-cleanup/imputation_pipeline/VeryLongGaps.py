@@ -194,21 +194,24 @@ def prediction_from_donor(
 
 def holdout_metrics(target: pd.Series, donor: pd.Series) -> Tuple[float, float]:
     """Evaluate the donor map on the latest 10% of overlapping observations."""
-    mask = target.notna() & donor.notna()
-    if int(mask.sum()) < 100:
+    aligned = pd.concat(
+        [target.rename("target"), donor.rename("donor")],
+        axis=1,
+        join="inner",
+    ).dropna().sort_index()
+    if len(aligned) < 100:
         return float("nan"), float("nan")
-    overlap_idx = target.index[mask].sort_values()
-    split = max(1, int(len(overlap_idx) * 0.9))
-    train_idx = overlap_idx[:split]
-    test_idx = overlap_idx[split:]
-    if len(test_idx) == 0:
+    split = max(1, int(len(aligned) * 0.9))
+    train = aligned.iloc[:split]
+    test = aligned.iloc[split:]
+    if test.empty:
         return float("nan"), float("nan")
     eval_model = LinearRegression().fit(
-        donor.loc[train_idx].values.reshape(-1, 1),
-        target.loc[train_idx],
+        train[["donor"]],
+        train["target"],
     )
-    y_true = target.loc[test_idx]
-    y_pred = eval_model.predict(donor.loc[test_idx].values.reshape(-1, 1))
+    y_true = test["target"]
+    y_pred = eval_model.predict(test[["donor"]])
     return (
         float(mean_absolute_error(y_true, y_pred)),
         float(mean_squared_error(y_true, y_pred, squared=False)),
