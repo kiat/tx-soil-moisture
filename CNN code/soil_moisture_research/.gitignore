@@ -13,3 +13,6 @@ report/*.bbl
 report/*.blg
 report/*.out
 report/*.xdv
+
+# LaTeX report is maintained separately in Overleaf, not tracked here
+report/

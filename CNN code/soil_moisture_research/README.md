@@ -27,9 +27,12 @@ soil_moisture_research/
 ├── notebooks/             eight small, single-purpose notebooks (see below)
 ├── results/               saved experiment CSVs (150 CNN runs + baselines)
 ├── figures/               generated figures (PNG)
-├── report/                LaTeX report (main.tex) + report figures (PDF)
 └── archive/               backup of the original monolithic notebook
 ```
+
+> The LaTeX report (`main.tex`, `references.bib`, and figure PDFs) is maintained
+> **separately in Overleaf** and is not tracked in this repository. Regenerate its
+> figures any time with notebook `08` or `python notebooks/make_figures.py`.
 
 ## Notebooks (run in order; each is self-contained)
 
@@ -150,8 +153,8 @@ python notebooks/make_figures.py      # regenerate every figure from results/
 
 ## Key results
 
-The complete numerical findings are in `results/` and the report
-(`report/main.tex`). Headline: across 5 held-out station-years × 5 horizons,
+The complete numerical findings are in `results/` and the LaTeX report (kept
+separately in Overleaf). Headline: across 5 held-out station-years × 5 horizons,
 **no exogenous feature consistently improves RMSE over soil-moisture-only** — the
 historical `SWC_20` signal dominates. The only clear positive is cumulative
 rainfall at the driest station (FD02). See `notebooks/07_feature_importance`.
