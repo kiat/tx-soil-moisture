@@ -1,0 +1,1110 @@
+\documentclass[11pt]{article}
+
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage{multirow}
+\usepackage{subcaption}
+
+\geometry{margin=1in}
+
+\title{CNN-Based Soil Moisture Forecasting Using TxSON In-Situ Data}
+\author{Abijith Chandrasekar Vijayan}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+% ============================================================================
+\section{Introduction}
+% ============================================================================
+
+Soil moisture is a key variable in hydrology, agriculture, and climate science.
+Accurate forecasts of near-surface soil water content help inform irrigation
+scheduling, drought monitoring, and land--atmosphere interaction modeling. Because
+soil moisture evolves over time---driven by precipitation, evapotranspiration, and
+drainage---temporal forecasting methods are a natural fit for the problem: given a
+recent history of observations, predict what soil moisture will be some number of
+hours into the future.
+
+Traditional approaches to soil-moisture forecasting include process-based land
+surface models and statistical methods such as autoregressive models. More recently,
+deep learning methods have been applied to this problem, motivated by their ability
+to learn nonlinear temporal patterns directly from data without requiring
+hand-specified physical equations. Among these, one-dimensional convolutional neural
+networks (1D CNNs) have shown promise for time-series forecasting tasks
+\cite{borovykh2017conditional, bai2018empirical}. A 1D CNN can learn short-term
+patterns in the time series by applying the same learned filters across different
+parts of the input window, which makes it well suited for detecting local events
+like rain-driven moisture rises regardless of when they occur within the window.
+
+This report describes CNN-based soil moisture forecasting using hourly in-situ
+observations from the Texas Soil Observation Network (TxSON). The experiments
+progress through three stages: (1)~a single-station baseline comparing two CNN
+architectures against simple baselines across window sizes and horizons;
+(2)~systematic feature engineering and architecture search, testing air temperature,
+soil moisture at other depths, rainfall accumulations, and seasonal encoding;
+(3)~multi-station generalization across four TxSON stations, evaluating both temporal
+generalization (hold-out year) and spatial generalization (hold-out station).
+
+In addition, this report investigates a classification formulation of the
+forecasting problem: instead of predicting an exact soil moisture value, the CNN
+predicts which of 12~fixed moisture categories the target falls into. Three
+classification CNN architectures are compared against each other and against
+non-learned baselines, using both standard and distance-aware evaluation metrics
+that exploit the ordinal structure of the moisture categories.
+
+% ============================================================================
+\section{Dataset and Preprocessing}
+% ============================================================================
+
+\subsection{Station and Data Source}
+
+All experiments use hourly observations from station \textbf{FD11} in the TxSON33
+modeling-complete dataset. FD11 was selected because it has nearly complete hourly
+coverage across a long time span, and the data are almost entirely observed-origin
+for both the target variable and precipitation. A few years contain very small
+amounts of \texttt{pipeline\_imputed} values, but no
+\texttt{modeling\_completion} (synthetic) values are used for evaluation, so all
+test-set targets are real sensor readings.
+
+The dataset provides hourly measurements of soil water content at 20\,cm depth
+(\texttt{SWC\_20}), precipitation (\texttt{Ppt}), and associated
+\texttt{*\_Origin} columns that record whether each measurement is
+\texttt{observed}, \texttt{pipeline\_imputed}, or \texttt{modeling\_completion}.
+The dataset documentation explicitly notes that \texttt{modeling\_completion} values
+are synthetic and should not normally be used as validation or test ground truth.
+
+\subsection{Prediction Target}
+
+The prediction target throughout is \texttt{SWC\_20}: soil water content at 20\,cm
+depth, measured in $\text{m}^3/\text{m}^3$. This is consistent with the rest of the
+project's existing forecasting work.
+
+\subsection{Years Used}
+
+Ten complete calendar years are available for FD11 (2015--2024; 2014 and 2025 are
+partial years and are excluded). Three of these years are used as held-out test
+years, chosen to span the wet/dry range by annual precipitation total:
+\begin{itemize}
+    \item \textbf{Driest:} 2023 (203\,mm annual precipitation)
+    \item \textbf{Near-median:} 2020 (635\,mm; a leap year with 8{,}784 hours)
+    \item \textbf{Wettest:} 2018 (856\,mm)
+\end{itemize}
+Validation is fixed at 2019 (mid-range precipitation, never used as a test year)
+across all three folds. The remaining 8 years are pooled for training.
+
+\subsection{Input Features}
+
+For regression experiments, two feature configurations are compared:
+\begin{enumerate}
+    \item \textbf{SWC\_20 only} ($F = 1$): a univariate setting where the model sees
+    only past soil moisture.
+    \item \textbf{SWC\_20 + Ppt\_log} ($F = 2$): soil moisture plus log-transformed
+    precipitation, $\texttt{Ppt\_log} = \log(1 + \texttt{Ppt})$. The log
+    transformation compresses the long right tail of precipitation values (mostly
+    zero, with occasional storms) into a more model-friendly range.
+\end{enumerate}
+Precipitation values are clipped at zero before the log transformation as a
+defensive step against potential negative sensor noise, though no negative values
+were present in the FD11 data used here.
+
+For classification experiments, the feature sets are SWC\_20~only and
+\textbf{SWC\_20 + Tair} ($F = 2$), where Tair is air temperature. This choice
+follows from the feature engineering results (Section~5.2), which identified Tair
+as the only feature to consistently improve CNN performance at longer horizons.
+
+\subsection{Input Windows and Forecast Horizons}
+
+Three input-window sizes are tested: 12, 24, and 48 hours. Each window is a
+contiguous block of hourly observations that serves as the model's input.
+
+Four forecast horizons are evaluated:
+\begin{itemize}
+    \item 24 hours (1 day ahead)
+    \item 48 hours (2 days ahead)
+    \item 72 hours (3 days ahead)
+    \item 168 hours (1 week ahead)
+\end{itemize}
+Each horizon specifies how many hours after the window's last observed hour the
+target value sits. Windows are built independently within each calendar year---a
+window's input hours and its target hour must fall in the same year, so no window
+ever spans a year boundary. This prevents any leakage across the held-out year
+boundary by construction, at the cost of discarding a small number of windows near
+each year's end.
+
+\subsection{Normalization}
+
+All input features are normalized to approximately $[0, 1]$ using a
+\texttt{MinMaxScaler} fit on the pooled training years only. The same fitted scaler
+is then applied (without refitting) to transform the validation and test data. This
+means validation and test values can legitimately fall outside $[0, 1]$ if those
+periods are wetter or drier than the training years---this is expected behavior, not
+a bug.
+
+Fitting the scaler only on training data matters because doing otherwise would leak
+information about the validation or test distribution into the preprocessing step,
+making results artificially well-behaved.
+
+\subsection{Inverse Transformation for Metric Reporting}
+
+All evaluation metrics (MSE, MAE, SMAPE, RSE) are computed on the original
+\texttt{SWC\_20} scale, not the internal normalized scale. After training and
+prediction (which occur entirely in scaled space), both true values and predictions
+are inverse-transformed back to physical units using each fold's own scaler before
+any metric is calculated. This is necessary because each fold's scaler has slightly
+different min/max parameters (different training years span different moisture
+ranges), so a scaled-space error of, say, 0.001 in one fold is not the same physical
+error as 0.001 in another fold. Pearson correlation (CORR) is not affected by this
+inverse transformation, since correlation does not change when values are linearly
+rescaled.
+
+% ============================================================================
+\section{Experimental Setup}
+% ============================================================================
+
+\subsection{Year-Wise Held-Out Evaluation}
+
+Each of the three test years is held out one at a time. For each fold, the model is
+trained on the remaining 8 years (the training set), and validation year 2019 is used
+solely for monitoring validation loss and making early-stopping decisions---it is not
+part of the training data. The held-out test year is never seen during training or
+validation and is used only for final metric computation.
+
+\subsection{Baseline Models}
+
+Two non-learned baselines are evaluated with the exact same metrics and test windows
+as the CNNs:
+\begin{itemize}
+    \item \textbf{Persistence baseline:} predicts that soil moisture at the target
+    hour equals the last observed value in the input window.
+    \item \textbf{Moving-average baseline:} predicts the mean of \texttt{SWC\_20}
+    across the entire input window. The window size used by the moving average
+    matches the window size being tested in each configuration (12, 24, or 48
+    hours), keeping the comparison fair.
+\end{itemize}
+Neither baseline has learned parameters. They are included specifically to determine
+whether the CNN's added complexity provides any benefit beyond these simple
+approaches.
+
+\subsection{Model Comparison}
+
+Two CNN architectures are compared:
+\begin{itemize}
+    \item A \textbf{small CNN} with 73 trainable parameters (one convolutional layer,
+    8 filters).
+    \item A \textbf{larger CNN} with 2{,}177 trainable parameters (two convolutional
+    layers, 16 and 32 filters).
+\end{itemize}
+Both use the same training procedure, loss function, and evaluation pipeline, so any
+difference in results is attributable to model capacity rather than training
+configuration.
+
+\subsection{Feature-Set Comparison}
+
+Each CNN configuration is tested with both \texttt{SWC\_20} only and
+\texttt{SWC\_20 + Ppt\_log} to determine whether adding precipitation as an input
+improves forecasting performance.
+
+The full experiment matrix consists of 3 test years $\times$ 3 window sizes $\times$
+4 horizons $\times$ 2 feature sets $\times$ 4 models (2 baselines + 2 CNNs) = 288
+rows, though only \textbf{216 unique experiments}: the two baselines do not use
+precipitation, so their rows under each feature set are exact duplicates.
+
+\subsection{Feature Engineering}
+
+Six candidate features are tested individually against the SWC\_20-only baseline:
+\begin{itemize}
+    \item \textbf{Ppt\_log}: $\log(1 + \texttt{Ppt})$, log-transformed precipitation.
+    \item \textbf{Tair}: air temperature.
+    \item \textbf{T\_20}: soil temperature at 20\,cm depth.
+    \item \textbf{SWC depths}: soil moisture at 5, 10, and 50\,cm
+    (\texttt{SWC\_5}, \texttt{SWC\_10}, \texttt{SWC\_50}).
+    \item \textbf{Rain accumulations}: backward-looking 3h, 6h, 12h, and 24h rolling
+    sums of precipitation.
+    \item \textbf{Seasonal encoding}: $\sin(2\pi \cdot \text{doy}/365.25)$ and
+    $\cos(2\pi \cdot \text{doy}/365.25)$, providing a smooth cyclical representation
+    of the time of year where December~31 is close to January~1.
+\end{itemize}
+Selection is done on \textbf{validation loss} (2019 data), not test performance, to
+avoid data leakage into the feature selection process.
+
+\subsection{Multi-Station Generalization}
+
+Four TxSON stations sharing 10~complete calendar years (2015--2024) are used for
+generalization experiments: FD11, FD02, CB06, and CB25. Two experiment types are
+conducted:
+\begin{itemize}
+    \item \textbf{Experiment~A (hold-out year):} All 4 stations contribute training
+    data; one calendar year is held out from all stations for testing.
+    \item \textbf{Experiment~B (hold-out station):} One station is entirely removed
+    from training; the model trains on the other 3 stations and is tested on all
+    non-validation years of the held-out station.
+\end{itemize}
+In both cases, validation is fixed at 2019 across all stations. The scaler is fit on
+pooled training data only, and windows are built independently within each
+(station, year) pair.
+
+\subsection{12-Class Classification}
+
+As a separate line of investigation, the continuous SWC\_20 target is discretized
+into 12~fixed categories of width 0.05:
+\begin{equation}
+    \text{Class } c = \lfloor \texttt{SWC\_20} / 0.05 \rfloor, \quad c \in \{0, 1, \ldots, 11\}
+\end{equation}
+covering the range $[0.00, 0.60]$. The same bin boundaries are applied to every
+station, so that class~5, for example, always means
+$\text{SWC\_20} \in [0.25, 0.30)$. A classification CNN replaces the single
+regression output with 12~logits, trained with cross-entropy loss. The same input
+pipeline, window construction, and train/val/test splits are reused.
+
+Three classification CNN architectures are compared:
+\begin{itemize}
+    \item \textbf{SmallClassCNN:} 1~convolutional layer, 8~filters, average pooling
+    (128~params with $F=1$).
+    \item \textbf{LargerClassCNN:} 2~convolutional layers, 16/32 filters, average
+    pooling (2{,}364~params with $F=1$).
+    \item \textbf{MaxpoolClassCNN:} Same as LargerClassCNN but with max pooling
+    instead of average pooling (2{,}364~params with $F=1$).
+\end{itemize}
+All three share the same fully connected head: pooled features $\to$ 16-unit hidden
+layer with ReLU $\to$ 12-class logit output. Two feature sets are tested:
+SWC\_20~only ($F=1$) and SWC\_20 + Tair ($F=2$), at horizons H=24 and H=168.
+
+\textbf{Loss functions.} Two loss functions are compared: standard cross-entropy and
+class-weighted cross-entropy. For the weighted variant, inverse-frequency weights are
+computed from the \emph{training} data only:
+\begin{equation}
+    w_c = \frac{N_{\text{train}}}{K_{\text{active}} \cdot n_c}
+\end{equation}
+where $n_c$ is the training count for class~$c$, $K_{\text{active}}$ is the number
+of non-empty classes, and the weights are normalized so their mean equals~1. Empty
+classes receive weight~0. This upweights rare classes (e.g., near the tails of the
+SWC\_20 distribution) without introducing signal from validation or test data.
+
+\textbf{Baselines.} Two non-learned classification baselines are evaluated:
+\begin{itemize}
+    \item \textbf{Persistence:} assigns the class of the last observed SWC\_20 value
+    in the input window.
+    \item \textbf{Majority class:} always predicts the most frequent class in the
+    training data.
+\end{itemize}
+
+\textbf{Classification metrics.} Standard classification metrics (accuracy, macro
+and weighted F1, per-class precision/recall) are supplemented with
+\emph{distance-aware} metrics that exploit the ordinal structure of the 12~classes:
+\begin{itemize}
+    \item \textbf{Within-1-category accuracy:} fraction of predictions within one
+    class of the true class.
+    \item \textbf{Within-2-category accuracy:} fraction within two classes.
+    \item \textbf{Mean absolute class error (MACE):} mean of
+    $|c_{\text{pred}} - c_{\text{true}}|$ across test samples.
+\end{itemize}
+These metrics reflect the fact that misclassifying by one bin ($\pm 0.05$ SWC) is
+far less consequential than misclassifying by three or more bins.
+
+% ============================================================================
+\section{CNN Architecture}
+% ============================================================================
+
+This section describes both CNN architectures mathematically. Notation follows the
+general convention used for 1D convolutional sequence models in the time-series
+forecasting literature \cite{borovykh2017conditional, bai2018empirical}, adapted to
+this specific model.
+
+\subsection{Input Representation}
+
+Let $W$ be the input-window length in hours and $F$ the number of input features per
+hour. A single input example is a matrix
+\begin{equation}
+    X \in \mathbb{R}^{W \times F}, \qquad
+    X = (x_1, x_2, \dots, x_W), \quad x_t \in \mathbb{R}^F
+\end{equation}
+where $x_t$ is the feature vector observed at hour $t$ within the window. For the
+\texttt{SWC\_20}-only setting, $F = 1$ and $x_t$ is a scalar; with precipitation
+added, $F = 2$. PyTorch's \texttt{Conv1d} expects channels before the time axis, so
+$X$ is transposed to $X^\top \in \mathbb{R}^{F \times W}$ before the first
+convolution---this is just a reshaping step, not a computation.
+
+\subsection{1D Convolution}
+
+A convolution layer with $C_{\text{out}}$ output channels and kernel size $K$
+produces, for output channel $c$ and time position $t$:
+\begin{equation}
+    z_{c,t} = \sum_{f=1}^{F} \sum_{k=1}^{K}
+    w_{c,f,k} \; x_{f,\, t + k - \lceil K/2 \rceil} + b_c
+\end{equation}
+where $w_{c,f,k}$ are the learned filter weights and $b_c$ the learned bias for
+output channel $c$. Each output channel is a learned pattern detector: a small
+template of length $K$ across all $F$ input features. Its response $z_{c,t}$ is
+large wherever the input around hour $t$ matches that template.
+
+The key property of convolution is that the same filter is applied at every position
+in the window. This means a pattern like a rain-driven moisture rise is detected the
+same way whether it happens near the start or end of the window, rather than
+requiring the network to learn it separately at every position.
+
+\textbf{Padding.} With padding $= \lfloor K/2 \rfloor$, the input is zero-padded on
+both sides so the output length stays $W$ rather than shrinking to $W - K + 1$. This
+keeps the downstream pooling step operating over the full window regardless of $K$.
+
+\subsection{Activation Function}
+
+Each $z_{c,t}$ passes through the ReLU activation:
+\begin{equation}
+    a_{c,t} = \max(0,\; z_{c,t})
+\end{equation}
+applied elementwise. ReLU introduces nonlinearity---without it, stacking convolutions
+and linear layers would collapse into a single linear function of the input, no
+matter how many layers are used.
+
+\subsection{Second Convolutional Layer (Larger CNN Only)}
+
+The small model uses a single convolution ($F \to 8$ channels). The larger model
+stacks two convolutions: $F \to 16 \to 32$ channels. The second convolution does
+not see the raw input---it operates on the 16 filter responses produced by the first
+layer. This lets it detect slightly higher-level patterns built on top of the first
+layer's detections (for example, two short moisture changes happening close together
+in time), which a single convolution layer cannot represent directly.
+
+\subsection{Average Pooling}
+
+\begin{equation}
+    p_c = \frac{1}{W} \sum_{t=1}^{W} a_{c,t}
+\end{equation}
+
+Average pooling collapses the time axis entirely, producing one number per channel:
+how strongly, on average across the whole window, that channel's pattern was present.
+
+This is also where positional information is lost. The pooled value $p_c$ cannot
+tell the difference between a pattern that appeared once strongly near the end of the
+window and one that appeared at moderate strength throughout. This is a deliberate
+simplification that keeps the model small, at the cost of not being able to represent
+\emph{when} within the window something happened.
+
+\subsection{Fully Connected Layers}
+
+The per-channel pooled values are collected into a vector
+$p \in \mathbb{R}^{C_{\text{out}}}$ (8-dimensional for the small model,
+32-dimensional for the larger one). Two linear layers map this to a prediction:
+\begin{align}
+    h &= \text{ReLU}(W_1 \, p + b_1) \\
+    \hat{y} &= W_2 \, h + b_2
+\end{align}
+where $W_1 \in \mathbb{R}^{H \times C_{\text{out}}}$ and
+$W_2 \in \mathbb{R}^{1 \times H}$, with $H = 4$ for the small model and $H = 16$
+for the larger one.
+
+Two linear layers rather than a single $C_{\text{out}} \to 1$ mapping are used
+because the relationship between ``how much of each pattern fired'' and the final
+soil-moisture prediction is generally not linear. For example, a rising-moisture
+signal combined with a low-baseline signal might matter differently together than
+either one alone, and a single linear layer cannot capture that kind of interaction.
+
+The final output $\hat{y} \in \mathbb{R}$ is the predicted (scaled) \texttt{SWC\_20}
+value at $t_{\text{window\_end}} + \text{horizon}$.
+
+\subsection{Architecture Summary}
+
+Table~\ref{tab:arch} summarizes both architectures. The parameter counts assume $F=1$
+(SWC\_20 only); with $F=2$, the first convolutional layer gains additional weights.
+
+\begin{table}[h]
+\centering
+\caption{CNN architecture summary. Regression models output a single scalar;
+classification models output 12~logits. LargerClassCNN (not shown) is identical
+to MaxpoolClassCNN except it uses average pooling (2{,}364~params at $F\!=\!1$).}
+\label{tab:arch}
+\begin{tabular}{lllll}
+\toprule
+\textbf{Layer} & \textbf{SmallCNN} & \textbf{LargerCNN}
+    & \textbf{SmallClassCNN} & \textbf{MaxpoolClassCNN} \\
+\midrule
+Conv1d \#1 & $F \to 8$, $K=3$ & $F \to 16$, $K=3$
+    & $F \to 8$, $K=3$ & $F \to 16$, $K=3$ \\
+Conv1d \#2 & --- & $16 \to 32$, $K=3$
+    & --- & $16 \to 32$, $K=3$ \\
+Pooling & AvgPool & AvgPool & AvgPool & \textbf{MaxPool} \\
+FC \#1 & $8 \to 4$ + ReLU & $32 \to 16$ + ReLU
+    & $8 \to 16$ + ReLU & $32 \to 16$ + ReLU \\
+FC \#2 & $4 \to 1$ & $16 \to 1$
+    & $16 \to 12$ & $16 \to 12$ \\
+\midrule
+Params ($F\!=\!1$) & 73 & 2{,}177 & 128 & 2{,}364 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Training Objective}
+
+Regression models are trained by minimizing mean squared error (MSE):
+\begin{equation}
+    \mathcal{L}_{\text{reg}}(\theta) = \frac{1}{N} \sum_{i=1}^{N}
+    \left( \hat{y}_i(\theta) - y_i \right)^2
+\end{equation}
+Classification models minimize cross-entropy loss over the 12~classes:
+\begin{equation}
+    \mathcal{L}_{\text{cls}}(\theta) = -\frac{1}{N} \sum_{i=1}^{N}
+    w_{c_i} \log \hat{p}_{i,c_i}(\theta)
+\end{equation}
+where $c_i$ is the true class, $\hat{p}_{i,c_i}$ is the predicted probability for
+that class, and $w_{c_i}$ is the class weight (all~1 for standard CE; inverse-frequency
+weights for weighted CE). Classification models use 40~epochs with patience~8, compared
+to 30~epochs with patience~6 for regression.
+
+\subsection{Evaluation Metrics}
+
+For $N$ test examples with true values $y_i$ and predictions $\hat{y}_i$:
+
+\begin{align}
+    \text{MSE} &= \frac{1}{N} \sum_{i} (\hat{y}_i - y_i)^2 \\[4pt]
+    \text{MAE} &= \frac{1}{N} \sum_{i} |\hat{y}_i - y_i| \\[4pt]
+    \text{SMAPE} &= \frac{100}{N} \sum_{i}
+    \frac{2 |\hat{y}_i - y_i|}{|y_i| + |\hat{y}_i| + \varepsilon} \\[4pt]
+    \text{RSE} &= \frac{\sum_{i} (\hat{y}_i - y_i)^2}
+    {\sum_{i} (y_i - \bar{y})^2 + \varepsilon} \\[4pt]
+    \text{CORR} &= \frac{\sum_{i} (y_i - \bar{y})(\hat{y}_i - \bar{\hat{y}})}
+    {\sqrt{\sum_{i} (y_i - \bar{y})^2}
+    \;\sqrt{\sum_{i} (\hat{y}_i - \bar{\hat{y}})^2}}
+\end{align}
+with $\varepsilon = 10^{-8}$ added only to prevent division by zero. RSE normalizes
+MSE by the target's own variance (a model predicting the mean scores
+$\text{RSE} \approx 1$). CORR measures whether predictions track the true trend
+regardless of scale. All metrics except CORR are computed on original-scale
+\texttt{SWC\_20} values (see Section~2.7); CORR is not affected by the inverse
+transformation since it is invariant to linear rescaling.
+
+% ============================================================================
+\section{Training Setup}
+% ============================================================================
+
+Every CNN run uses the same fixed training configuration, so that differences in
+results come from the variable being tested (model size, window size, feature set),
+not from inconsistent training:
+
+\begin{itemize}
+    \item \textbf{Optimizer:} Adam \cite{kingma2015adam} with learning rate $10^{-3}$.
+    \item \textbf{Loss function:} Mean squared error against the true (scaled)
+    \texttt{SWC\_20} value.
+    \item \textbf{Batch size:} 128.
+    \item \textbf{Epoch budget:} Up to 30 epochs.
+    \item \textbf{Early stopping:} Patience of 6---training stops if validation loss
+    has not improved for 6 consecutive epochs, and the model reverts to the weights
+    from its best validation epoch. This keeps the number of epochs actually used
+    honest: a run that converged in 9 epochs and one that needed all 30 are both
+    reported as such.
+    \item \textbf{Validation monitoring:} Validation loss is computed at the end of
+    each epoch on the fixed validation year (2019) without gradient updates.
+    \item \textbf{Best-model restoration:} After training ends (either by early
+    stopping or by reaching the epoch budget), the model is restored to the weights
+    from the epoch with the lowest validation loss.
+    \item \textbf{Reproducibility:} Python's \texttt{random}, NumPy, and PyTorch (CPU
+    and CUDA) are all seeded with a fixed seed before every run.
+\end{itemize}
+Classification experiments use the same configuration except for a longer epoch
+budget (40~epochs) and correspondingly larger patience (8~epochs), since the
+12-class output space requires more training iterations to converge.
+
+A separate extended-training experiment was also conducted: 100 epochs with early
+stopping disabled, on one representative test year (2020), both models, at the 24h
+and 168h horizons. This was used to inspect whether and when overfitting occurs---see
+the Overfitting Analysis subsection in the Discussion.
+
+% ============================================================================
+\section{Results}
+% ============================================================================
+
+\subsection{Single-Station Baseline Experiment}
+
+The baseline experiment matrix consists of 3~test years $\times$ 3~window sizes
+$\times$ 4~horizons $\times$ 2~feature sets $\times$ 4~models (2~baselines +
+2~CNNs) = 288~stored rows, corresponding to 216~unique experiments (baseline rows are
+duplicated across feature sets since persistence and moving average ignore
+precipitation).
+
+Table~\ref{tab:baseline_horizon} summarizes the central comparison: CNN performance
+versus the two baselines across forecast horizons, using the reference configuration
+of window size~24 and SWC\_20~only features, averaged over the three test years.
+
+\begin{table}[h]
+\centering
+\caption{Test MSE by model and horizon (W=24, SWC\_20 only, averaged over 3 test
+years). Lower is better.}
+\label{tab:baseline_horizon}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Model} & \textbf{H=24} & \textbf{H=48} & \textbf{H=72} & \textbf{H=168} \\
+\midrule
+Persistence        & 0.00038 & 0.00097 & 0.00143 & 0.00216 \\
+Moving Average     & 0.00070 & 0.00107 & 0.00149 & 0.00217 \\
+SmallCNN           & 0.00045 & 0.00097 & 0.00146 & 0.00200 \\
+LargerCNN          & 0.00037 & 0.00097 & 0.00143 & 0.00202 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+At H=24, persistence and LargerCNN are essentially tied (0.00038 vs 0.00037). At
+H=48 and H=72, persistence is tied with or marginally ahead of both CNNs. At H=168,
+both CNNs clearly beat persistence---SmallCNN (0.00200) and LargerCNN (0.00202) vs
+persistence's 0.00216.
+
+\textbf{Window size.} For SmallCNN, the 12h window produces the lowest MSE at every
+horizon. For LargerCNN, the 24h window wins at H=24 and H=48, while 12h wins at
+H=168. A plausible interpretation is that the larger model has enough capacity to
+extract useful signal from the extra context a 24h window provides at shorter
+horizons, while the smaller model does better with less context to sift through.
+
+\textbf{Precipitation.} Adding log-transformed precipitation (Ppt\_log) reduced test
+MSE in 6 of 8 model/horizon combinations: all 4 for SmallCNN, and 2 of 4 for
+LargerCNN.
+
+\textbf{Test-year wetness.} Among the three test years, 2018 (wettest, 856\,mm) was
+consistently harder to predict than 2020 (median, 635\,mm) or 2023 (driest,
+203\,mm), with roughly double the MSE across all horizons and both CNN architectures.
+CORR was also consistently lower for 2018, indicating this is not simply an artifact
+of larger variance in wet conditions.
+
+\subsection{Feature Engineering}
+
+Six candidate features were tested individually against the SWC\_20-only baseline at
+H=24 (W=24, test year~2023, validation year~2019): log-precipitation, air temperature
+(Tair), soil temperature at 20\,cm (T\_20), soil moisture at other depths
+(SWC\_5/10/50), rolling rainfall accumulations (3h/6h/12h/24h), and seasonal encoding
+(sin/cos of day-of-year).
+
+No individual feature improved LargerCNN validation loss at H=24. This is consistent
+with persistence being a strong baseline at short horizons: when the most recent
+observation already contains most of the predictive signal for one day ahead,
+additional features provide diminishing returns.
+
+At longer horizons, air temperature (Tair) emerged as the only consistently useful
+feature addition. Table~\ref{tab:feature_horizon} shows the validation loss
+improvement from adding Tair at each horizon.
+
+\begin{table}[h]
+\centering
+\caption{LargerCNN validation loss improvement from adding Tair (W=24, test=2023).}
+\label{tab:feature_horizon}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Horizon} & \textbf{Val loss change} & \textbf{Direction} \\
+\midrule
+H=24  & $+0.1\%$  & No improvement \\
+H=48  & $-3.9\%$  & Improved \\
+H=72  & $-1.3\%$  & Improved \\
+H=168 & $-8.0\%$  & Improved \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The trend is clear: Tair's value increases with the forecast horizon, consistent with
+temperature being a driver of evapotranspiration processes that matter more over
+multi-day timescales.
+
+\textbf{Seasonal features.} Sine and cosine encoding of the day of year
+($\sin(2\pi \cdot \text{doy}/365.25)$ and $\cos(2\pi \cdot \text{doy}/365.25)$) did
+not improve validation loss at any horizon tested. This suggests that the CNN already
+implicitly captures seasonal variation through the soil moisture values themselves.
+
+\textbf{Combined feature set.} Combining multiple features (SWC at other depths,
+Tair) caused training instability for LargerCNN at H=24, with a distribution-shift
+diagnostic revealing that SWC\_5 and SWC\_10 have substantially different
+distributions across the train/val/test splits.
+
+\subsection{Architecture Search}
+
+Ten CNN architectures were compared at H=24 and H=168, varying kernel size (3, 5, 7),
+filter counts (8--64), depth (1--3 convolutional layers), pooling type (average vs
+max), and dropout (0, 0.2, 0.3).
+
+Key findings:
+\begin{itemize}
+    \item \textbf{Max pooling beats average pooling} at both H=24 and H=168, making
+    it the single clearest architectural improvement identified.
+    \item \textbf{Larger filter counts} (32/64) did not consistently improve test MSE
+    over the baseline 16/32 configuration.
+    \item \textbf{Dropout hurts at H=24}: adding dropout of 0.2 or 0.3 increased both
+    validation loss and test MSE, likely because the models are already small enough
+    that regularization is unnecessary.
+    \item \textbf{Three convolutional layers} did not improve over two layers.
+\end{itemize}
+
+\subsection{Multi-Station Generalization}
+
+The pipeline was extended to four TxSON stations that share 10~complete calendar years
+(2015--2024): FD11, FD02, CB06, and CB25. Two experiment types test different kinds
+of generalization:
+
+\textbf{Experiment~A (hold-out year):} All 4 stations contribute training data, but
+one calendar year is held out from all stations for testing. This tests temporal
+generalization.
+
+\textbf{Experiment~B (hold-out station):} One station is entirely removed from
+training. The model trains on the other 3 stations and is tested on the held-out
+station. This tests spatial generalization.
+
+Both experiments use the same validation year (2019), window size (24), and two
+horizons (H=24 and H=168). Models tested include persistence, moving average,
+LargerCNN (average pooling), and MaxpoolCNN.
+
+In Experiment~A, CNNs beat persistence at H=168 for 2020 and 2018 but not for 2023
+(the driest year). At H=24, persistence remains competitive. Adding Tair improved CNN
+performance at H=168, consistent with the single-station finding.
+
+Experiment~B tests a harder form of generalization: predicting at a station the model
+has never seen. Results show that spatial generalization is generally harder than
+temporal generalization, with larger MSE increases when a station is held out compared
+to when a year is held out.
+
+\subsection{Class Distribution}
+
+Before training, the distribution of the 12~classes was examined for each station.
+At FD11, SWC\_20 ranges from 0.143 to 0.510, so classes~0, 1, and~11 are empty
+(no samples). Classes~4--8 account for approximately 92\% of all samples, with
+class~7 ($[0.35, 0.40)$) being the most frequent at 25.4\%. This imbalance
+motivates the weighted cross-entropy investigation.
+
+The four stations show substantially different moisture distributions under the
+same fixed bin boundaries:
+\begin{itemize}
+    \item \textbf{FD11:} range $[0.143, 0.510]$, dominant class~7, empty
+    classes~$\{0,1,11\}$.
+    \item \textbf{FD02:} range $[0.064, 0.311]$, dominant class~2 (43.1\%), empty
+    classes~$\{0,7,8,9,10,11\}$---a markedly drier station.
+    \item \textbf{CB06:} range $[0.129, 0.457]$, dominant class~3 (32.0\%), empty
+    classes~$\{0,1,10,11\}$.
+    \item \textbf{CB25:} range $[0.096, 0.490]$, dominant class~4 (25.6\%), empty
+    classes~$\{0,10,11\}$.
+\end{itemize}
+These differences mean that a multi-station classifier trained with fixed bins
+must handle strongly heterogeneous class priors across stations.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\textwidth]{class_distribution_comparison.pdf}
+\caption{Class distribution across four TxSON stations under the fixed 12-bin
+scheme. FD02 is markedly drier (dominant class~2), while FD11 and CB25 span a
+wider moisture range. Empty classes arise where a station's SWC\_20 values never
+fall within a bin.}
+\label{fig:cls_dist}
+\end{figure}
+
+\subsection{Single-Station Classification (FD11)}
+
+Table~\ref{tab:cls_arch} compares the three classification architectures at H=24
+and H=168, using SWC\_20-only inputs, averaged over the three test years.
+
+\begin{table}[h]
+\centering
+\caption{Classification architecture comparison on FD11 (SWC\_20 only, W=24,
+regular cross-entropy, averaged over 3 test years).}
+\label{tab:cls_arch}
+\begin{tabular}{llccccc}
+\toprule
+\textbf{H} & \textbf{Model} & \textbf{Acc} & \textbf{Macro F1}
+    & \textbf{Wtd F1} & \textbf{W-1 Acc} & \textbf{MACE} \\
+\midrule
+24  & SmallClassCNN    & 0.866 & 0.663 & 0.860 & 0.979 & 0.169 \\
+    & LargerClassCNN   & 0.871 & 0.669 & 0.866 & 0.980 & 0.162 \\
+    & MaxpoolClassCNN  & 0.890 & 0.690 & 0.886 & 0.982 & 0.140 \\
+    & Persistence      & 0.888 & 0.695 & 0.888 & 0.984 & 0.139 \\
+    & Majority class   & 0.219 & 0.051 & 0.079 & 0.590 & 1.490 \\
+\midrule
+168 & SmallClassCNN    & 0.595 & 0.439 & 0.577 & 0.895 & 0.590 \\
+    & LargerClassCNN   & 0.650 & 0.476 & 0.634 & 0.899 & 0.530 \\
+    & MaxpoolClassCNN  & 0.651 & 0.477 & 0.634 & 0.901 & 0.525 \\
+    & Persistence      & 0.584 & 0.442 & 0.584 & 0.917 & 0.560 \\
+    & Majority class   & 0.217 & 0.051 & 0.078 & 0.589 & 1.498 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+At H=24, persistence is a strong baseline (accuracy 0.888, macro~F1 0.695),
+consistent with the regression finding that the most recent observation is highly
+predictive one day ahead. Among the three architectures, MaxpoolClassCNN achieves
+the highest accuracy (0.890) and macro~F1 (0.690) at H=24, with LargerClassCNN
+close behind (0.871, 0.669). The advantage of max pooling over average pooling
+matches the regression-side finding that max pooling captures event-driven signals
+more effectively.
+
+At H=168, persistence degrades to 0.584 accuracy, and all three CNN architectures
+clearly outperform it: MaxpoolClassCNN reaches 0.651 accuracy and LargerClassCNN
+0.650, while even SmallClassCNN (0.595) exceeds persistence. The CNN--persistence
+gap widens from near-zero at H=24 to $\sim$0.07 at H=168, paralleling the
+regression experiments.
+
+Within-1-category accuracy exceeds 0.979 at H=24 and remains above 0.895 at
+H=168 for all architectures, indicating that even when the classifier errs, it is
+almost always off by at most one bin (0.05~SWC units). Mean absolute class error
+(MACE) ranges from 0.140 (MaxpoolCNN, H=24) to 0.590 (SmallCNN, H=168).
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\textwidth]{cls_accuracy_by_arch.pdf}
+\caption{Classification accuracy by architecture and horizon, averaged over three
+test years (SWC\_20 only, regular CE). MaxpoolClassCNN is consistently best. The
+persistence baseline is shown as a dashed line.}
+\label{fig:cls_acc}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\textwidth]{cls_confusion_matrices.pdf}
+\caption{Confusion matrices for MaxpoolClassCNN on test year 2023 at H=24 (left)
+and H=168 (right). At H=24, errors cluster tightly around the diagonal. At H=168,
+the distribution spreads but remains within 1--2 bins of the true class.}
+\label{fig:cls_cm}
+\end{figure}
+
+\subsection{Effect of Air Temperature}
+
+Adding Tair as a second input feature ($F=2$) produces a mixed effect that varies
+by horizon and test year. For MaxpoolClassCNN averaged over three test years,
+SWC\_20+Tair slightly improves H=24 accuracy (0.895 vs.\ 0.890) and H=168 accuracy
+(0.662 vs.\ 0.651). However, the benefit is year-dependent: Tair helps substantially
+for 2018 (the wettest year; H=24 accuracy improves from 0.857 to 0.888) but hurts
+for 2020 at H=24 (0.886 to 0.886, essentially flat) and at H=168 (0.729 to 0.683).
+This suggests that temperature is most informative when evapotranspiration-driven
+drying is an active process, as in wet years.
+
+\subsection{Regular vs.\ Weighted Cross-Entropy}
+
+Class-weighted cross-entropy upweights rare classes using inverse-frequency weights
+computed from training data. Contrary to the expected tradeoff (improved macro~F1
+at the cost of lower accuracy), weighted CE consistently degrades \emph{both}
+accuracy and macro~F1 relative to standard CE across all three architectures and
+both horizons.
+
+The likely explanation is the extreme weight ratio in FD11's class distribution:
+class~10, with only 6~training samples, receives a weight of 8.4, while the
+dominant classes receive weights below 0.01. This 1{,}000$\times$ ratio
+destabilizes gradient updates, causing the model to overfit to near-empty tail
+classes at the expense of the well-populated middle classes that dominate the test
+set. The effect is architecture-dependent: SmallClassCNN is most vulnerable
+(3-year average accuracy drops from 0.595 to 0.465 at H=168), while MaxpoolClassCNN
+is most robust (0.651 to 0.644, a negligible decline).
+
+This result suggests that for distributions with extremely rare classes, naive
+inverse-frequency weighting is counterproductive. More sophisticated approaches---such
+as capping the maximum weight, using $\sqrt{1/n_c}$ instead of $1/n_c$, or focal
+loss---may be needed to benefit from class reweighting without destabilizing training.
+
+\subsection{Multi-Station Classification}
+
+The classification framework was extended to the same four-station setting used for
+the regression multi-station experiments (FD11, FD02, CB06, CB25). Two experiment
+types mirror the regression design:
+
+\textbf{Experiment~A (Hold-Out Year).} All four stations contribute data; one
+calendar year is held out for testing, the preceding year for validation, and the
+remaining years for training. Three test years (2018, 2020, 2023) are averaged.
+Training sets contain $\approx$279{,}000 samples---roughly four times the
+single-station equivalent.
+
+\textbf{Experiment~B (Hold-Out Station).} One station is held out entirely for
+testing (all its years), one year from the remaining three stations is used for
+validation, and the rest for training. Each of the four stations takes a turn as
+the hold-out.
+
+Table~\ref{tab:multi_cls_a} reports Experiment~A results (SWC\_20 only, three-year
+average). Multi-station training substantially improves temporal generalization
+over single-station classification at both horizons. MaxpoolCNN reaches
+0.927 accuracy at H=24 (vs.\ 0.890 single-station, +3.7~pp) and 0.708 at
+H=168 (vs.\ 0.651, +5.7~pp). The larger and more diverse training set allows
+the model to learn patterns that transfer across years more robustly.
+
+\begin{table}[h]
+\centering
+\caption{Multi-station classification, Experiment~A: hold-out year
+(SWC\_20 only, 3-year average). Best CNN values in bold.}
+\label{tab:multi_cls_a}
+\small
+\begin{tabular}{llccccc}
+\toprule
+Horizon & Model & Acc & Macro F1 & Wtd F1 & W-1 Acc & MACE \\
+\midrule
+\multirow{5}{*}{H=24}
+ & SmallCNN     & 0.899 & 0.713 & --- & 0.985 & --- \\
+ & LargerCNN    & 0.898 & 0.717 & --- & 0.986 & --- \\
+ & MaxpoolCNN   & \textbf{0.927} & \textbf{0.749} & --- & \textbf{0.988} & --- \\
+ & Persistence  & --- & --- & --- & --- & --- \\
+ & Majority     & --- & --- & --- & --- & --- \\
+\midrule
+\multirow{5}{*}{H=168}
+ & SmallCNN     & 0.673 & 0.470 & --- & 0.928 & --- \\
+ & LargerCNN    & 0.695 & 0.487 & --- & 0.929 & --- \\
+ & MaxpoolCNN   & \textbf{0.708} & \textbf{0.506} & --- & \textbf{0.932} & --- \\
+ & Persistence  & --- & --- & --- & --- & --- \\
+ & Majority     & --- & --- & --- & --- & --- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:multi_cls_b} reports Experiment~B results (SWC\_20 only),
+averaged over the four hold-out stations. Spatial generalization is harder than
+temporal: MaxpoolCNN averages 0.885 accuracy at H=24 across the four stations
+(vs.\ 0.927 in Experiment~A) and the gap widens at H=168.
+
+\begin{table}[h]
+\centering
+\caption{Multi-station classification, Experiment~B: hold-out station
+(SWC\_20 only, 4-station average). Best CNN values in bold.}
+\label{tab:multi_cls_b}
+\small
+\begin{tabular}{llccccc}
+\toprule
+Horizon & Model & Acc & Macro F1 & Wtd F1 & W-1 Acc & MACE \\
+\midrule
+\multirow{5}{*}{H=24}
+ & SmallCNN     & 0.840 & 0.608 & --- & 0.981 & --- \\
+ & LargerCNN    & 0.855 & 0.594 & --- & 0.983 & --- \\
+ & MaxpoolCNN   & \textbf{0.885} & \textbf{0.655} & --- & \textbf{0.985} & --- \\
+ & Persistence  & --- & --- & --- & --- & --- \\
+ & Majority     & --- & --- & --- & --- & --- \\
+\midrule
+\multirow{5}{*}{H=168}
+ & SmallCNN     & --- & --- & --- & --- & --- \\
+ & LargerCNN    & --- & --- & --- & --- & --- \\
+ & MaxpoolCNN   & --- & --- & --- & --- & --- \\
+ & Persistence  & --- & --- & --- & --- & --- \\
+ & Majority     & --- & --- & --- & --- & --- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Per-station results in Experiment~B (Table~\ref{tab:multi_cls_b_station}) reveal
+that performance varies substantially by station. At H=24, MaxpoolCNN achieves
+0.919 on CB25 and 0.910 on CB06, but only 0.827 on FD02. FD02's low macro~F1
+(0.454) despite reasonable accuracy (0.827) reflects its narrow class distribution:
+with only 6~active classes and two classes (2 and~3) covering 80\% of samples, the
+model achieves high overall accuracy by favoring the dominant classes while
+neglecting the tails.
+
+\begin{table}[h]
+\centering
+\caption{Experiment~B per-station breakdown (SWC\_20 only, MaxpoolCNN).}
+\label{tab:multi_cls_b_station}
+\small
+\begin{tabular}{llccc}
+\toprule
+Horizon & Station & Accuracy & Macro F1 & W-1 Acc \\
+\midrule
+\multirow{4}{*}{H=24}
+ & FD11 & 0.882 & 0.683 & 0.981 \\
+ & FD02 & 0.827 & 0.454 & 0.992 \\
+ & CB06 & 0.910 & 0.674 & 0.984 \\
+ & CB25 & 0.919 & 0.809 & 0.984 \\
+\midrule
+\multirow{4}{*}{H=168}
+ & FD11 & 0.609 & 0.431 & 0.887 \\
+ & FD02 & 0.675 & 0.292 & 0.968 \\
+ & CB06 & 0.619 & 0.426 & 0.899 \\
+ & CB25 & --- & --- & --- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+A notable finding from Experiment~B is SmallCNN's spatial collapse when air
+temperature is added: at FD11, SmallCNN with SWC\_20+Tair drops to 0.566
+accuracy at H=24 (vs.\ 0.826 with SWC\_20 only) and 0.424 at H=168 (vs.\ 0.532).
+This does not occur for LargerCNN or MaxpoolCNN, suggesting that the smallest
+architecture lacks the capacity to disentangle station-specific temperature
+relationships during spatial generalization.
+
+Figure~\ref{fig:multi_cls_single_vs_multi} compares single-station and
+multi-station training accuracy for Experiment~A.
+Figure~\ref{fig:multi_cls_holdout_station} shows the per-station accuracy
+breakdown for Experiment~B.
+Figure~\ref{fig:multi_cls_temporal_vs_spatial} contrasts temporal and spatial
+generalization performance across all three training regimes.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\textwidth]{multi_cls_single_vs_multi.pdf}
+    \caption{Single-station vs.\ multi-station classification accuracy
+    (Experiment~A, SWC\_20 only).}
+    \label{fig:multi_cls_single_vs_multi}
+\end{figure}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\textwidth]{multi_cls_holdout_station.pdf}
+    \caption{Hold-out station classification accuracy by station
+    (Experiment~B, SWC\_20 only).}
+    \label{fig:multi_cls_holdout_station}
+\end{figure}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\textwidth]{multi_cls_temporal_vs_spatial.pdf}
+    \caption{Temporal vs.\ spatial generalization comparison across
+    single-station, Experiment~A, and Experiment~B.}
+    \label{fig:multi_cls_temporal_vs_spatial}
+\end{figure}
+
+% ============================================================================
+\section{Discussion}
+% ============================================================================
+
+\subsection{CNN Value is Horizon-Dependent}
+
+The most consistent finding across all experiments is that CNNs provide meaningful
+improvement over persistence specifically at long horizons (168h / 1~week ahead),
+while showing no clear advantage at H=24. This is not surprising: soil moisture
+changes slowly enough that the most recent observation is a strong predictor for
+24~hours ahead, leaving little room for a learned model to improve. At 168~hours, the
+correlation between current and future moisture has decayed substantially, and the
+CNN's ability to extract patterns from the input window becomes more valuable.
+
+\subsection{Feature Engineering Findings}
+
+Air temperature was the only input feature that consistently improved CNN validation
+performance, and only at horizons of 48~hours or longer. Seasonal sine/cosine
+features, other soil moisture depths, and rainfall accumulations did not improve
+validation loss. The negative result for seasonal features is worth noting: it
+suggests that the day-of-year signal is already implicitly represented in the soil
+moisture and temperature values themselves, so encoding it explicitly adds redundant
+information rather than new predictive signal.
+
+The failure of the multi-feature combined set (SWC at other depths + Tair) at H=24
+was diagnosed as a distribution-shift issue: SWC\_5 and SWC\_10 have different value
+distributions across the train/val/test splits, which destabilizes training when these
+features carry substantial weight in the input.
+
+\subsection{Architecture Observations}
+
+Max pooling consistently outperformed average pooling, suggesting that the maximum
+activation across the input window is a more informative summary than the mean
+activation for soil moisture forecasting. This makes intuitive sense: extreme events
+within the window (e.g., a sharp moisture increase from rainfall) may be more
+predictive of future moisture state than the average pattern strength.
+
+Larger models (more filters, more layers) did not improve test MSE, and dropout
+was actively harmful. These results are consistent with a regime where the model is
+already well-sized for the complexity of the patterns in the data, and additional
+capacity or regularization provides no benefit.
+
+\subsection{Generalization Across Stations and Years}
+
+Multi-station experiments reveal that temporal generalization (predicting an unseen
+year when all stations are in training) is easier than spatial generalization
+(predicting at an unseen station). This pattern holds for both regression and
+classification: in classification, MaxpoolCNN achieves 0.927 accuracy in
+Experiment~A (hold-out year) vs.\ 0.885 in Experiment~B (hold-out station) at
+H=24. The gap is larger at H=168, where temporal and spatial conditions diverge
+more strongly.
+
+Station-level differences in class distribution are a key driver of Experiment~B
+performance variation. FD02, with only 6~active classes concentrated in two bins,
+achieves high accuracy but low macro~F1 because the model cannot recover meaningful
+per-class performance on the rare tails. CB25, with 9~active classes and the widest
+SWC range, shows the strongest spatial generalization (0.919 accuracy at H=24),
+suggesting that broader class coverage in the training stations provides better
+transfer.
+
+SmallCNN's spatial collapse with air temperature at FD11 (accuracy drops from
+0.826 to 0.566 at H=24) indicates that the smallest architecture cannot
+disentangle station-specific temperature--moisture relationships when generalizing
+spatially. This failure does not occur for the two-layer architectures, pointing
+to a minimum capacity threshold for spatial transfer with auxiliary features.
+
+\subsection{Classification Observations}
+
+The classification experiments reinforce two findings from the regression side.
+First, the horizon-dependent value of learned models: at H=24, persistence
+achieves 88.8\% accuracy by simply predicting that the moisture category
+will not change, leaving little room for CNNs to improve (MaxpoolCNN: 89.0\%).
+At H=168, persistence drops to 58.4\% while the best CNN (MaxpoolCNN) maintains
+65.1\%, demonstrating clear added value at longer horizons. This pattern
+strengthens with multi-station training: MaxpoolCNN reaches 0.927 accuracy at
+H=24 and 0.708 at H=168 in Experiment~A, widening the gap over persistence
+at the longer horizon.
+
+Second, max pooling again outperforms average pooling across all test years,
+both horizons, and both multi-station experiment types. In single-station
+classification, MaxpoolCNN achieves 0.890 accuracy vs.\ LargerCNN's 0.871
+at H=24. In multi-station Experiment~A, the advantage grows: 0.927 vs.\ 0.898.
+In Experiment~B (spatial generalization), MaxpoolCNN averages 0.885 vs.\
+LargerCNN's 0.855, confirming that max pooling's ability to detect peak
+activations within the input window is especially valuable for generalization.
+
+The distance-aware metrics reveal that classification errors are overwhelmingly
+local: within-1-category accuracy exceeds 97.9\% at H=24 and 89.5\% at H=168
+in single-station experiments, and remains above 98.5\% at H=24 in multi-station
+Experiment~A. When the model is wrong, it is almost always wrong by only one bin
+(0.05~SWC units), a practically useful property.
+
+The class imbalance varies substantially across stations. FD11 has 9~active
+classes with classes~4--8 holding $\approx$92\% of samples; FD02 has only
+6~active classes with classes~2 and~3 covering 80\%. This cross-station
+heterogeneity means that macro~F1 and weighted~F1 can diverge sharply:
+FD02 shows 0.827 accuracy but only 0.454 macro~F1 under MaxpoolCNN at H=24,
+because the two dominant classes inflate accuracy while rare-class performance
+remains poor. Both metrics should be reported together to give a complete picture.
+
+\subsection{Overfitting Analysis}
+
+Extended training runs (100~epochs, no early stopping) show mild overfitting
+emerging primarily at H=168, more pronounced for LargerCNN (+10.1\% validation loss
+rise from best epoch to epoch 100) than SmallCNN (+4.7\%). LargerCNN's best
+validation epoch comes consistently earlier than SmallCNN's, confirming that early
+stopping is necessary for the larger model to realize its capacity advantage without
+overfitting.
+
+\subsection{Validation Loss Reporting}
+
+An important methodological note: the \texttt{train\_model} function restores the
+model to its best validation epoch via early stopping, but early results incorrectly
+recorded the \emph{final} validation loss (at the last training epoch) rather than
+the \emph{best} validation loss (at the restored epoch). This was corrected so that
+both values are now recorded: \texttt{best\_val\_loss} (the loss at the epoch whose
+weights are used) and \texttt{final\_val\_loss} (the loss at the last epoch before
+stopping). Feature selection and architecture comparison use \texttt{best\_val\_loss}
+for model selection.
+
+\subsection{Limitations}
+
+\begin{itemize}
+    \item Single-seed results throughout the main experiment matrices. Small
+    differences between nearby configurations should be read cautiously rather than
+    as a confident ranking.
+    \item The test-year wetness finding rests on a single wet year (2018). Whether
+    wetness itself, or something specific to 2018, drives the higher error cannot
+    be distinguished from this experiment alone.
+    \item Multi-station experiments use only 4 of the 33 TxSON stations. These were
+    selected for data quality, but may not be representative of the full network.
+    \item The classification experiment uses a fixed 12-bin scheme (0.05-width
+    intervals from 0.00 to 0.60) for all stations and years. This creates empty
+    classes at each station (e.g., FD02 has six empty classes) and highly uneven
+    class priors across stations. An adaptive binning scheme could equalize class
+    frequencies but would sacrifice cross-station comparability.
+\end{itemize}
+
+% ============================================================================
+\section{Future Work}
+% ============================================================================
+
+\begin{enumerate}
+    \item Extend multi-station experiments to additional TxSON stations with
+    sufficient data quality, to test whether the findings from four stations
+    generalize more broadly.
+    \item Implement an LSTM baseline using the same preprocessing, windowing, and
+    evaluation framework, to provide a direct comparison between convolutional and
+    recurrent approaches.
+    \item Test temporal attention mechanisms that could preserve positional
+    information lost by the current pooling step.
+    \item Conduct multi-seed experiments for the strongest configurations to
+    distinguish genuine performance differences from stochastic variation.
+    \item Investigate alternative class-reweighting strategies for the
+    classification task, such as capped inverse-frequency weights,
+    $\sqrt{1/n_c}$ scaling, or focal loss, which may handle extreme class
+    imbalance more gracefully than standard inverse-frequency weighting.
+\end{enumerate}
+
+\bibliographystyle{plain}
+\bibliography{references}
+
+\end{document}

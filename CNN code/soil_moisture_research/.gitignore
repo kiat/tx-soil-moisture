@@ -1,0 +1,15 @@
+# large data / artifacts — regenerated or downloaded, not committed
+data/*.parquet
+results/checkpoints/
+results/experiments.csv
+results/loss_histories.csv
+# python / latex / jupyter cruft
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+report/*.aux
+report/*.log
+report/*.bbl
+report/*.blg
+report/*.out
+report/*.xdv

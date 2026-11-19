@@ -1,0 +1,16 @@
+# Core (data audits, lag analysis, figures, report tables) -- no GPU needed
+numpy>=1.24
+pandas>=2.0
+scipy>=1.10
+matplotlib>=3.7
+seaborn>=0.12
+pyarrow>=12.0          # read the TxSON33 parquet
+
+# Model training (notebooks 02/03/06, main.py) -- CPU or CUDA
+torch>=2.0
+scikit-learn>=1.3     # MinMaxScaler
+
+# Notebook execution / validation
+nbformat>=5.9
+nbclient>=0.8
+ipykernel>=6.0
